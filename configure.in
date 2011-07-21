@@ -1,0 +1,27 @@
+AC_INIT(src/ns_init.cc)
+
+AC_ARG_WITH(xul-sdk, [   --with-xul-sdk      directory in which the xulrunner-sdk distribution is located],
+               XUL_SDK=${withval})
+
+AC_SUBST(XUL_SDK)
+AC_SUBST(MOZVER)
+
+
+if test -z "${MOZVER}" ; then 
+  echo "No Mozilla version specified, assuming 1.9.2"
+  echo "To set the Mozilla version please edit the configure.in file and set the MOZVER variable or create an environment variable named MOZVER"
+  MOZVER=192
+fi
+if test $MOZVER -eq 191; then
+     AC_MSG_ERROR("Builds based on Mozilla 1.9.1 are no longer supported.")
+fi
+
+XUL_SDK="$HOME/gabe/checkedout/FirefoxSource192/obj-xulrunner/dist/xulrunner-sdk"
+
+if ! test -d "$XUL_SDK" ; then
+  echo "Can't compile this package. We need the xulrunner SDK."
+  echo "For now, please edit the configure.in file and set the XUL_SDK variable to the location of the Xulrunner SDK on your system."
+  AC_MSG_ERROR( "Eventually this will be detected automatically.") 
+fi
+
+AC_OUTPUT(src/Makevars)

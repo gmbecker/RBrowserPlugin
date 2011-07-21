@@ -1,0 +1,22 @@
+<html>
+  <head>
+    <script type="text/javascript">
+      const cid = "@R/Revaluator;1";
+      netscape.security.PrivilegeManager.enablePrivilege("UniversalXPConnect");
+      var Rev = Components.classes[cid].createInstance();
+      console.log(Rev);
+      Rev = Rev.QueryInterface(Components.interfaces.REvaluator);  
+      var res;
+      var args = ["R"]
+      res = Rev.init(args, 1);
+      
+      console.log(Rev);
+      res = Rev.get("testvalforget");
+      console.log(res);
+      
+    </script>
+  </head>
+   <body>
+     <div id="test"> </div>
+  </body>
+</html>

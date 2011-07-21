@@ -1,0 +1,189 @@
+<?xml-stylesheet type="text/xsl" href="../../Docs/XSL/Todo.xsl" ?> 
+
+<topics xmlns:r="http://www.r-project.org">
+
+<topic>
+<title>Basics</title>
+<items>
+
+<item>
+Sort out the inheritance issues with RFunctionImpl and RObjectImpl
+and the interfaces and the implementation of the methods.
+<br/>
+I want the methods to be inherited from RObjectImpl.
+</item>
+
+<item>
+Make the REvaluator a singleton, e.g. through a service
+or make the factory smart enough to reuse the same object.
+</item>
+
+<item>
+Allow JavaScript to pass an object to R and have this treated
+as a JavaScript object. From this, allow dynamic calls to 
+JavaScript methods be called.
+See include/js/jsapi.h
+<js:code>
+</js:code>
+</item>
+
+<item status="partial">
+Convert R  (non-scalar) vectors to JavaScript arrays.
+<br/>
+See RVariants.cpp in the inst/components directory.
+</item>
+
+<item>
+Convert JavaScript hashes/associative/named arrays to R objects.
+And the other way too.
+</item>
+
+<item>
+Create NS exceptions in R/C++ code.
+</item>
+
+<item>
+Classes for different JavaScript types.
+<br/>
+Should be able to use dynamic invocation via xptcall.
+Can R handle this.
+</item>
+
+<item>
+Call JavaScript methods from references to JavaScript objects in R.
+<br/>
+https://developer.mozilla.org/en/XPConnect_wrappers
+</item>
+
+<item>
+Allow passing a JavaScript function to R.
+</item>
+
+<item>
+Figure out XPTCall.
+</item>
+
+<item>
+Make S4 objects accessible in JavaScript with 
+slots accessible as obj.slot.
+</item>
+
+<item>
+Allow R programmers to implement an XPCOM interface.
+</item>
+
+
+<item>
+Find out how to build xulrunner and firefox as embeddable libraries.
+<br/>
+Is building  xulrunner and firefox from source
+the same thing. i.e. using .mozconfig, make -f client.mk and so on.
+<br/>
+The browser doesn't seem to have been built, or 
+more specifically, if it is, how do we invoke it?
+</item>
+
+<item>
+Embed xulrunner in R so we can run GUIs within R.
+</item>
+
+<item>
+Embed R within Firefox as an extension/component.
+</item>
+
+<item>
+Bindings for R to access XPCOM objects.
+</item>
+
+<item>
+Allow specifying R functions as event handlers.
+<br/>
+Can we do this in JavaScript with 
+something akin to R::cb_func(obj).
+What about anonymous functions.
+(e.g. instead of "javascript:...." we might have "r:function(a, b) {...}"
+and have R interpret that code)
+Or can we do something nice via XBL.
+<br/>
+Look at how Python does it.
+</item>
+
+<item>
+reflection.cc (line 93)
+Converting nsID/nsIID to a string via ToString() but only if we
+use nspr.
+</item>
+
+<item>
+TestXPTCInvoke.cpp works when in the mozilla-1.9.1/xpcom/reflect/xptcall/tests
+tree, but not if we use xul-runner.
+Code is the same. But the compilation and  linking are different.
+<invisible>
+<sh:output>
+c++ -o TestXPTCInvoke.o -c -I../../../../dist/include/system_wrappers -include ../../../../config/gcc_hidden.h -DOSTYPE=\"Darwin9.7.0\"\
+ -DOSARCH=Darwin  -I. -I. -I../../../../dist/include/xpcom -I../../../../dist/include   -I../../../../dist/include/TestXPTC -I/Users/du\
+ncan/Projects/Mozilla/mozilla-1.9.1/dist/include/nspr    -I/Users/duncan/Projects/Mozilla/mozilla-1.9.1/dist/sdk/include -I/usr/X11/inc\
+lude   -fPIC  -I/usr/X11/include -fno-rtti -fno-exceptions -Wall -Wpointer-arith -Woverloaded-virtual -Wsynth -Wno-ctor-dtor-privacy -W\
+no-non-virtual-dtor -Wcast-align -Wno-invalid-offsetof -Wno-long-long -fno-strict-aliasing -fpascal-strings -fno-common -fshort-wchar -\
+pthread -I/Developer/Headers/FlatCarbon -pipe  -DDEBUG -D_DEBUG -DDEBUG_duncan -DTRACING -g  -I/usr/X11/include -DMOZILLA_CLIENT -inclu\
+de ../../../../mozilla-config.h -Wp,-MD,.deps/TestXPTCInvoke.pp TestXPTCInvoke.cpp
+TestXPTCInvoke.cpp: In function 'int main()':
+TestXPTCInvoke.cpp:904: warning: format '%s' expects type 'char*', but argument 2 has type 'void*'
+TestXPTCInvoke.cpp: At global scope:
+TestXPTCInvoke.cpp:1325: warning: 'void DoSpeedTest()' defined but not used
+c++  -I/usr/X11/include -fno-rtti -fno-exceptions -Wall -Wpointer-arith -Woverloaded-virtual -Wsynth -Wno-ctor-dtor-privacy -Wno-non-vi\
+rtual-dtor -Wcast-align -Wno-invalid-offsetof -Wno-long-long -fno-strict-aliasing -fpascal-strings -fno-common -fshort-wchar -pthread -\
+I/Developer/Headers/FlatCarbon -pipe  -DDEBUG -D_DEBUG -DDEBUG_duncan -DTRACING -g -o TestXPTCInvoke TestXPTCInvoke.o   -framework Coco\
+a  -framework ExceptionHandling       -Wl,-executable_path,/Users/duncan/Projects/Mozilla/mozilla-1.9.1/dist/bin -L../../../../dist/bin\
+ -L../../../../dist/lib /Users/duncan/Projects/Mozilla/mozilla-1.9.1/dist/lib/libxpcomglue_s.a -L/Users/duncan/Projects/Mozilla/mozilla\
+-1.9.1/dist/bin -lxpcom -L/Users/duncan/Projects/Mozilla/mozilla-1.9.1/dist/lib -lplds4 -lplc4 -lnspr4
+</sh:output>
+Note that we change the include to get the system_wrappers,
+include gcc_hidden.h, probably need the OSTYPE and OSARCH,
+use nspr, g++ options, -DMOZILLA_CLIENT, mozilla-config.h;
+link against xpcom plds4, plc4, nspr4, pull in libxpcomglue_s.a
+<br/>
+</invisible>
+See RFirefox/expt/xpt/Makefile for how to get this to work
+agains the build in mozilla-1.9.1/dist/{bin,lib}
+</item>
+
+<item>
+Implement the mapping from R to variants and back.
+</item>
+
+</items>
+</topic>
+
+<topic>
+<title>IDL</title>
+<items>
+<item>
+Support for sequence. See RObject.idl and creating the .h file.
+</item>
+</items>
+</topic>
+
+<topic>
+<title>Ideas for Extensions</title>
+<items>
+<item>
+Allow tabs to be collected in a tree in a panel on the
+side of the browser so that we can group them more
+than just tabs.
+Allow dragging the entire parent node to a new window to put them in a different window,
+or for a different profile.
+</item>
+
+<item>
+Record the history for a particular tab and see how we jump around
+and display this in a plot that lets us see where we started
+and remember why we were there.
+</item>
+<item>
+Let me see the (Google) search string that brought me to this page.
+i.e. go back through the history to the top-most page and get the search string.
+</item>
+</items>
+</topic>
+</topics>

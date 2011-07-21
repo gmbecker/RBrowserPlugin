@@ -1,0 +1,13 @@
+#include "nsISupports.idl"
+#include "nsIVariant.idl"
+[scriptable, uuid(1214e30c-6c09-4dc5-bd13-f46f72924fb8)]
+interface JSevaluator : nsISupports {
+
+  nsIVariant eval(in string code);
+  nsIVariant callFun(in string funName, [array, size_is(numArgs) ] in nsIVariant args, in unsigned long numArgs);
+
+  nsIVariant assign(in string varname, in nsIVariant val);
+  nsIVariant get(in string varname);
+  nsIVariant setPropertyWithValue(in nsIVariant obj, in string prop, in nsIVariant val);
+  nsIVariant setPropertyWithVar(in nsIVariant obj, in string prop, in string val);
+};

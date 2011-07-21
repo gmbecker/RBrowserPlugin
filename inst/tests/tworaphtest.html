@@ -1,0 +1,55 @@
+<html>
+  <head>
+<!--
+    <script type="text/javascript" src="http://github.com/DmitryBaranovskiy/raphael/raw/master/raphael.js"> </script>
+-->    
+
+<script type="text/javascript" src="../javascript/raphael.js"> </script>
+<script type="text/javascript" src="../javascript/Rhelpers.js"> </script>
+<script type="text/javascript" src="../javascript/Rscripthandler.js"> </script>
+    <script type="text/R">
+      print(1)
+      library(RFirefox)
+      library(SpiderMonkey)
+      canv = raphaelDev("raphcanvas")
+      #plot(1:10)
+      x = rnorm(100)
+      y = rnorm(100, x^2)
+      print(2)
+      sp = smooth.spline(x, y)
+      plot(x, y, cex=1.5)
+      lines(sp, col="blue")
+      print(3)
+      #print(thing$getPoints()[[1]])
+      #call_JS_Method(ScriptCon, thing$getPoints()[[3]],
+      #  "attr", c("fill", "#3b4449"))
+
+      colorThem = function(e)
+      {
+        print("I'm in the function")
+        pts = canv$getPoints()
+        sapply(1:length(pts),
+          function(x)
+          {
+            #if (x %% 2 == 0)
+              call_JS_Method(ScriptCon, pts[[x]], "attr", 
+                c("fill", "#3b4449"))
+          })
+      }
+      print(4)
+    </script>
+    <script type="text/R">
+      canv2 = raphaelDev("raphcanvas2")
+      plot(y, x, cex= 1.5)
+    </script>
+  </head>
+  <body>
+    <div id="test1"> </div>
+    <div id="test2"> </div>
+    <div id="test3"> </div>
+    <div id="test4"> </div>
+    <div id="raphcanvas" height="600" width="400" />
+    <div id="raphcanvas2" height="600" width="400" />
+    <button type="buton" id="colbutton" onClick="jsREventHandler('colorThem');"> Color Points </button>
+  </body>
+</html>

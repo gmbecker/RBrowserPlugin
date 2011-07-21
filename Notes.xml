@@ -1,0 +1,47 @@
+<article
+	xmlns:sh="http://www.shell.org"
+	xmlns:r="http://www.r-project.org">
+
+<para>
+string in IDL maps to const char * in C++.
+wstring maps to PRUnichar *.
+
+Details about strings
+https://developer.mozilla.org/en/XPCOM_string_guide
+</para>
+
+
+<para>
+To run Firefox with the extensions/components using a different profile (dev for development), use
+
+<sh:code>
+/Applications/Firefox.app/Contents/MacOS/firefox-bin --no-remote -P dev ~/Projects/org/omegahat/R/RFirefox/inst/components/test-R.html
+</sh:code>
+To force the registration of the components,  remove xpti.dat
+and compreg.dat in the profile's directory, e.g.
+/Users/duncan/Library/Application Support/Firefox/Profiles/lb0ds9ss.dev
+on the Mac.
+</para>
+
+
+
+<para>
+To run Mozilla within R, set the (DY)LD_LIBRARY_PATH to 
+<sh:code>
+setenv DYLD_LIBRARY_PATH ${DYLD_LIBRARY_PATH}:/Users/duncan/Projects/Mozilla/mozilla-1.9.1/dist/bin
+</sh:code>
+
+
+</para>
+
+
+
+<para>
+XPCOMViewer for 2.0 - 3.5
+https://addons.mozilla.org/en-US/firefox/addon/7979?src=reco
+</para>
+
+
+
+
+</article>

@@ -1,0 +1,34 @@
+#include "nsISupports.idl"
+#include "nsIVariant.idl"
+
+[scriptable, uuid(381CB19E-6BD4-489E-81AC-E88E2E1F3C7E)]
+interface REvaluator : nsISupports {
+
+  boolean init( [array, size_is(length) ] in string args, in unsigned long length);
+
+    /* Invoke the function by name with just one argument */
+  nsIVariant call1(in string funName, in nsIVariant arg);
+  nsIVariant call(in string funName); //have to grab the variable number of arguments from javascript via xpconnect
+
+  nsIVariant library(in string library);
+
+  nsIVariant eval(in string cmd);
+
+
+  nsIVariant exists(in string var);
+  nsIVariant get(in string var);
+  nsIVariant assign(in string var, in nsIVariant val);
+  nsIVariant remove(in string var);
+
+
+  readonly attribute string version;
+
+
+  /*
+    // Invoke the named function with a list of arguments 
+  nsIVariant call(in wstring funName, in nsIVariant args);
+   //Given a function object, not a name.
+  nsIVariant invokeFun(in nsIVariant fun, in nsIVariant args);
+  nsIVariant callWithString(in wstring funName, in wstring arg);
+*/
+};

@@ -1,0 +1,39 @@
+<html>
+  <head>
+<!--
+    <script type="text/javascript" src="http://github.com/DmitryBaranovskiy/raphael/raw/master/raphael.js"> </script>
+-->    
+<script type="text/javascript" src="../javascript/raphael.js"> </script>
+
+<script type="text/javascript" src="../javascript/Rhelpers.js"> </script>
+<script type="text/javascript" src="../javascript/Rscripthandler.js"> </script>
+<script type="text/javascript">
+  function testfun(name, x)
+{
+  var el = document.getElementById(name);
+  el.innerHTML = "the value of x is : " + x;
+  return;
+}
+</script>
+<script type="text/R">
+  library(RFirefox)
+  library(SpiderMonkey)
+  glob = JS_GetGlobalObject(ScriptCon, returnInputs=FALSE)
+  print(paste("glob class: ", class(glob), "\n"))
+  JS_AddRoot(ScriptCon, glob)
+  res1 = call_JS_Method(ScriptCon, glob, "testfun", list("char", "hi there"))
+  res2 = call_JS_Method(ScriptCon, glob, "testfun", list("int", 5L))
+  res3 = call_JS_Method(ScriptCon, glob, "testfun", list("numeric", pi))
+  
+</script>
+</head>
+  <body>
+    Character data test:
+    <div id="char" > </div>
+    Integer data test:
+    <div id="int" > </div>
+    Numeric data test:
+    <div id="numeric" > </div>
+    
+  </body>
+</html>

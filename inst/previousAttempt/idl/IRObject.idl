@@ -1,0 +1,23 @@
+#include "nsISupports.idl"
+
+#include "IRBasicTypes.idl"
+
+
+[ptr] native SEXP(SEXPREC);
+
+[scriptable, uuid(1EF917F6-EE8F-42B2-8EC4-9025A6BCBBE2)]
+
+interface IRObject : nsISupports {
+
+    long length();
+    string typeof();
+    string class();
+    string str();
+#ifdef R_NAMES_METHOD
+    void names([array, size_is(len)] out string ans, out unsigned long len);
+#endif
+
+    [noscript] SEXP asSEXP();
+};
+
+//typedef sequence <RObject> RArgList;

@@ -1,0 +1,3 @@
+When I source Rscripthandler.js like so: <script type="text/javascript" src="Rscripthandler.js" /> document.getElementsByTag("script") can't find the other script tags. 
+
+When I do it like this: <script type="text/javascript" src="Rscripthandler.js"> </script> it can. This seems like it's actually a bug in getElementsByTag

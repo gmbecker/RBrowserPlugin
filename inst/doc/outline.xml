@@ -1,0 +1,16 @@
+<article>
+<para>
+The idea is that we create R as an XPCOM.
+We expose methods for the interpreter.
+These might be
+<ul>
+<li>call/invoke</li>
+<li>library</li>
+<li>detach</li>
+<li>remove</li>
+<li>assign</li>
+<li>exists</li>
+<li>eval</li>
+</ul>
+</para>
+</article>

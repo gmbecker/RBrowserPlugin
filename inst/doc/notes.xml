@@ -1,0 +1,133 @@
+<article xmlns:sh="http://www.shell.org"
+         xmlns:r="http://www.r-project.org">
+<para>
+These are some notes as we explore Firefox extensions.
+</para>
+<section>
+<title>Extensions</title>
+<para>
+One tutorial is:
+http://blog.mozilla.com/addons/2009/01/28/how-to-develop-a-firefox-extension/
+</para>
+<para>
+Building XPCOM components tutorial at http://www.iosart.com/firefox/xpcom/
+</para>
+<para>
+Create a file in the extensions/ directory under the profile we want to use
+and put the name of the directory that contains our code, e.g.
+sample@example.net and have it contain ~/Projects/org/omegahat/R/RFirefox/expt/Foo/
+</para>
+
+<para>
+Check into the R interface in the browser that uses a lot of
+JavaScript. Rpad.
+</para>
+
+<para>
+See <ulink url="https://developer.mozilla.org/en/Building_an_Extension"/>.
+</para>
+
+<p>
+Use a different profile to test, etc.
+Start Firefox with the desired profile (-P profileName) and a second separate instance
+of Firefox (-no-remote) with 
+<sh:code>
+/Applications/Firefox.app/Contents/MacOS/firefox-bin --no-remote -P dev
+</sh:code>
+</p>
+
+<p>
+Install the extensiondev for a suite of tools to help develop
+extensions.
+It won't install and will complain about "No secure updates".
+You can by-pass this by creating and setting two firefox configuration options.
+Go to "about:config" in the navigation bar or set them in prefs.js
+in your profile.
+
+user_pref("extensions.checkCompatibility", false);
+user_pref("extensions.checkUpdateSecurity", false);
+</p>
+
+<p>
+There are interfaces in XPCOM that provide reflection info.
+See nsIInterfaceInfoManager.idl and nsIInterfaceInfo.idl
+We can write a stand-alone app or something in R that
+interrogates these and generates R/C++ bindings to these
+classes statically, or use them at run-time.
+</p>
+
+
+</section>
+
+
+
+<section>
+<title>xulrunner</title>
+
+<p>
+Embedding xulrunner in Gtk.
+http://git.sugarlabs.org/projects/hulahop
+</p>
+<p>
+look at the email at
+http://groups.google.com/group/mozilla.dev.embedding/browse_thread/thread/31a22e981127c878
+</p>
+
+<p>
+See expt/xulrunner_eg/xsample for an example.
+</p>
+<p>
+Download the example from the bottom of
+https://developer.mozilla.org/en/Getting_started_with_XULRunner
+</p>
+
+<p>
+The specification in the prefs.js
+pref("toolkit.defaultChromeURI", "chrome://xsample/content/win.xul");
+takes the chrome out of the path.
+</p>
+
+<p>
+My version ends up with a tansparent background.
+The version I downloaded does not.
+<br/>
+That's because I commented out the xml-stylesheet Processing Instruction
+at the top of win.xul.
+</p>
+
+<p>
+On the Mac (at least),  we get errors about
+"Error: couldn't parse application.ini."
+This is because we need the full path name,
+not the relative file name.
+</p>
+</section>
+<section>
+<title>IDL</title>
+
+<p>
+xpidl doesn't seem to recognize #ifdef 
+</p>
+<p>
+xpidl doesn't seem to handle sequence types.
+So we need to use [array, size_is(len)] in type arg, in unsigned long len
+and similarly for out parameter.
+</p>
+
+<p>
+Perhaps use Enumerators to return arrays? Not very JavaScript'y
+</p>
+
+<p>
+To convert the IDL to a type library
+<sh:code>
+./bin/xpidl -w -v -I./idl -e tmp.xpt -m typelib idl/nsIDOM3Document.idl
+</sh:code>
+Then we can dump this with
+<sh:code>
+./bin/xpt_dump tmp.xpt
+</sh:code>
+</p>
+
+</section>
+</article>

@@ -1,0 +1,128 @@
+<article xmlns:sh="http://www.shell.org"
+         xmlns:r="http://www.r-project.org">
+<section>
+<title>Putting R in Firefox as an Extension</title>
+
+<section>
+<title>Including C/C++ code in an extension</title>
+<ol>
+<li>
+<para>
+The first step is to find out how to build an extension
+that contains C/C++ code  and that is the loaded by Firefox.
+Alternatively, we might just provide one or more components
+and then use these from a JavaScript/XUL extension.
+</para>
+
+
+<para>
+NSGetModule().
+See the example in mozilla-1.9/xpcom/sample.
+(Also, http://www.iosart.com/firefox/xpcom/.)
+The code in xpcom/sample doesn't work completely out of the box for us
+because we have to copy the .xpt and .dylib  file
+into the components/ directory of the Firefox we are actually
+using and cause them to be found.
+</para>
+<para>
+What about manifest files? registering components?
+<ol>
+<li>We can put the .xpt and .dylib into the components/ directory.</li>
+<li>Then we clear the compreg.dat and xpti.dat files in the profile directory.
+  These will get rebuilt.</li>
+</ol>
+</para>
+</li>
+
+<li>
+<para>
+The next step is to link in R and have the extension start
+an R session.
+</para>
+</li>
+
+<li>
+<para>
+Next, we define the evaluator XPCOM component and make it
+available.
+http://kb.mozillazine.org/Development_resources#XPCOM_.2F_XPConnect
+<br/>
+Implement the REvaluator a singleton.
+See page 21 of cxc.pdf  for comments about using 
+nsIServiceManager for this.
+</para>
+</li>
+
+<li>
+<para>
+Next we make the evaluator component available to JavaScript via XPConnect.
+</para>
+<para>
+We might provide a XUL interface that shows the state of the R 
+evaluator, e.g. objects(), search(), ..
+</para>
+</li>
+
+<li>
+<para>
+Allow R programmers to create new XPCOM objects, i.e. instantiate them.
+</para>
+</li>
+
+<li>
+<para>
+Enable exporting S4 objects.
+Providing access to slots and 
+This involves doing it either statically 
+or with xpt stubs.
+</para>
+</li>
+
+<li>
+<para>
+Take options from about:config
+and define ones that allow the Firefox
+programmer to control R.
+</para>
+</li>
+
+<li>
+<para>
+Reflection for XPCOM objects  to allow
+R programmers find and call (via XPTCall) the methods.
+Finding the methods is less important given that we are not doing this interactively.
+But we can do it from within a standalone XPCOM session.
+But calling them will be necessary even from an embedded R session.
+</para>
+<para>
+Information on scripting <ulink url="http://www.mozilla.org/scriptable/roadmap.html"/>
+</para>
+</li>
+
+<li>
+<para>Allow R programmers to define their own extensions with R code, also
+implement XPCOM objects (define IDL and implement the stubs with R code/functions).
+</li>
+
+</ol>
+</section>
+</section>
+
+<section>
+<title>Implementing Technologies</title>
+<para>
+The underlying technologies within Mozilla (XPCOM, XPIDL, XPTCall, XPConnect)
+are very similar to OMG's CORBA and Microsoft's DCOM.
+</para>
+</section>
+
+<bibliography>
+<bibitem id="bib:CreateMozApp">
+<ulink url="http://www.csie.ntu.edu.tw/~piaip/docs/CreateMozApp/">Creating Applications with Mozilla</ulink>
+</bibitem>
+<bibitem id="bib:xcx">
+Doug Turner 
+</bibitem>
+
+</bibliography>
+</article>

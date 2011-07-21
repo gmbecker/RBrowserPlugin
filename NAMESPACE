@@ -1,0 +1,12 @@
+useDynLib(RFirefox)
+
+exportClasses("JavaScriptRef")
+exportClasses("nsIDocument", "nsINode")
+
+exportPattern(".*")
+
+exportMethods("coerce")
+exportClasses("nsPIDOMWindow")
+
+
+

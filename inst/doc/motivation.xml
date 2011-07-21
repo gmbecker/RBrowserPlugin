@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<article>
+<title>Motivation</title>
+<section>
+<para>
+(Academic) Statistics has deep and long traditions in mathematics and
+focusing on inference.  The increasing availability of richer, and
+more complex data about important topics, the importance of the Web,
+the exciting new technologies for both accessing data and displaying
+data and statistical results challenges statistics to get more
+involved in new, broader areas of statistics. Rather than focusing on
+just one (albeit important) step in the data analysis pipeline, we
+hope that statistics will pay attention to the other parts.  We hope
+the field will take time to explore and harness these new technologies
+to access data and present results in rich new ways.  We risk being
+usurped by others in this emerging data-driven era.  It behoves us to
+study, master and engage in these new technologies.  To this end, we
+present here some ideas about connecting R with a Web browser -
+Firefox.
+</para>
+<para>
+The idea is that we will embed R in Firefox.  Similarly, we might
+embed Firefox in R.  Certainly, when R is embedded within Firefox as an extension,
+JavaScript code will be able to call R functions, access R
+objects and generally manipulate the R evaluator.
+Similarly, from within R, we can access JavaScript classes, objects, etc.
+and so can dynamically modify documents being displayed.
+We can create graphical displays and update them in HTML documents,
+rewrite tables, generate dynamic content.
+</para>
+
+
+<para>
+Building a Firefox extension and embedding R within Firefox is
+"cool". It requires mastering a reasonably complex software mechanism.
+It is a "cool" trick.  So it is interesting from a technical point of view.
+But there should be more to such a project than just being "cool"
+or challenging.  So what is the purpose?
+</para>
+<para>
+One motivation for us is considering rich, interactive documents as
+part of reproducible research.  We want to be able to load an XML/HTML
+document that contains R code that is used to construct the content.
+The HTML document may contain all the actual results obtained by the
+original researcher. But we want to allow the creation of interactive
+components such as sliders, file browsers, data grids and so on that
+allow the reader to modify the computations by modifying the inputs.
+We then want to update the computations and insert the results back
+into the HTML document.  To be able to do this, we need to be able to
+run an R session within the browser.  The R session needs to be able
+to operate on the document, e.g. to find specific elements within it
+(via getElementById()) and modify their contents.  We want to be able to
+display R graphics within an HTML document and update these
+displays. We might use SVG or a JavaScript canvas for these
+displays. We can the fully inter-operate between the components: the R
+interpreter, the HTML elements, the SVG, JavaScript canvas or Flash/Flex.  We can
+respond to user interactions on the graphical displays  with JavaScript events 
+(with JavaScript or R function handlers)
+and have R update the displays via JavaScript event handlers.
+</para>
+<para>
+We also want to be able to explore using XUL and xul-runner as a means of 
+creating GUIs. 
+We want to embed xulrunner within an R  process and use it to 
+create GUIs by passing it XML files.
+</para>
+<para>
+We want to have (statistical) graphics that are dynamic and
+interactive.  The computations required to support these run-time
+changes may involve statistical operations that exist in R, e.g.
+smoothing, filtering out points and redrawing, updating models, making predictions, ...  It is preferable
+to be able to do these computations again when they are needed rather
+than embed the results for all possible values within the plot and
+show the "current" ones. We can do this if R is available and can be
+called from SVG or Flash as if it were JavaScript.  Furthermore, we
+want R to be able to create new elements in these displays, e.g. SVG
+lines and paths, just as we can with JavaScript. For this, R needs to
+be able to access components in SVG.
+</para>
+
+
+<para>
+An alternative approach is to have JavaScript code communicate with a separate R 
+session, e.g. running on the same machine as a separate process  (e.g. Rserve) or 
+as a Web service, e.g. RApache or R's own HTTPD server.
+This has advantages over running R within the browser (e.g. 
+separate processes so failure of one doesn't affect the other,
+portable across platforms, allows R to be run on a big server with
+many computational resources).  However there are several significant
+features we miss. By embedding R within the browser, the communication
+between R and JavaScript will be faster than between processes.
+Most importantly, the interface is bi-directional: JavaScript code can invoke
+R functions, but R can also invoke JavaScript functions and methods.
+This allows us to chose where to program rather than forcing a particular
+programming model and software architecture.
+There are fewer security concerns for an organization that would host
+an R server. Instead, the security concerns move to the user's browser.
+</para>
+
+
+</section>
+
+<section>
+<title>Details</title>
+
+<para>
+Let's return to some more details about how we might use an R extension
+to implement interactive documents.
+We have done this in various ways before, so most of the details are the same.
+Basically, we start with an Rdb/XML document containing Docbook markup and
+R code.
+
+</para>
+</section>
+
+<section>
+<title>Tasks, Branches, Alternative Approaches and Drill Down</title>
+
+<para>
+We also want to be able to present the reader with different views of the document
+that allow her to explore what the author actually did rather than 
+the condensed  version 
+</para>
+</section>
+
+
+</article>

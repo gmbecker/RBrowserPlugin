@@ -1,0 +1,104 @@
+<html>
+<head>
+<script type="text/javascript" src="Rscripthandler.js" ></script>
+<script type="text/R">
+  x = 5
+  cat(paste("x is:", x, "\n"))
+  
+  myscript = "document.getElementById('jsc').innerHTML='Javascript says R says hello.';"
+  myval = jsVal()
+  JS_EvaluateScript(ScriptCon, JS_GetGlobalObject(ScriptCon)$value,
+  myscript, nchar(myscript), "R", 0, myval)
+
+  getjsObj = function(objname)
+    {
+      retval = jsVal()
+      JS_EvaluateScript(ScriptCon, JS_GetGlobalObject(ScriptCon)$value,
+      objname, nchar(objname), paste("R get", objname), 0, retval)
+      retval
+    }
+
+  doc = getjsObj("document")
+
+  
+  
+  
+ 
+  
+  #print(getel)
+  mydiv = jsVal()
+  #print(doc)
+  #print(getel)
+  #cat("attempting to convert doc to a JSObject\n")
+  #myob = new("JSObjectRef")
+  #rv = JS_ValueToObject(ScriptCon, getJSValAsInt(doc), myob)
+  #cat("Conversion complete, result follows\n")
+  #print(rv)
+  #jstr = JS_NewStringCopyZ(ScriptCon, "This is my string", returnInputs = FALSE)
+  #tmp = as(jstr, "jsvalRef")
+  #JS_AddRoot(ScriptCon, tmp)
+
+  #rv = JS_CallFunctionName(ScriptCon, doc, "getElementById", 
+  #  1, tmp, mydiv)
+  #print(rv)
+  
+
+  #getel = getjsObj("document.getElementById")
+  #myobj =   JS_ConstructObject(ScriptCon, NULL, NULL, NULL, NULL);
+  
+ # JS_ValueToObject(ScriptCon, getJSValAsInt(doc), myobj); 
+ # JS_AddRoot(ScriptCon, myobj)
+ # print(myobj)
+  #hacky-mchack\
+  
+  #myarg = getjsObj("var arg = 'callfun';")  
+  #rv = JS_CallFunction(ScriptCon, myobj, getel, 1, myarg, mydiv);
+  #cat("mydiv: ");print(mydiv)
+
+  #jstr = JS_NewStringCopyZ(ScriptCon, "Success", returnInputs = FALSE)
+  #tmp = as(jstr, "jsvalRef")
+  #print(JS_AddRoot(ScriptCon, tmp))
+  
+  #succ = getjsObj("var thing = 'Success!';")
+  #JS_SetProperty(ScriptCon, mydiv, "innerHTML", succ)
+  cat("ScriptCon: ")
+  print(ScriptCon)
+  cat("doc: ")
+  print(doc)
+  .Call("R_CallFunctionNameTestC", ScriptCon, doc)
+  
+
+  
+
+  
+  
+  #extEvaluateJS("alert('javascript says that R says that javascript says hi');")
+  #print(objects("package:RinFirefox"))
+  #mycon = extensionGetContext()
+  #evaluateJSInContext(mycon, paste("alert('x is:", x, "');"))  
+  
+</script>
+
+
+</head>
+<body>
+<para>
+  Hi there this is a webpage with an R script tag. Check the
+  terminal to see if it worked!
+</para>
+<br />
+<para>
+  Testing nsIScriptContext  EvaluateScript: <div id="nsisc"> </div>
+</para>
+<br />
+<para>
+  Testing JSContext  EvaluateScript: <div id="jsc"> </div>
+</para>
+
+<para>
+
+Testing JS_CallFunction: <div id="callfun"> </div>
+</para>
+
+</body>
+</html>

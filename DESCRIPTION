@@ -1,0 +1,18 @@
+Package: RFirefox
+Version: 0.1-0
+Title: R bindings to Firefox
+Description: This package provides bindings to
+  Firefox XPCOM components to allow R programmers
+  create instances of these components and invoke
+  their methods.
+  This package is initially targetted at running
+  R within Firefox as an extension.
+  The functionality in this package is then to be used
+  within R functions that are called from JavaScript.
+Author: Duncan Temple Lang, Gabriel Becker
+Depends: methods, RAutoGenRunTime, RGtk2, RGraphicsDevice
+Sugests: SpiderMonkey
+Maintainer: Gabriel Becker <gmbecker@ucdavis.edu>
+License: GPL
+  
+Packaged: 2011-07-20 22:31:46 UTC; gmbecker

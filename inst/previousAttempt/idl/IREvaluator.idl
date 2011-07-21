@@ -1,0 +1,26 @@
+/*
+  Duncan Temple Lang <duncan@wald.ucdavis.edu>  August, 2009
+
+  A definition of an interface to the R interpreter.
+  At present, we can only have one REvaluator. So it is a singleton.
+
+  In the future, we may allow for more than 1 separate REvaluator objects in R,
+  i.e. with their own search path, global environment, etc.
+ */
+
+#include "nsISupports.idl" 
+#include "IRObject.idl"
+#include "IRFunction.idl"
+
+
+#define NS_R_EVALUATOR_SERVICE_CID
+#define NS_R_EVALUATOR_SERVICE_CONTRACTID "@r-project.org/revaluator;1"
+
+[scriptable, uuid(BED33746-1B4D-4495-9365-7642C3186276)]
+ 
+interface IREvaluator : nsISupports {
+
+    IRObject callFun(in string fun, [array, size_is(length)] in IRObject args, in unsigned long length);
+    IRObject call(in IRFunction fun, [array, size_is(length)] in IRObject args, in unsigned long length);  /* would like in RArgList args */
+
+};

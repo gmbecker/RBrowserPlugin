@@ -1,0 +1,125 @@
+<html>
+<head>
+<script type="text/javascript" src="../javascript/Rscripthandler.js"> </script>
+<script type="text/R">
+  print("hi there")
+  setPar = function(k)
+  {
+   if (k == 1)
+     par(mfrow = c(1,1))
+   else if (k == 4)
+     par(mfrow = c(2,2))
+  }
+
+  x = runif(25, 0, 5) 
+  y = rnorm(25, x, .7)
+  print(setPar)
+  tmpdir = tempdir()
+  print(ls())
+
+  fitreg = function()#x = x, y = y, tmpdir = tmpdir)
+  {
+    thelm = lm(y~x)
+    print(thelm)
+    assign("mylm", thelm, env = .GlobalEnv)
+    png(paste(tmpdir, "mainplot.png", sep="/"))
+    plot(x , y)
+    abline(mylm) #boo on global variables
+    dev.off()
+  }
+
+  fitreg()
+ 
+  plotresvord = function(dummy) #, mylm = mylm, tmpdir = tmpdir)
+  {
+    path=paste(tmpdir, "resvorder.png", sep="/")
+    png(path)
+    plot(residuals(mylm))
+    dev.off()
+    path
+  }
+
+  plotresvfit = function(dummy)
+  {
+    path = paste(tmpdir, "resvfit.png", sep="/")
+    png(path)
+    plot(mylm$fitted, residuals(mylm))
+    dev.off()
+    print(path)
+    return(path)
+  }
+
+  plotcooksd = function(dummy)#, mylm = mylm, tmpdir = tmpdir)
+  {
+    path = paste(tmpdir, "cooksd.png", sep="/") 
+    png(path)
+    plot(cooks.distance(mylm))
+    dev.off()
+    path
+  }
+
+</script>
+<script type="text/javascript">
+
+/*
+  var mainplot = document.getElementById("regplot");
+  var diagplot = document.getElementById("diagplot");
+  console.log(mainplot);
+  console.log(diagplot);
+*/
+  //console.log("executing javascript code");
+  const cid = "@R/Revaluator;1";
+  netscape.security.PrivilegeManager.enablePrivilege("UniversalXPConnect");
+  var Rev = Components.classes[cid].createInstance();
+  Rev = Rev.QueryInterface(Components.interfaces.REvaluator);  
+  var thing = ["R"];
+  Rev.init(thing, 1);
+  
+
+  function UpdateMainPlot(e)
+  {
+    var mainplot = document.getElementById("regplot");
+    //console.log(mainplot);
+    netscape.security.PrivilegeManager.enablePrivilege("UniversalXPConnect");
+    var out;
+    var dir = Rev.get("tmpdir", out);
+    //console.log("updating main plot: " + dir);
+    mainplot.src = dir + "/mainplot.png";  
+  }
+  function radioChange(e)
+  { 
+  netscape.security.PrivilegeManager.enablePrivilege("UniversalXPConnect");  
+    //console.log(Rev);
+    var im = document.getElementById("diagplot");
+    //console.log(e.value)    
+    var out, res;
+    if (e.value == "resvord")
+    {
+      res = Rev.call1("plotresvord", 5, out);
+    } else if (e.value == "resvfit") {
+      res = Rev.call1("plotresvfit", 5, out);
+    } else if (e.value == "cooksd") {
+      res = Rev.call1("plotcooksd", 5, out);
+      im.src = "cooksd.png";
+    }
+    //console.log(res)
+    im.src = res
+  }
+</script>
+</head>
+<body onload="UpdateMainPlot(this);">
+  <div id="radioholder">
+    Diagnostic Plots:
+    <form>
+      <input type="radio" name="whichplot" value="resvord" label="Plot Residuals vs Order" onclick="radioChange(this)" /> Residuals vs Order <br />
+      <input type="radio" name="whichplot" value="resvfit" label="Plot Residuals vs Fit" onclick="radioChange(this)" /> Residuals vs Fit<br />
+      <input type="radio" name="whichplot" value="cooksd" label="Plot Cook's Distances" onclick="radioChange(this)" /> Cook's Distance
+    </form>
+  </div>
+  <div id="imageholder" >
+    <img id="regplot" src="" height="375" />
+    <img id="diagplot" src="" height="375" />
+  </div>
+  Note that nothing on this page is precomputed. In practice that is silly since we are only making four plots regardless of how many times we click, but it shows that we can create plots when we need them. Currently the plots are just being saved as pngs to a temp directory then inserted with javascript into the img tags, but eventually we will have more advanced ways of plotting directly into webpages.
+</body>
+</html>

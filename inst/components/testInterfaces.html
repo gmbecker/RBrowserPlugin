@@ -1,0 +1,48 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html> <head>
+<META http-equiv="Content-Type" content="text/html"/> 
+<title></title>
+<script type="text/javascript">
+ function go() {
+    var R;
+	try {
+		netscape.security.PrivilegeManager.enablePrivilege("UniversalXPConnect");
+    	        const cid = "@R/Revaluator;1";
+		R = Components.classes[cid].createInstance();
+		R = R.QueryInterface(Components.interfaces.REvaluator);
+	} catch (err) {
+		alert( " failed to start R " + err);
+		return;
+	}
+
+    R.init(["R"], 1);
+    R.library("RFirefox");
+    R.eval("print(getInterfaces())");
+    alert("Done now");
+ }
+</script>
+</head>
+
+<body>
+<h1></h1>
+
+Click on the Go button and this will start the test
+that runs R and calls getInterfaces().
+
+<button id="go" onclick="go();">Go</button>
+
+
+<p>
+<ul>
+  <li> 
+</ul>
+
+
+
+<hr>
+<address><a href="http://www.stat.ucdavis.edu/~duncan">Duncan Temple Lang</a>
+<a href=mailto:duncan@wald.ucdavis.edu>&lt;duncan@wald.ucdavis.edu&gt;</a></address>
+<!-- hhmts start -->
+Last modified: Sat Dec 19 07:10:46 PST 2009
+<!-- hhmts end -->
+</body> </html>

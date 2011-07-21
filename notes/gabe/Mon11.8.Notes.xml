@@ -1,0 +1,29 @@
+<para>
+following the suggestions for linux at:
+http://developer.mozilla.org/en/Troubleshooting_XPCOM_components_registration
+
+I ran :
+
+./run-mozilla.sh `which ldd` -r /home/gmbecker/gabe/checkedout/RFirefox/inst/components/Revaluator.so
+
+and found that even though it links properly, some of the symbols are undefined eg:
+
+undefined symbol: _ZN13nsCOMPtr_base18assign_from_helperERK15nsCOMPtr_helperRK4nsID	(/home/gmbecker/gabe/checkedout/RFirefox/inst/components/Revaluator.so)
+undefined symbol: _ZN13nsCOMPtr_base16begin_assignmentEv	(/home/gmbecker/gabe/checkedout/RFirefox/inst/components/Revaluator.so)
+
+libxul.so in the copy of the xulrunner 1.9.2 sdk that I built myself contains this symbol with a lower case t next to it.
+
+I'm going to change back to linking against this copy.
+</para>
+<para>
+When I add the -Wl,-z,defs flag to the linking command, the linking fails, complaining about undefined references.
+</para>
+<para>
+Recall that nsVariant.h is the reason we can't use either of the specified XPCOM GLUE linking strategies (the one we want is dependent glue, not standalone) because it includes nsStringFwd.h which is the NON-frozen string API intended for internal Mozilla use only. This is why I couldn't get it to link without linking against libxul, because they don't export non-frozen symbols from libxul to libxpcom or libxpcomglue anymore since version 1.9
+</para>
+<para>
+According to wikipedia (http://en.wikipedia.org/wiki/Tagged_union) A variant, otherwise known as a tagged union, is a datatype which can take multiple types of values, and has a "tag" which indicates what type of value is currently stored in the type. This sounds very familiar!!!! (SEXP, though SEXPs have a lot of other things going on as well)
+</para>
+<para>
+I understand somewhat from a convenience standpoint but it doesn't seem like we get huge gains in functionality by using nsVariant, and since its internal, we are probably going to want to use something else
+</para>

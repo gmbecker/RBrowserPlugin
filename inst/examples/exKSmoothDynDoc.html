@@ -1,0 +1,98 @@
+<html>
+  <head>
+<!--
+    <script type="text/javascript" src="http://github.com/DmitryBaranovskiy/raphael/raw/master/raphael.js"> </script>
+-->    
+<script type="text/javascript" src="../javascript/raphael.js"> </script>
+
+<script type="text/javascript" src="../javascript/Rhelpers.js"> </script>
+<script type="text/javascript" src="../javascript/Rscripthandler.js"> </script>
+<script type="text/R" src="exKSmoothDynDoc.R"> </script>
+<!-- Combo-handled YUI CSS files: --> 
+<script type="text/javascript" src="./sliderFiles/yahoo-dom-event.js"></script>
+
+<script type="text/javascript" src="./sliderFiles/dragdrop-min.js"></script>
+<script type="text/javascript" src="./sliderFiles/slider-min.js"></script>
+<!--
+<link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/2.9.0/build/fonts/fonts-min.css" />
+<link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/2.9.0/build/slider/assets/skins/sam/slider.css" />
+-->
+<style media="screen" type="text/css">
+#slider-bg {
+    background:url(http://yui.yahooapis.com/2.9.0/build/slider/assets/bg-fader.gif) 5px 0 no-repeat;
+}
+#slider-thumb {
+    left: 0;
+}
+</style>
+
+<script type="text/javascript">
+
+myElement = document.getElementById("dispval");
+var slider = YAHOO.widget.Slider.getHorizSlider("slider-bg", "slider-thumb", 0, 500);
+slider.subscribe('change', function (newOffset) {
+    YAHOO.log("Thumb is now " + newOffset + " pixels from its starting position");
+ 
+    myElement.innerHTML = newOffset;
+});
+ 
+slider.subscribe("slideStart", function() {
+    YAHOO.log("Slider is a go!");
+ 
+    YAHOO.util.Dom.setStyle(myElement,'background-color','#9f9');
+});
+ 
+slider.subscribe("slideEnd", function() {
+   
+    
+    // Move the thumb to an increment of 10 pixels
+    // (see using ticks for a better option)
+    var val = slider.getValue(),
+        roundedVal = val - (val % 3);
+ 
+    // Note: DO NOT attempt slider.setValue(x) here.
+    // You CAN call setValue in a setTimeout from here, though.
+    if (val !== roundedVal) {
+setTimeout(function () { slider.setValue(roundedVal); },0);
+
+netscape.security.PrivilegeManager.enablePrivilege("UniversalXPConnect");
+var out;
+Rev.call1("doMainPlot", roundedVal, out);
+    }
+});
+
+</script>
+
+<link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/combo?2.9.0/build/slider/assets/skins/sam/slider.css"> 
+ </head>
+  <body>
+    
+    <div id="test1"> </div>
+    <div id="test2"> </div>
+    <div id="test3"> </div>
+    <div id="test4"> </div>
+X Variable :
+<div id="container">
+  <input type="radio" name="dset" value="1" onclick="jsREventHandler('changeData', this.value);" />
+  <label for="1">Displacement </label>
+<input type="radio" name="dset" value="2" onclick="jsREventHandler('changeData', this.value);" />
+  <label for="2">Horse Power </label>
+<input type="radio" name="dset" value="3" onclick="jsREventHandler('changeData', this.value);" />
+  <label for="2">Gear Ratio </label>
+<input type="radio" name="dset" value="4" onclick="jsREventHandler('changeData', this.value);" />
+  <label for="2">1/4 Mi (sec) </label>
+
+</div
+
+<div id="residplot" width="200" height="300" style="float:left"  /> 
+<div id="mainplot" width="200" height="300" style="float:left" />
+<div id="slider-bg" class="yui-h-slider" tabindex="-1" title="Slider" style="background:url(http://yui.yahooapis.com/2.9.0/build/slider/assets/bg-fader.gif) 5px 0 no-repeat;"> 
+  <div id="slider-thumb" class="yui-slider-thumb"><img src="http://yui.yahooapis.com/2.9.0/build/slider/assets/thumb-n.gif"></div> 
+</div>
+ <div id="dispval"> </div>
+
+
+
+
+  </body>
+</html>

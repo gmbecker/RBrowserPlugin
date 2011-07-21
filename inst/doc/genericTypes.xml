@@ -1,0 +1,42 @@
+<article>
+
+<para>
+To be able to pass arbitrary JavaScript values/objects
+to R, we need to be able to define, e.g., a call method
+in C++ that takes an array of generic objects.
+Then we need to be able to dynamically query the types of
+those objects within C++ code and convert them to the
+appropriate R values.  This is the marshalling.
+We cannot declare the C++ routines/methods to have
+specific types, but must wait until run-time.
+This is not the usual XPCOM/XPConnect approach.
+</para>
+<para>
+Is the nsScriptable going to help us?
+</para>
+
+<para>
+We can use the nsIVariant type in our declarations.
+</para>
+
+<para>
+Is XPTCall the right way to marshall these.
+</para>
+<para>
+We can of course use TypeInformation in R to export particular
+functions with specific signatures.
+</para>
+
+<para>
+How can we have a JavaScript call that takes arbitrary number of
+arguments and passes them to C++ as an array of these objects.
+The arguments[] array (page 91 JavaScript: The Definitive Guide does this for us.)
+<js:code>
+function callR() {
+    callR.arguments
+}
+</js:code>
+and callR.arguments is the array of these arguments.
+
+</para>
+</article>

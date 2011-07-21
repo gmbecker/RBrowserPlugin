@@ -1,0 +1,62 @@
+<html>
+  <head>
+<!--
+    <script type="text/javascript" src="http://github.com/DmitryBaranovskiy/raphael/raw/master/raphael.js"> </script>
+-->    
+<script type="text/javascript" src="../javascript/raphael.js"> </script>
+
+<script type="text/javascript" src="../javascript/Rhelpers.js"> </script>
+<script type="text/javascript" src="../javascript/Rscripthandler.js"> </script>
+
+    <script type="text/R">
+      library(RFirefox)
+      library(SpiderMonkey)
+      thing = raphaelDev("raphcanvas")
+      print(class(thing))
+      x = 1:50
+      y = rnorm(50, sin(x))
+      #plot(x,y)
+      plot(1:5)
+            
+      pts = thing$getPoints()
+      
+      sapply(1:length(pts),
+        function(x, pts, glob)
+        {
+
+          glob = JS_GetGlobalObject(ScriptCon, returnInputs = FALSE)
+          JS_AddRoot(ScriptCon, glob) 
+          
+          node = get_JS_Property(ScriptCon, pts[[x]], "node" )
+          #already addrooted.
+          print(node)
+                  
+          args = list("colorIt", node, "mouseover", x) 
+          call_JS_Method(ScriptCon, glob, "addREventHandler", args)
+          args[[1]] = "unColorIt"
+          args[[3]] = "mouseout"
+          call_JS_Method(ScriptCon, glob, "addREventHandler", args)
+          JS_RemoveRoot(ScriptCon, node)
+          JS_RemoveRoot(ScriptCon, glob)
+         }, pts = pts, glob = glob )
+ 
+      colorIt = function(i)
+      {
+        call_JS_Method(ScriptCon, pts[[i]], "attr", c("fill", "#3b4444"))
+      }
+
+      unColorIt = function(i)
+      {
+        call_JS_Method(ScriptCon, pts[[i]], "attr", c("fill", "#ffffff"))
+      }
+    </script>
+  </head>
+  <body>
+    <div id="test1"> </div>
+    <div id="test2"> </div>
+    <div id="test3"> </div>
+    <div id="test4"> </div>
+    <div id="raphcanvas" height="600" width="400" />
+    <button type="buton" id="colbutton" onClick="REventHandler('colorThem');"> Color Points </button>
+  </body>
+</html>

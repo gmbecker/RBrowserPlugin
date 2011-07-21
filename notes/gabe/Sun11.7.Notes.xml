@@ -1,0 +1,10 @@
+<para>
+Created a developer profile for my firefox installation called "dev"
+Set many of the configuration options suggested here:
+https://developer.mozilla.org/en/setting_up_extension_development_environment
+</para>
+<para>
+set Revaluator.so to be created by linking against the version of libxul.so actaully installed with my xulrunner version (1.9.2.12) instead of the one I built from the (now slightly out of date) code in the hopes that that would allow it to load.
+
+It still didn't for whatever reason. I think the problem may be that its not actually registered as an XPCOM component. Or rather, I know it is not registered, and need to figure out why.
+</para>
