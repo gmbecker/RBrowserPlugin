@@ -1,0 +1,19 @@
+These are installation instructions for the RFirefox package and extension.
+
+For any questions please see the AFAQ (anticipated frequently asked questions)
+
+Steps:
+
+1. Install Firefox 3.6.x. It doesn't have to be your main installation so long as you can get at it.
+2. Obtain the Mozilla Xulrunner 1.9.2 SDK (Also known as the Gecko SDK). Check https://developer.mozilla.org/en/Gecko_SDK , If Mozilla does not provide a prebuilt version of the SDK for your platform, you will need to build it yourself (my condolences).
+3. Edit configuration and make files. Currently there is no "smart" configuration so you will need to point the variables to the correct directories (this will eventually change). The following should be a complete list of files you will need to change and what in them to change (though the latter is likely to be obvious):
+   a) configure.in - XUL_SDK
+   b) /inst/components/GNUmakefile - GECKO_SDK, DLIBEXT (the extension for dynamic shared libraries for your OS)
+   c) /inst/runfirefox.sh - FF (location of your Firefox 3.6.x) FFOPTS (command line options to use when running firefox. It is strongly encouraged that you create a separate profile for R powered web page developement and use --no-remote -P <your new profile name>, -g runs firefox in a debugger if one is available, and is strictly optional)
+4. Install the package:  Set your LD_LIBRARY_PATH (or OS-appropriate equivalent indicator of where to search for shared libraries) to include <path to xulrunner sdk>/lib. Then simply run R CMD INSTALL RFirefox.
+5. Build the Extension: navigate to RFirefox/inst/components and type make.
+6. Install the Extension: Start up Firefox 3.6.x using RFirefox/inst/runfirefox.sh. At this point you have two options.
+   a) Create a zip file containing the contents (including relative paths) of /RFirefox/inst/extension and rename it to <anyfiilename>.xpi. Then open the file with firefox and install the extension.
+   b) Install a Firefox extension, such as the Add-on Developer Helper, which gives you the ability to install unpacked extension. Then do so using the /RFirefox/inst/extension directory.
+7. Open the webpage of your choice in RFirefox/inst/tests or RFirefox/inst/examples to test that everything worked.
+8. Enjoy

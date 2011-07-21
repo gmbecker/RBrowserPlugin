@@ -6,6 +6,7 @@ AC_ARG_WITH(xul-sdk, [   --with-xul-sdk      directory in which the xulrunner-sd
 AC_SUBST(XUL_SDK)
 AC_SUBST(MOZVER)
 
+XUL_SDK="$HOME/gabe/checkedout/FirefoxSource192/obj-xulrunner/dist/xulrunner-sdk"
 
 if test -z "${MOZVER}" ; then 
   echo "No Mozilla version specified, assuming 1.9.2"
@@ -15,8 +16,6 @@ fi
 if test $MOZVER -eq 191; then
      AC_MSG_ERROR("Builds based on Mozilla 1.9.1 are no longer supported.")
 fi
-
-XUL_SDK="$HOME/gabe/checkedout/FirefoxSource192/obj-xulrunner/dist/xulrunner-sdk"
 
 if ! test -d "$XUL_SDK" ; then
   echo "Can't compile this package. We need the xulrunner SDK."

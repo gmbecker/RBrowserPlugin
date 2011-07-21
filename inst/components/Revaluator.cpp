@@ -25,7 +25,6 @@
 //#include "nsIServiceManager.h"
 #include "nsServiceManagerUtils.h"
 
-#include "JSevaluator.h"
 
 NS_IMPL_ISUPPORTS1(REvaluatorImpl, REvaluator)
 
@@ -34,10 +33,8 @@ JSContext *GetContextForR();
 JSBool FunCallTest(nsIPrincipal *principal, JSContext *con);
 SEXP jscriptTest2();
 nsresult TestnsScriptContext(nsIScriptContext *context, nsIPrincipal *principal);
-nsresult TestJSEvaluatorEval(JSevaluator *jseval);
 JSBool TestJSContextEval(JSContext *jscon, nsIPrincipal *principal, const char *code);
 JSBool TestJSContextFunCall(nsIPrincipal *principal, JSContext *jscon);
-nsresult TestJSEvaluatorFunCall(JSevaluator *jseval);
 nsresult doContextPush(nsIPrincipal *principal, JSContext *jscon);
 nsresult doContextPop(nsIPrincipal *principal, JSContext *jscon);
 nsIScriptGlobalObject *grabnsIScriptGlobalObject();
@@ -516,21 +513,6 @@ GetContextForR()
   success = FunCallTest(principal, jscon);
 #endif
 
-  //success = doContextPop(principal, jscon);
-
-  nsCOMPtr<JSevaluator> jseval = do_CreateInstance("@www.omegahat.org/jsevaluator;1", &rv);
-if(NS_FAILED(rv))
-    {
-       fprintf(stderr, "GetServiceByContractID failed for JSEvaluator: %u", rv); fflush(stderr);
-    }
-#ifdef TEST_JSEVALUATOR_EVAL
-  rv = TestJSEvaluatorEval(jseval);
-#endif
-
-#ifdef TEST_JSEVALUATOR_FUNCALL
-  rv = TestJSEvaluatorFunCall(jseval);
-#endif
-
   NS_IF_RELEASE(principal);
   NS_IF_RELEASE(globj);
   //Create R object and place it in global environment.
@@ -740,60 +722,6 @@ JSBool FunCallTest(nsIPrincipal *principal, JSContext *con)
  fprintf(stderr, "GC call %d successful\n", i); fflush(stderr);
  
  return success;
-}
-
-
-//need to surround nsCOMPtrs in in/out paramaters with getter_AddRefs a la https://developer.mozilla.org/en/Using_nsCOMPtr/Reference_Manual#.22In.2fOut.22_Parameters??
-//Its not clear the javascript functions are actually being called, or that we are in the right context. We may be able to 
-//get around this by using xpcom components (eg windowmediator) to grab the most recent window and go from there.
-nsresult TestJSEvaluatorEval(JSevaluator *jseval)
-{
-  //const char *code = "var div; div=document.getElementById('test1');div.innerHTML = 'JSevaluator.Eval working properly from C code.');";
-  const char *code = "alert('hi there');";
-  nsresult rv;
-  nsCOMPtr<nsIVariant> ret;
-  ret = do_CreateInstance("@mozilla.org/variant;1", &rv);
-  rv = jseval -> Eval(code, getter_AddRefs(ret));
-  if (NS_FAILED(rv))
-    {
-      fprintf(stderr, "jseval->Eval failed:%u", rv);fflush(stderr);
-    }
-  //Rf_PrintValue(variantToR(ret));
-  return rv;
-}
-
-nsresult TestJSEvaluatorFunCall(JSevaluator *jseval)
-{
-  nsresult rv;
-  nsCOMPtr<nsIVariant> ret;
-  nsCOMPtr<nsIVariant> div;
-  nsCOMPtr<nsIWritableVariant> tmp;
-  div = do_CreateInstance("@mozilla.org/variant;1", &rv);
-  ret = do_CreateInstance("@mozilla.org/variant;1", &rv);
-  tmp = do_CreateInstance("@mozilla.org/variant;1", &rv);
-  nsCOMPtr<nsIVariant> tmpvar;
-  tmp -> SetAsString("test2");
-  const char *code = "document.getElementById";
-  rv = tmp -> QueryInterface(NS_GET_IID(nsIVariant), getter_AddRefs(tmpvar));
-  rv = jseval -> CallFun(code, getter_AddRefs(tmpvar) , (PRUint32) 1, getter_AddRefs(div));
-
-  
-  if (NS_FAILED(rv))
-    {
-      fprintf(stderr, "jseval->CallFun failed."); fflush(stderr);
-    }
-  tmp -> SetAsString("Direct Function Calling and Property Setting are working for JSevaluator from C code.");
-  rv = tmp -> QueryInterface(NS_GET_IID(nsIVariant), getter_AddRefs(tmpvar));
-  rv = jseval -> SetPropertyWithValue(div, "innerHTML", 
-				      tmpvar,
-				      getter_AddRefs(ret));
-
-  if (NS_FAILED(rv))
-    {
-      fprintf(stderr, "jseval->setPropertyWithValue failed."); fflush(stderr);
-    }
-
-  return rv;
 }
 
 nsresult doContextPush(nsIPrincipal *principal, JSContext *jscon)

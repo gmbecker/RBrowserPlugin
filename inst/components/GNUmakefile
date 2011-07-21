@@ -1,10 +1,11 @@
 ifndef GECKO_SDK
     GECKO_SDK=$(HOME)/gabe/checkedout/xulrunner-sdk
 endif
+DLIBEXT=so
 
-ifndef EXTEN_DIR
-  EXTEN_DIR=/home/gmbecker/gabe/checkedout/RFirefox@Omegahat.com/components
-endif
+EXTEN_DIR=../extension/components
+
+ZIP=zip
 
 CXX=g++
 
@@ -43,7 +44,7 @@ GECKO_LDFLAGS =  -L$(GECKO_SDK)/lib -L$(GECKO_SDK)/bin -Wl,-rpath-link,$(GECKO_S
 R_INCLUDES=-I$(R_HOME)/include
 RFF_INCLUDES=-I../../src/
 #NON-Portable!!!! came from .../<MozillaSourceBuild>/js/src/js-config --libs
-#JS_LDFLAGS=-L/home/gmbecker/gabe/checkedout/Firefox192/obj-xulrunner-dbg/dist/lib -lmozjs -L/home/gmbecker/gabe/checkedout/Firefox192/obj-xulrunner-dbg/dist/lib -lplds4 -lplc4 -lnspr4 -lpthread -ldl -ldl -lm  -lm -ldl 
+#JS_LDFLAGS=-L/home/gmbecker/gabe/checkedout/Firefox192/objxulrunner-dbg/dist/lib -lmozjs -L/home/gmbecker/gabe/checkedout/Firefox192/obj-xulrunner-dbg/dist/lib -lplds4 -lplc4 -lnspr4 -lpthread -ldl -ldl -lm  -lm -ldl 
 JS_LDFLAGS=-L$(GECKO_SDK)/lib -lmozjs -lplds4 -lplc4 -lnspr4 \
 	-lpthread -ldl -ldl -lm -lm -ldl
 
@@ -61,11 +62,7 @@ NEW_LD_LIBS= -lxpcom -lplc4 -lnspr4 -lxul
 
 OBJ_FILES=Revaluator.o RevaluatorModule.o RVariants.o
 
-ifdef DUNCAN
-  DLIBEXT=dylib
-else
-  DLIBEXT=so
-endif
+
 
 default: extension
 Revaluator.h: Revaluator.idl
@@ -93,8 +90,6 @@ testjsapifun : extension
 Revaluator.$(DLIBEXT): $(OBJ_FILES) 
 	$(CXX) -Wall -Os $^  -Bstatic $(R_LD_FLAGS) -Bdynamic -L$(GECKO_SDK)/lib -L$(GECKO_SDK)/bin -Wl,-rpath-link,$(GECKO_SDK)/bin  $(LD_FLAGS) $(NEW_LINKFLAGS) $(JS_LDFLAGS) -lxpcomglue_s -lxpcom -lnspr4 -ldl -o $@
 
-JSevaluator.xpt: JSevaluator.idl
-	$(XPIDL) -m typelib -w -v -I$(GECKO_SDK)/idl -e $@ $^
 
 # How to build the type table information from the idl.
 %.xpt: %.idl
@@ -103,5 +98,6 @@ JSevaluator.xpt: JSevaluator.idl
 extension: Revaluator.$(DLIBEXT) Revaluator.xpt
 	cp Revaluator.$(DLIBEXT) $(EXTEN_DIR)
 	cp Revaluator.xpt $(EXTEN_DIR)
-	cp JSevaluator.xpt $(EXTEN_DIR)
-	cp JSevaluator.js $(EXTEN_DIR)
+	cd $(EXTEN_DIR)
+	zip RFirefox.xpi *
+	mv RFirefox.xpi ../RFirefox.xpi 

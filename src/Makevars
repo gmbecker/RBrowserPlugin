@@ -1,5 +1,5 @@
 XUL_SDK=/home/gmbecker/gabe/checkedout/FirefoxSource192/obj-xulrunner/dist/xulrunner-sdk
-MOZ_DIST=#/home/gmbecker/gabe/checkedout/FirefoxSource192/objdir-ff-release/dist
+
 
 ifndef MOZVER
  MOZVER=192
