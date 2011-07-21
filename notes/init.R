@@ -1,3 +1,0 @@
-dyn.load("RFirefox.so")
-
-
