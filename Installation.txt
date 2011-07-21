@@ -17,3 +17,4 @@ Steps:
    b) Install a Firefox extension, such as the Add-on Developer Helper, which gives you the ability to install unpacked extension. Then do so using the /RFirefox/inst/extension directory.
 7. Open the webpage of your choice in RFirefox/inst/tests or RFirefox/inst/examples to test that everything worked.
 8. Enjoy
+8.5 Do not open more than one tab with R enabled webpages at the same time. This will cause firefox to crash. It is a known issue and we are working on it.
