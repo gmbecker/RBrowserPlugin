@@ -11,7 +11,7 @@ Description: This package provides bindings to
   within R functions that are called from JavaScript.
 Author: Duncan Temple Lang, Gabriel Becker
 Depends: methods, RAutoGenRunTime, RGtk2, RGraphicsDevice
-Sugests: SpiderMonkey
+Suggests: SpiderMonkey
 Maintainer: Gabriel Becker <gmbecker@ucdavis.edu>
 License: GPL
   
