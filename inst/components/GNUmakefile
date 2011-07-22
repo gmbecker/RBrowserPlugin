@@ -98,6 +98,3 @@ Revaluator.$(DLIBEXT): $(OBJ_FILES)
 extension: Revaluator.$(DLIBEXT) Revaluator.xpt
 	cp Revaluator.$(DLIBEXT) $(EXTEN_DIR)
 	cp Revaluator.xpt $(EXTEN_DIR)
-	cd $(EXTEN_DIR)
-	zip RFirefox.xpi *
-	mv RFirefox.xpi ../RFirefox.xpi 
