@@ -1,0 +1,61 @@
+RFirefox (Anticipated) Frequently Asked Questions
+Gabriel Becker
+
+
+1. Installation
+
+   1a. I had to perform a step not in the installation instructions to install the package/extension.
+       
+       Please send the maintainer an email and let us know so we can update the instructions.
+
+   1b. I use Windows.
+
+       While we are working towards supporting windows, currently we do not have a set of windows based installation instructions. If you do manage to install the package and extension on Windows, please let us know.
+
+2. Crashing
+
+   2a. Firefox crashes to desktop/debugging program when I open websites which use the extension in more than one tab, even though both websites work fine separately.
+
+       This is a known issue which will be fixed in future releases. For now the only solution is to only open one R enabled website at a time.
+
+   2b. Firefox crashes as soon as I try to load a webpage which uses the extension.
+
+       It is possible that the R_HOME environmental variable is not being set properly (this is required to start the embedded R instance). For now, be sure you are using a properly edited copy of the runfirefox.sh script provided in the package to start firefox with the appropriate environtmental variables set (see installation instructions).
+
+   2c. Some R code (eg the tests/examples provided) works but other R enabled pages cause firefox to crash.
+       
+       Any uncaught (eg not inside a try or tryCatch call) R error will cause firefox to crash. This is not an issue with RFirefox, but rather with the embedding mechanism for the R engine, and as such is somewhat out of our control. In the future we may figure out a way around this, but for now it is advised that you wrap all R code being called from javascript/evaluated in javascript in tryCatch blocks.
+
+   2d. I have wrapped all my code in tryCatch blocks and it still crashes.
+
+       It is likely you are running into a memory management issue with the javascript engine. We are trying to automate memory management as much as possible, so this should not happen unless you have chosen have altered the default behavior. 
+
+       The primary issue here is "Rooting" which is the way we tell the javascript engine whether or not we are done with a particular internal javascript object/value. Most rooting using the primary functions in RFirefox should be done automatically with no input from the user. Consider the correct and incorrect code examples below.
+
+       CORRECT
+	   x = getElementById(ScriptCon, "mydiv") #x is Rooted automatically by default
+	   set_JS_Property(ScriptCon, x, "innerHTML", "Hi there")
+ 
+       PROBABLY OK (BUT ODD)
+       	   x = getElementById(ScriptCon, "mydiv", addRoot = FALSE)
+	   JS_AddRoot(ScriptCon, x)
+	   set_JS_Property(ScriptCon, x, "innerHTML", "Hi there")
+
+       INCORRECT
+	   x = getElementById(ScriptCon, "mydiv", addRoot = FALSE)
+	   set_JS_Property(ScriptCon, x, "innerHTML", "Hi there")
+
+       INCORRECT
+       	   x = getElementById(ScriptCon, "mydiv", addRoot = FALSE)
+	   set_JS_Property(ScriptCon, x, "innerHTML", "Hi there")       	     
+	   JS_AddRoot(ScriptCon, x)	   
+
+       INCORRECT
+       	   x = getElementById(ScriptCon, "mydiv")
+	   JS_AddRoot(ScriptCon, x) #double rooting is bad!
+	   set_JS_Property(ScriptCon, x, "innerHTML", "Hi there")       	     	   
+   
+       Currently whenever an element is rooted, a finalizer is created to unroot it when the R object is removed (garbage collected), thus users should not need to worry about removing a root once it is created.
+
+
+
