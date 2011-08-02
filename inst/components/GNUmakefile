@@ -1,3 +1,4 @@
+
 ifndef GECKO_SDK
     GECKO_SDK=$(HOME)/gabe/checkedout/xulrunner-sdk
 endif
@@ -98,6 +99,4 @@ Revaluator.$(DLIBEXT): $(OBJ_FILES)
 extension: Revaluator.$(DLIBEXT) Revaluator.xpt
 	cp Revaluator.$(DLIBEXT) $(EXTEN_DIR)
 	cp Revaluator.xpt $(EXTEN_DIR)
-	cd $(EXTEN_DIR)
-	zip RFirefox.xpi *
-	mv RFirefox.xpi ../RFirefox.xpi 
+	cd ../extension ; zip RFirefox.xpi * -r ; mv RFirefox.xpi ../
