@@ -97,6 +97,6 @@ Revaluator.$(DLIBEXT): $(OBJ_FILES)
 	$(XPIDL) -m typelib -I$(GECKO_SDK)/idl $<
 
 extension: Revaluator.$(DLIBEXT) Revaluator.xpt
-	cp Revaluator.$(DLIBEXT) $(EXTEN_DIR)
-	cp Revaluator.xpt $(EXTEN_DIR)
+	cp Revaluator.$(DLIBEXT) $(EXTEN_DIR)/
+	cp Revaluator.xpt $(EXTEN_DIR)/
 	cd ../extension ; zip RFirefox.xpi * -r ; mv RFirefox.xpi ../
