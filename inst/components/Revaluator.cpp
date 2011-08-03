@@ -122,7 +122,9 @@ void *h = dlopen("/home/gmbecker/Downloads/R-2.12.0/lib/libR.so", RTLD_NOW);
   //Loading RFirefox (which loads SpiderMonkey. We need these for
   //parseEval and JSContextRef class.
   nsIVariant *retval;
+  fprintf(stderr, "before library call in init");fflush(stderr);
   this -> Library("RFirefox", &retval);
+  fprintf(stderr, "after library call in init"); fflush(stderr);
   PRBool loaded;
   nsresult rv;
   rv = retval -> GetAsBool(&loaded);
