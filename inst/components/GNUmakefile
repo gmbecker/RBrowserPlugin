@@ -1,3 +1,4 @@
+
 ifndef GECKO_SDK
     GECKO_SDK=$(HOME)/gabe/checkedout/xulrunner-sdk
 endif
