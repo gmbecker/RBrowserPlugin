@@ -20,11 +20,11 @@
 #endif
 
 /* starting interface:    REvaluator */
-#define REVALUATOR_IID_STR "381cb19e-6bd4-489e-81ac-e88e2e1f3c7e"
+#define REVALUATOR_IID_STR "b69468e2-3894-4679-870b-42cec870001e"
 
 #define REVALUATOR_IID \
-  {0x381cb19e, 0x6bd4, 0x489e, \
-    { 0x81, 0xac, 0xe8, 0x8e, 0x2e, 0x1f, 0x3c, 0x7e }}
+  {0xb69468e2, 0x3894, 0x4679, \
+    { 0x87, 0x0b, 0x42, 0xce, 0xc8, 0x70, 0x00, 0x1e }}
 
 class NS_NO_VTABLE NS_SCRIPTABLE REvaluator : public nsISupports {
  public: 

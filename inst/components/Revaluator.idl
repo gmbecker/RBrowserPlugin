@@ -1,7 +1,8 @@
 #include "nsISupports.idl"
 #include "nsIVariant.idl"
 
-[scriptable, uuid(381CB19E-6BD4-489E-81AC-E88E2E1F3C7E)]
+//[scriptable, uuid(381CB19E-6BD4-489E-81AC-E88E2E1F3C7E)]
+[scriptable, uuid(b69468e2-3894-4679-870b-42cec870001e)]
 interface REvaluator : nsISupports {
 
   boolean init( [array, size_is(length) ] in string args, in unsigned long length);
