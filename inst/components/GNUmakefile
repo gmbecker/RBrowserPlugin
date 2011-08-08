@@ -1,6 +1,6 @@
 
 ifndef GECKO_SDK
-    GECKO_SDK=$(HOME)/gabe/checkedout/xulrunner-sdk
+    GECKO_SDK=$(HOME)/local/xulrunner2.0-sdk
 endif
 DLIBEXT=so
 
@@ -46,12 +46,13 @@ R_INCLUDES=-I$(R_HOME)/include
 RFF_INCLUDES=-I../../src/
 #NON-Portable!!!! came from .../<MozillaSourceBuild>/js/src/js-config --libs
 #JS_LDFLAGS=-L/home/gmbecker/gabe/checkedout/Firefox192/objxulrunner-dbg/dist/lib -lmozjs -L/home/gmbecker/gabe/checkedout/Firefox192/obj-xulrunner-dbg/dist/lib -lplds4 -lplc4 -lnspr4 -lpthread -ldl -ldl -lm  -lm -ldl 
-JS_LDFLAGS=-L$(GECKO_SDK)/lib -lmozjs -lplds4 -lplc4 -lnspr4 \
+#JS_LDFLAGS=-L$(GECKO_SDK)/lib -lmozjs -lplds4 -lplc4 -lnspr4 \
 	-lpthread -ldl -ldl -lm -lm -ldl
-
+JS_LDFLAGS=-L$(GECKO_SDK)/lib -lxul -lplds4 -lplc4 -lnspr4 \
+	-lpthread -ldl -ldl -lm -lm -ldl
 R_LD_FLAGS=-L$(R_HOME)/lib -lR
 
-LD_FLAGS=-shared
+LD_FLAGS=-shared -lmozalloc
 
 NEW_LDFLAGS= -L$(GECKO_SDK)/lib -lnspr4 -lplc4 -lxpcom -lxul
 
@@ -89,7 +90,7 @@ testjsapifun : extension
 	$(CXX)  -c -o $@ $(TEST_DEFINES) $(GECKO_CONFIG_INCLUDE) $(NEW_DEFINES) $(GECKO_INCLUDES) $(R_INCLUDES) $(RFF_INCLUDES) $(CPPFLAGS) $(CXXFLAGS) $<
 
 Revaluator.$(DLIBEXT): $(OBJ_FILES) 
-	$(CXX) -Wall -Os $^  -Bstatic $(R_LD_FLAGS) -Bdynamic -L$(GECKO_SDK)/lib -L$(GECKO_SDK)/bin -Wl,-rpath-link,$(GECKO_SDK)/bin  $(LD_FLAGS) $(NEW_LINKFLAGS) $(JS_LDFLAGS) -lxpcomglue_s -lxpcom -lnspr4 -ldl -o $@
+	$(CXX) -Wall -Os $^  -Bstatic $(R_LD_FLAGS) -Bdynamic -L$(GECKO_SDK)/lib -L$(GECKO_SDK)/bin -Wl,-rpath-link,$(GECKO_SDK)ma/bin  $(LD_FLAGS) $(NEW_LINKFLAGS) $(JS_LDFLAGS) -lxpcomglue_s -lxpcom -lnspr4 -ldl -o $@
 
 
 # How to build the type table information from the idl.

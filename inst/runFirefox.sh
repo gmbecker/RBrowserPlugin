@@ -1,4 +1,4 @@
-FF=/home/gmbecker/local/ff-valgrind/dist/bin/firefox
+FF=/home/gmbecker/local/firefox4.0-valgrind/bin/firefox
 FFOPTS="-g --no-remote -P dev"
 
 if test -z "$R_HOME"

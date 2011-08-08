@@ -18,7 +18,7 @@
 #include <Rinternals.h>
 
 #include "jsapi.h"
-#include "jsobj.h"
+//#include "jsobj.h"
 #include "nsIJSContextStack.h"
 #include "nsIScriptObjectPrincipal.h"
 #include "nsIXPConnect.h"
@@ -571,13 +571,15 @@ JSBool TestJSContextEval(JSContext *jscon, nsIPrincipal *principal, const char *
   //doContextPush(principal, jscon);
   //const char *script = "var x =5; x*x;";
   JSObject * glob = JS_GetGlobalObject(jscon);
-  JS_AddRoot(jscon, &glob);
+  //JS_AddRoot(jscon, &glob);
+  JS_AddObjectRoot(jscon, &glob);
   //const char *script = "var div = document.getElementById('test1'); div.innerHTML = 'hi there, that is weird.';";
   JSBool success;
   success = JS_EvaluateScript(jscon, glob,
 		    code, strlen(code), "thing",
 		    0, &retval);
-  JS_AddRoot(jscon, &retval);
+  //  JS_AddRoot(jscon, &retval);
+  JS_AddValueRoot(jscon, &retval);
   if(success != JS_TRUE)
     {
       fprintf(stderr,"jsapi failed to execute \n"); 
@@ -588,8 +590,10 @@ JSBool TestJSContextEval(JSContext *jscon, nsIPrincipal *principal, const char *
       fprintf(stderr, "jsapi executed and returned %d\n", JSVAL_TO_INT(retval));
       fflush(stderr);
     }
-  JS_RemoveRoot(jscon, &glob);
-  JS_RemoveRoot(jscon, &retval);
+  //JS_RemoveRoot(jscon, &glob);
+  //JS_RemoveRoot(jscon, &retval);
+  JS_RemoveObjectRoot(jscon, &glob);
+  JS_RemoveValueRoot(jscon, &retval);
   //doContextPop(principal, jscon);
   return(success);
 }
@@ -611,7 +615,8 @@ JSBool FunCallTest(nsIPrincipal *principal, JSContext *con)
   const char *code =  "document;";
   JSString *id, *text;
   JSClass *cl;
-  JS_AddRoot(con, rv);  
+  //JS_AddRoot(con, rv);  
+  JS_AddValueRoot(con, rv);  
   //2;
   fprintf(stderr, "GC call %d commencing\n", i); fflush(stderr);
   //JS_GC(con);
@@ -634,7 +639,8 @@ JSBool FunCallTest(nsIPrincipal *principal, JSContext *con)
   i++;  
   
   success = JS_ConvertValue(con, *rv,  JSTYPE_OBJECT, &tmp);
-  JS_AddRoot(con, &tmp);
+  //JS_AddRoot(con, &tmp);
+  JS_AddValueRoot(con, &tmp);
   if (!success)
     {
       fprintf(stderr, "Failed to convert jsval to JSObject"); fflush(stderr);
@@ -648,9 +654,11 @@ JSBool FunCallTest(nsIPrincipal *principal, JSContext *con)
   
   jsval *rv2;
   id = JS_NewStringCopyZ(con, "test3");
-  JS_AddRoot(con, &id);
+  //JS_AddRoot(con, &id);
+  JS_AddStringRoot(con, &id);
   jsval idval = STRING_TO_JSVAL(id);
-  JS_AddRoot(con, &idval);
+  //JS_AddRoot(con, &idval);
+  JS_AddValueRoot(con, &idval);
   fprintf(stderr, "tmp %u idvalptr %u rvptr %u\n", tmp, &idval, rv);fflush(stderr);
   				 
   success = JS_ValueToObject(con, tmp, &doc);
@@ -697,10 +705,12 @@ JSBool FunCallTest(nsIPrincipal *principal, JSContext *con)
     }   
   
  text = JS_NewStringCopyZ(con, "Direct Function Calls and Property Setting within C code Successful.");
- JS_AddRoot(con, &text);
+ //JS_AddRoot(con, &text);
+ JS_AddStringRoot(con, &text);
  jsval textval;
  textval = STRING_TO_JSVAL(text);
- JS_AddRoot(con, &textval);
+ //JS_AddRoot(con, &textval);
+ JS_AddValueRoot(con, &textval);
  const char *propname = "innerHTML";
  success = JS_SetProperty(con, div, propname, &textval);
 
@@ -708,14 +718,21 @@ JSBool FunCallTest(nsIPrincipal *principal, JSContext *con)
     {
       fprintf(stderr, "Failed to set object property\n"); fflush(stderr);
     }   
-   
+ /* 
   JS_RemoveRoot(con, &textval);
   JS_RemoveRoot(con, &idval); 
   JS_RemoveRoot(con, &tmp);
   JS_RemoveRoot(con, rv);
   JS_RemoveRoot(con, &text);
   JS_RemoveRoot(con, &id);
-   
+ */
+ JS_RemoveValueRoot(con, &textval);
+ JS_RemoveValueRoot(con, &idval);
+ JS_RemoveValueRoot(con, &tmp);
+ JS_RemoveValueRoot(con, rv);
+ JS_RemoveStringRoot(con, &text);
+ JS_RemoveStringRoot(con, &id);
+
   //8;
   fprintf(stderr, "GC call %d commencing\n", i); fflush(stderr);
   //JS_GC(con);
@@ -723,7 +740,7 @@ JSBool FunCallTest(nsIPrincipal *principal, JSContext *con)
  
  return success;
 }
-
+/*
 nsresult doContextPush(nsIPrincipal *principal, JSContext *jscon)
 {
   nsresult rv;
@@ -802,7 +819,7 @@ nsresult doContextPop(nsIPrincipal *principal, JSContext *jscon)
   JSPRINCIPALS_DROP( jscon , jsprinc );
 
 }
-
+*/
 JSBool TestJSContextFunCall(nsIPrincipal *principal, JSContext *jscon)
 {
   //doContextPush(principal, jscon);

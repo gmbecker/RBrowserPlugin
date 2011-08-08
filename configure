@@ -12,8 +12,6 @@ ac_help=
 ac_default_prefix=/usr/local
 # Any additions from configure.in:
 ac_help="$ac_help
-   --with-mozilla-sdk      directory in which the mozilla distribution that you have compiled or installed is located"
-ac_help="$ac_help
    --with-xul-sdk      directory in which the xulrunner-sdk distribution is located"
 
 # Initialize some variables set by options.
@@ -526,13 +524,6 @@ fi
 
 
 
-# Check whether --with-mozilla-sdk or --without-mozilla-sdk was given.
-if test "${with_mozilla_sdk+set}" = set; then
-  withval="$with_mozilla_sdk"
-  MOZ_DIST=${withval}
-fi
-
-
 # Check whether --with-xul-sdk or --without-xul-sdk was given.
 if test "${with_xul_sdk+set}" = set; then
   withval="$with_xul_sdk"
@@ -543,52 +534,21 @@ fi
 
 
 
+XUL_SDK="$HOME/local/xulrunner2.0-sdk"
 
-
-if test -z "${MOZVER}" ; then
+if test -z "${MOZVER}" ; then 
+  echo "No Mozilla version specified, assuming 1.9.2"
+  echo "To set the Mozilla version please edit the configure.in file and set the MOZVER variable or create an environment variable named MOZVER"
   MOZVER=192
 fi
-
-
-ME=`whoami`
-if test "$ME" = "duncan" ; then
-  if test -d "$HOME/Projects/Mozilla/mozilla-1.9.1/dist" ; then
-    MOZ_DIST="$HOME/Projects/Mozilla/mozilla-1.9.1/dist"
-    XUL_SDK="$HOME/Projects/Mozilla/xulrunner-sdk"
-  fi
+if test $MOZVER -eq 191; then
+     { echo "configure: error: "Builds based on Mozilla 1.9.1 are no longer supported."" 1>&2; exit 1; }
 fi
 
-if test "$ME" = "gmbecker" ; then
-  if test $MOZVER -eq 191 ; then
-    if test -d "$HOME/gabe/checkedout/FirefoxSource191/objdir-ff-release/dist" ; then
-      MOZ_DIST="$HOME/gabe/checkedout/FirefoxSource191/objdir-ff-release/dist"
-      XUL_SDK="$HOME/gabe/checkedout/Oldxulrunner-sdk"
-      echo "IT's GABE! 1.9.1"
-      cat >> confdefs.h <<\EOF
-#define MOZVER 191
-EOF
- 
-    fi
-  else 
-      MOZ_DIST=#"$HOME/gabe/checkedout/FirefoxSource192/objdir-ff-release/dist"
-      XUL_SDK="$HOME/gabe/checkedout/FirefoxSource192/obj-xulrunner/dist/xulrunner-sdk"
-      echo "IT's GABE! 1.9.2"
-      cat >> confdefs.h <<\EOF
-#define MOZVER 192
-EOF
-
-  fi
-fi
-
-
-
-
-if test -z "$MOZ_DIST" || test -z "$XUL_SDK" ; then
-  echo "Can't compile this package. We need the xulrunner SDK and the Mozilla SDK."
-  echo "If you think you have the proper setup, contact the maintainer and describe your configuration"
-  echo "and he will probably be able to help to amend the configuration to use your setup"
-  echo "If you don't have the relevant 3rd party software installed, read the README, INSTALL, FAQ.html files"
-  echo "for information about what you need to do "
+if ! test -d "$XUL_SDK" ; then
+  echo "Can't compile this package. We need the xulrunner SDK."
+  echo "For now, please edit the configure.in file and set the XUL_SDK variable to the location of the Xulrunner SDK on your system."
+  { echo "configure: error: "Eventually this will be detected automatically."" 1>&2; exit 1; } 
 fi
 
 trap '' 1 2 15
@@ -735,7 +695,6 @@ s%@includedir@%$includedir%g
 s%@oldincludedir@%$oldincludedir%g
 s%@infodir@%$infodir%g
 s%@mandir@%$mandir%g
-s%@MOZ_DIST@%$MOZ_DIST%g
 s%@XUL_SDK@%$XUL_SDK%g
 s%@MOZVER@%$MOZVER%g
 

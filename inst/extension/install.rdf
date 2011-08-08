@@ -9,11 +9,12 @@
     <em:contributor>Duncan Temple Lang</em:contributor>
     <em:description>Facilitates communication between firefox and the R statistical computing engine</em:description>
     <em:aboutURL>chrome://RFirefox/content/about.xul</em:aboutURL>
+    <em:unpack>true</em:unpack>
     <em:targetApplication>
       <Description>
         <em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id> <!-- Firefox -->
-        <em:minVersion>3.5</em:minVersion>
-        <em:maxVersion>3.6.*</em:maxVersion>
+        <em:minVersion>4.0</em:minVersion>
+        <em:maxVersion>4.*</em:maxVersion>
       </Description>
     </em:targetApplication>
     <em:targetApplication>

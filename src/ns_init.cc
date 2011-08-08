@@ -1,3 +1,5 @@
+#if 0
+
 #include "xpcom-config.h"
 #include "mozilla-config.h"
 #include "nsEmbedAPI.h"
@@ -389,3 +391,5 @@ SEXP gtkTest2(SEXP window)
   
   return ScalarLogical(TRUE);
 }
+
+#endif

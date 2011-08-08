@@ -22,7 +22,7 @@ R_STRING_TO_JSVAL(SEXP con, SEXP string, SEXP addRoot)
   
   
   if (LOGICAL(addRoot)[0])
-    JS_AddRoot(jscon, &val);
+    JS_AddValueRoot(jscon, &val);
   
   SEXP klass, ans, Rptr;
   PROTECT( klass = MAKE_CLASS( "jsvalRef" ) );
@@ -36,15 +36,6 @@ R_STRING_TO_JSVAL(SEXP con, SEXP string, SEXP addRoot)
   return ans;
 }
 
-SEXP
-jsvalptr_to_jsval(SEXP ptr)
-{
-  jsval *val = (jsval *) R_ExternalPtrAddr(ptr);
-  fprintf(stderr, "val: %d &val: %d *val %d\n", val, &val, *val); fflush(stderr);
-
-  SEXP Rval = ScalarInteger( *val );
-  return( Rval );
-}
 
 SEXP
 R_JS_ConvertValue(SEXP con, SEXP Rvalptr, SEXP type, SEXP _retv)
@@ -82,7 +73,7 @@ R_JS_ValueToObject(SEXP con, SEXP valptr, SEXP _retobj)
 ret = (JSObject *) R_ExternalPtrAddr( GET_SLOT( _retobj , Rf_install( "ref" ) ) );
 
   JSBool success = JS_ValueToObject(jscon, *val, &ret);
-  JS_AddRoot(jscon, &ret);
+  JS_AddValueRoot(jscon, &ret);
   JSClass *class = JS_GET_CLASS(jscon, ret);
   fprintf(stderr, "resulting object class: %s\n", class->name);fflush(stderr);
   if (!success)
@@ -131,17 +122,17 @@ R_JS_RemoveRoot(SEXP con, SEXP Rptr, SEXP type)
    if(INTEGER(type)[0] == 0)
      {
        jsval *val = (jsval *) thing;
-     JS_RemoveRoot(jscon, val);
+     JS_RemoveValueRoot(jscon, val);
      }
    else if (INTEGER(type)[0] == 1) 
      {
        JSObject *obj = (JSObject *) thing;
-       JS_RemoveRoot(jscon, &obj);
+       JS_RemoveObjectRoot(jscon, &obj);
      }
    else
      {
        JSString *str = (JSString *) thing;
-       JS_RemoveRoot(jscon, &str);
+       JS_RemoveStringRoot(jscon, &str);
      }
    return ScalarLogical(TRUE);
    
@@ -163,17 +154,17 @@ R_JS_AddRoot(SEXP con, SEXP Rptr, SEXP type)
   if(typ == 0)
      {
        jsval *val = (jsval *) thing;
-       JS_AddRoot(jscon, val);
+       JS_AddValueRoot(jscon, val);
      }
    else if (typ== 1) 
      {
        JSObject *obj = (JSObject *) thing;
-       JS_AddRoot(jscon, &obj);
+       JS_AddObjectRoot(jscon, &obj);
      }
    else
      {
        JSString *str = (JSString *) thing;
-       JS_AddRoot(jscon, &str);
+       JS_AddStringRoot(jscon, &str);
      }
 
    return ScalarLogical(TRUE);
@@ -189,17 +180,17 @@ R_Do_Finalizer(SEXP con, SEXP ptr, SEXP type)
   if(typ == 0)
     {
       jsval *val = (jsval *) thing;
-      JS_RemoveRoot(jscon, val);
+      JS_RemoveValueRoot(jscon, val);
     }
   else if (typ == 1)
     {
       JSObject *obj = (JSObject *) thing;
-      JS_RemoveRoot(jscon, &obj);
+      JS_RemoveObjectRoot(jscon, &obj);
     }
   else
     {
       JSString *str = (JSString *) thing;
-      JS_RemoveRoot(jscon, &str);
+      JS_RemoveStringRoot(jscon, &str);
     }
   return ScalarLogical(1);
 }

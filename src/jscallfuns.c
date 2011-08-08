@@ -9,25 +9,30 @@ R_SetPropertyCh(SEXP Rcon, SEXP Robjptr, SEXP Rname, SEXP Rcharval)
   JSBool success;
   JSContext *jscon =  (JSContext *) R_ExternalPtrAddr(GET_SLOT( Rcon , Rf_install( "ref" ) ) );
   jsval *valobj = (jsval *)  R_ExternalPtrAddr( GET_SLOT( Robjptr , Rf_install( "ref" ) ) );
-  //JS_AddRoot(jscon, valobj);  
   
   const char *name = CHAR(STRING_ELT(Rname, 0));
   JSObject *obj;// = JS_NewObject(jscon, NULL, NULL, NULL);
   success = JS_ValueToObject(jscon, *valobj, &obj);
-  success = JS_AddRoot(jscon, &obj);
+  //success = JS_AddRoot(jscon, &obj);
+  success = JS_AddObjectRoot(jscon, &obj);
   
   const char *charval = CHAR(STRING_ELT(Rcharval, 0));
   JSString *jstrval = JS_NewStringCopyZ(jscon, charval);
-  success = JS_AddRoot(jscon, &jstrval);
+  //success = JS_AddRoot(jscon, &jstrval);
+  success = JS_AddStringRoot(jscon, &jstrval);
   jsval jvalval = STRING_TO_JSVAL(jstrval);
-  JS_AddRoot(jscon, &jvalval);
+  //JS_AddRoot(jscon, &jvalval);
+  JS_AddValueRoot(jscon, &jvalval);
   
   success = JS_SetProperty(jscon, obj, name, &jvalval);
- 
+  /*
   JS_RemoveRoot(jscon, &jvalval);
   JS_RemoveRoot(jscon, &jstrval);
   JS_RemoveRoot(jscon, &obj);
-  //JS_RemoveRoot(jscon, valobj);
+  */  
+  JS_RemoveValueRoot(jscon, &jvalval);
+  JS_RemoveStringRoot(jscon, &jstrval);
+  JS_RemoveObjectRoot(jscon, &obj);
 
   return ScalarLogical(success);
 }
@@ -38,20 +43,20 @@ R_GetPropertyCh(SEXP Rcon, SEXP Robjptr, SEXP Rname, SEXP Rret)
   JSBool success;
   JSContext *jscon =  (JSContext *) R_ExternalPtrAddr(GET_SLOT( Rcon , Rf_install( "ref" ) ) );
   jsval *valobj = (jsval *)  R_ExternalPtrAddr( GET_SLOT( Robjptr , Rf_install( "ref" ) ) );
-  JS_AddRoot(jscon, valobj);
+  //JS_AddRoot(jscon, valobj);
+  JS_AddValueRoot(jscon, valobj);
   
   const char *name = CHAR(STRING_ELT(Rname, 0));
   JSObject *obj = JS_NewObject(jscon, NULL, NULL, NULL);
   success = JS_ValueToObject(jscon, *valobj, &obj);
-  success = JS_AddRoot(jscon, &obj);
+  //success = JS_AddRoot(jscon, &obj);
+  success = JS_AddObjectRoot(jscon, &obj);
   
   jsval *jstoret = (jsval *)  R_ExternalPtrAddr( GET_SLOT( Rret , Rf_install( "ref" ) ) );
   success = JS_GetProperty( jscon , obj , name , jstoret );
-  //already addrooted with finalizer on R side.
-  //JS_AddRoot( jscon , jstoret );
-  
-  JS_RemoveRoot(jscon, &obj);
-  JS_RemoveRoot(jscon, valobj);
+    
+  JS_RemoveObjectRoot(jscon, &obj);
+  JS_RemoveValueRoot(jscon, valobj);
   
   return ScalarLogical(success);
 }
@@ -64,14 +69,13 @@ R_Call_JS_Method(SEXP Rcon, SEXP Robjptr, SEXP Rname, SEXP Rargs, SEXP Rtypes, S
   JSContext *jscon =  (JSContext *) R_ExternalPtrAddr(GET_SLOT( Rcon , Rf_install( "ref" ) ) );
   int objAdded = 0;
   const char *name = CHAR(STRING_ELT(Rname, 0));
-  JSObject *obj; // = JS_NewObject(jscon, NULL, NULL, NULL);
-  //JS_AddRoot(jscon, &obj);
-  jsval *valobj;
+  JSObject *obj; 
+    jsval *valobj;
   if (LOGICAL(RobjIsVal)[0])
     {
       valobj = (jsval *) R_ExternalPtrAddr( GET_SLOT( Robjptr , Rf_install( "ref" ) ) );  
       success = JS_ValueToObject(jscon, *valobj, &obj);
-      success = JS_AddRoot(jscon, &obj);    
+      success = JS_AddObjectRoot(jscon, &obj);    
       objAdded = 1;
     } else 
     {
@@ -83,7 +87,7 @@ R_Call_JS_Method(SEXP Rcon, SEXP Robjptr, SEXP Rname, SEXP Rargs, SEXP Rtypes, S
 
   JSString *tmpstr;
   jsval tmpval;
-  JS_AddRoot(jscon, &tmpval);
+  JS_AddValueRoot(jscon, &tmpval);
   
   jsval *tmpval2;
   //JS_AddRoot(jscon, tmpval2);
@@ -101,7 +105,7 @@ R_Call_JS_Method(SEXP Rcon, SEXP Robjptr, SEXP Rname, SEXP Rargs, SEXP Rtypes, S
 	  
 	  if (!strrooted)
 	    {
-	      JS_AddRoot(jscon, &tmpstr);
+	      JS_AddStringRoot(jscon, &tmpstr);
 	      strrooted = 1;
 	    }
 	  
@@ -126,20 +130,20 @@ R_Call_JS_Method(SEXP Rcon, SEXP Robjptr, SEXP Rname, SEXP Rargs, SEXP Rtypes, S
 	  break;
 	}
 	  
-     JS_AddRoot(jscon, &(args[i]));
+     JS_AddValueRoot(jscon, &(args[i]));
     }
   jsval *retval = (jsval *) R_ExternalPtrAddr( GET_SLOT( Rout , Rf_install( "ref" ) ) );  
   success = JS_CallFunctionName(jscon, obj, name, n, args, retval);
   //addrooted in R code
   //JS_AddRoot(jscon, retval);
   if(objAdded)
-    JS_RemoveRoot(jscon, &obj);
+    JS_RemoveObjectRoot(jscon, &obj);
   if(strrooted)
-    JS_RemoveRoot(jscon, &tmpstr);
-  JS_RemoveRoot(jscon, &tmpval);
+    JS_RemoveStringRoot(jscon, &tmpstr);
+  JS_RemoveValueRoot(jscon, &tmpval);
   //JS_RemoveRoot(jscon, tmpval2);
 for(int j = 0; j < n; j++)
-    JS_RemoveRoot(jscon, &(args[j]));
+  JS_RemoveValueRoot(jscon, &(args[j]));
   
   return ScalarLogical(success);
 }
