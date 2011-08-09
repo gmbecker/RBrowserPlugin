@@ -1,6 +1,6 @@
 
 ifndef GECKO_SDK
-    GECKO_SDK=$(HOME)/local/xulrunner2.0-sdk
+    GECKO_SDK=$(HOME)/local/xulrunner5.0-sdk
 endif
 DLIBEXT=so
 
