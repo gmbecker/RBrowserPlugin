@@ -1,7 +1,4 @@
 library(RFirefox)
-#library(SpiderMonkey)
-print("file has been sourced")
-
 
 changeData = function(dset)
   {
@@ -10,8 +7,6 @@ changeData = function(dset)
     xrange <<- range(myxvar)
     cascadeChanges(1)
   }
-
-
 
 cascadeChanges = function(pos)
   {

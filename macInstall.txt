@@ -1,0 +1,31 @@
+These steps were performed in Snow Leopard 10.6.6 on x86_64 arch (hopefully replacing  x86_64 with i386 will work for 32 bit systems, but I cannot confirm).
+
+1. Obtain Xcode 3.2 
+2. Obtain gfortran copiler from R.research.att.com/tools
+3. Obtain and build R sources with the configuration option --enable-R-shlib (other than that follow instructions in  R Mac FAQ, this worked for both 2.12.2 and 2.13.1 as of writing)
+4. Obtain Gecko SDK 5.0 for your architecture (x86_64 in this case)
+6. Create environment variable(s)
+   a) export DYLD_LIBRARY_PATH=<path to xul sdk>/bin
+5. Build extension:
+   a)Edit GNUmakefile
+   	  i) set GECKO_SDK
+	  ii) Set DLIBEXT=dylib
+	  iii) Set R_HOME to the location of the R you built
+	  iv) change R_LD_FLAGS to -L$(R_HOME)/lib/x86_64
+	  v) remove the "-Wl,rpath-link,$(GECKO_SDK)/bin" portion of the Revaluator.$(DLIBEXT) rule
+	  vi) set NEW_LINKFLAGS to "" (nothing)
+	  vii) replace "-lxul" with "$(GECKO_SDK)/bin/XUL" in JS_LDFLAGS 
+   b) Edit chrome.manifest in RFirefox/inst/extension
+      i)change Revaluator.so to Revaluator.dylib in last line
+   c) rm *.*o ; make in inst/components ****On 32 bit systems Do not remove Revaluator.xpt. xpidl did not ship with this version of the sdk. The xpt file from the git repository should work fine and stay up to date.!!!
+7) Edit runfirefox.sh
+   a) set FF to the location of Firefox 5
+   b) remove -g from FFOPTS (for me, -g caused firefox to crash)
+   c) Set R_HOME to your build of R with --enable-R-shlib
+   d) Replace LD_LIBRARY_PATH with DYLD_LIBRARY_PATH and $(R_HOME)/lib with $(R_HOME)/lib/x86_64 in the line setting LD_LIBRARY_PATH
+8) Run Firefox using runfirefox.sh and install the extension by opening the Rfirefox.xpi file in 
+9) Prepare to install RFirefox R package
+   a) edit configure.in and set XUL_SDK
+   b) run autoconf
+10) Install RFirefox R package with --preclean option
+11) open inst/tests/raphaeltest.html in Firefox. If (after a few seconds) a familiar looking type of graph appears, you have successfully run your first R code within a web browser.

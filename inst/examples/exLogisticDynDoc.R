@@ -152,18 +152,11 @@ matrixToHTML = function(mat, parent = NULL)
 
 #data retrieved from the ucla ATS stats tutorial website
 library(RFirefox)
-library(SpiderMonkey)
 library(R2HTML)
 library(XML)
 adm = read.csv("/home/gmbecker/gabe/checkedout/GabeResearch/Packages/RFirefox/inst/examples/gradAdmisdat.csv")
 modelframe = adm
-#dev1 = raphaelDev("linregplot")
-#lindev = dev.cur()
-#dev2 = raphaelDev("logitplot")
-#logdev = dev.cur()
-#doc = jsVal()
-#JS_EvaluateScript(ScriptCon, JS_GetGlobalObject(ScriptCon, returnInputs = FALSE), "document;", 9, "getdoc", 1, doc)
-#JS_AddRoot(ScriptCon, doc)
+
 lindiv = getElementById(ScriptCon, "linregcontainer")
 lindivstyle = get_JS_Property(ScriptCon, lindiv, "style")
 

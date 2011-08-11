@@ -17,7 +17,7 @@
 </script>
 <script type="text/R">
   library(RFirefox)
-  library(SpiderMonkey)
+  
   glob = JS_GetGlobalObject(ScriptCon, returnInputs=FALSE)
   print(paste("glob class: ", class(glob), "\n"))
   JS_AddRoot(ScriptCon, glob)

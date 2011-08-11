@@ -4,12 +4,12 @@ For any questions please see the AFAQ (anticipated frequently asked questions)
 
 Steps:
 
-1. Install Firefox 3.6.x. It doesn't have to be your main installation so long as you can get at it.
-2. Obtain the Mozilla Xulrunner 1.9.2 SDK (Also known as the Gecko SDK). Check https://developer.mozilla.org/en/Gecko_SDK , If Mozilla does not provide a prebuilt version of the SDK for your platform, you will need to build it yourself (my condolences).
+1. Install the current version of Firefox (currently 5) . It doesn't have to be your main installation so long as you can get at it.
+2. Obtain the Mozilla Xulrunner SDK (Also known as the Gecko SDK) for that version (curently 5.0). Check https://developer.mozilla.org/en/Gecko_SDK.
 3. Edit configuration and make files. Currently there is no "smart" configuration so you will need to point the variables to the correct directories (this will eventually change). The following should be a complete list of files you will need to change and what in them to change (though the latter is likely to be obvious):
    a) configure.in - XUL_SDK
    b) /inst/components/GNUmakefile - GECKO_SDK, DLIBEXT (the extension for dynamic shared libraries for your OS)
-   c) /inst/runfirefox.sh - FF (location of your Firefox 3.6.x) FFOPTS (command line options to use when running firefox. It is strongly encouraged that you create a separate profile for R powered web page developement and use --no-remote -P <your new profile name>, -g runs firefox in a debugger if one is available, and is strictly optional)
+   c) /inst/runfirefox.sh - FF (location of your Firefox executable) FFOPTS (command line options to use when running firefox. It is strongly encouraged that you create a separate profile for R powered web page developement and use --no-remote -P <your new profile name>, -g runs firefox in a debugger if one is available, and is strictly optional)
 4. Install the package:  Set your LD_LIBRARY_PATH (or OS-appropriate equivalent indicator of where to search for shared libraries) to include <path to xulrunner sdk>/lib. Then simply run R CMD INSTALL RFirefox.
 5. Build the Extension: navigate to RFirefox/inst/components and type make.
 6. Install the Extension: Start up Firefox 3.6.x using RFirefox/inst/runfirefox.sh. At this point you have two options.
