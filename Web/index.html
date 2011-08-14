@@ -1,0 +1,98 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html> <head>
+<title>RFirefox</title>
+<link rel=stylesheet href="../OmegaTech.css" >
+</head>
+
+<body>
+<p align="right"><a href="RFirefox_0.1-5.tar.gz">RFirefox_0.1-5.tar.gz</a></p>
+<p align="right">11 Aug 2011</p>
+<h1>RFirefox</h1>
+
+<p>
+The RFirefox framework currently includes both an R package and a Firefox extension. With these two pieces of software, it allows the user to create web pages which contain and can excecute R code. Furthermore, it allows the R engine and the Javascript engine to be aware of and communicate with each other. This will allow statisticians to teach methods of analysis  and convey results in rich and interesting new ways.
+</p>
+
+<h2>Authors</h2>
+<p> The RFirefox project is a collaboration between Duncan Temple Lang and his graduate student, Gabriel (Gabe) Becker. Currently Gabe is the corresponding author/maintainer for the project.</p>
+
+<h2>Documentation</h2>
+<p> Currently, documentation for RFirefox is minimal. This will change over the coming weeks, but for now see the tests and example webpages linked to below (they can also be found in the package itself at RFirefox/inst/tests/*.html and RFirefox/inst/examples/*.hml, respectively). These should and give you a good idea of how to do some of the basic things RFirefox is designed to do.
+
+<h2>Slides</h2>
+<p>You can download slides from talks about RFirefox below. </p>
+<dl>
+  <dt>
+    <li>
+      <a href="files/talkslidesneworder.pdf">Gabe's WNAR 2011 Talk</a>
+      <dd>
+	A Short, high-level talk introducing the goals of RFirefox and the types of opportunities it brings with it.
+      </dd>
+    </li>
+  </dt>
+</dl>
+
+
+<h2>Examples</h2>
+<p> More comprehensive examples of what RFirefox can do are forthcoming. For now you can find those that ship with the package linked to below.</p>
+<dl>
+  <dt>
+    <li> <a href="examples/raphtest.html">Simple R plot using Raphael graphics devices (created with RGraphicsDevice)</a>
+      <dd>Plot containing randomly generated (using R) data plus a kernel smoother with default bandwidth.
+	</dd>
+    </li>
+  </dt>
+  <dt>
+    <li> <a href="examples/callJSMethod.html">Calling a Javascript Function from R</a>
+      <dd>Simple page which uses R code to call a defined javascript function 3 times in order to write to the loaded webpage</dd>
+    </li>
+  </dt>
+</dl>
+
+
+<h2>Installation</h2>
+<p>Installation instructions ship with RFirefox, but can also be found below.</p>
+<p>
+Installation Instructions for: <br />
+<a href="macInstall.txt">Mac OS X</a> <br />
+<a href="Installation.txt">Linux</a>  (tested/developed on Ubuntu 10.04)  <br />
+</p>
+
+<h2>Windows Support</h2>
+<p> Sorry Windows users, your OS must be at least <b>this tall</b> to ride the ride.</p>
+<p> More seriously, Windows support is forthcoming but not available at this time. If anyone successfully installs RFirefox on Windows, please let us know.
+</p>
+<h2>(Anticipated) Frequently Asked Questions</h2>
+<p>Before using RFirefox, please have a glance at the AFAQ <a href="AFAQ">here</a>. </p>
+<p> If you experience a crash NOT caused by one of the known issues listed in the AFAQ, please let us know in as much detail as you can.</p>
+
+<h2>Latest Version</h2>
+<p> We plan to keep this page and the Omegahat repository as up to date as possible, but the very latest version (as well as versions for previous versions of Firefox, etc) are available at <a href="http://www.github.com/gmbecker/RFirefox">github</a>
+</p>
+
+<h2>Related Packages</h2>
+<p>A number of Duncan's solo-authored packages may be relevent to users of RFirefox:</p>
+<dl>
+  <dt>
+    <li><a href="www.omegahat.org/RGraphicsDevice">RGraphicsDevice</a>
+    <dd>Create prototypes of new Graphics Devices for R using only R code. The Raphael graphics device which ships with RFirefox was written using this package</dd>
+    </li>
+  </dt>
+  <dt>
+    <li><a href="www.omegahat.org/SpiderMonkey">SpiderMonkey</a>
+      <dd> The SpiderMonkey package gives (for the most part) a 1-to-1 mapping to the C-level API (JSAPI) for Mozilla's SpiderMonkey javascript engine. NOTE: If you intend to use SpiderMonkey along with the RFirefox R package you should be sure to load SpiderMonkey first, as there are a few functions which should be masked by RFirefox.
+      </dd>
+    </li>
+  </dt>
+</dl>
+
+<hr>
+<address><a href="http://www.stat.ucdavis.edu/~duncan">Duncan Temple Lang</a>
+<a href=mailto:duncan@wald.ucdavis.edu>&lt;duncan@wald.ucdavis.edu&gt;</a></address>
+<address>Gabriel Becker
+<a href=mailto:gmbecker@ucdavis.edu>&lt;gmbecker@ucdavis.edu&gt;</a></address>
+<!-- hhmts start -->
+
+Last modified: Thu Aug  11 08:03:51 PDT 2011
+<!-- hhmts end -->
+</body> </html>
