@@ -27,5 +27,6 @@ These steps were performed in Snow Leopard 10.6.6 on x86_64 arch (hopefully repl
 9) Prepare to install RFirefox R package
    a) edit configure.in and set XUL_SDK
    b) run autoconf
+   c) install packages: bitops from CRAN, RGraphicsDevice (and dependencies) from omegahat
 10) Install RFirefox R package with --preclean option
 11) open inst/tests/raphaeltest.html in Firefox. If (after a few seconds) a familiar looking type of graph appears, you have successfully run your first R code within a web browser.
