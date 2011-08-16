@@ -6,7 +6,7 @@
 
 <body>
 <p align="right"><a href="RFirefox_0.1-5.tar.gz">RFirefox_0.1-5.tar.gz</a></p>
-<p align="right">14 Aug 2011</p>
+<p align="right">15 Aug 2011</p>
 <h1>RFirefox</h1>
 
 <p>
@@ -24,14 +24,13 @@ The RFirefox project currently includes both an R package and a Firefox extensio
 <dl>
   <dt>
     <li>
-      <a href="files/talkslidesneworder.pdf">Gabe's WNAR 2011 Talk</a>
+      <a href="files/gmbeckerWNAR2011.pdf">Gabe's WNAR 2011 Talk</a>
       <dd>
 	A Short, high-level talk introducing the goals of RFirefox and the types of opportunities it brings with it.
       </dd>
     </li>
   </dt>
 </dl>
-
 
 <h2>Examples</h2>
 <p> More comprehensive examples of what RFirefox can do are forthcoming. For now you can find those that ship with the package linked to below.</p>
@@ -47,15 +46,38 @@ The RFirefox project currently includes both an R package and a Firefox extensio
       <dd>Simple page which uses R code to call a defined javascript function 3 times in order to write to the loaded webpage</dd>
     </li>
   </dt>
+  <dt>
+    <li> <a href="examples/tworaphtest.html">Two live R plots on a single page</a>
+      <dd> A webpage containing two R plots which are drawn to using the included Raphael graphics device</dd>
+    </li>
+  </dt>
+  <dt>
+    <li> <a href="examples/exLinkedPlot.html">Linked Plots</a>
+      <dd>Two plots which are linked using R code (and javascript which ships with RFirefox)</dd>
+    </li>
+  </dt>
+  <dt>
+    <li><a href="examples/exKSmoothDynDoc.html">Accepting Input from Users to set Nuisance Paramters</a>
+      <dd>
+	A number of plots relating to the Kernel Smoothing of the mtcars dataset, with basic interaction so that the viewer can set the bandwith and choose which measurements to use. R code <a href="examples/R/exKSmoothDynDoc.R">here</a></dd>
+    </li>
+  </dt>
+  <dt>
+    <li> <a href="examples/exLogisticDynDoc.html"> Comparing Two Analyses Methods</a>
+      <dd>
+	Two tables are generated summarizing logistic and multiple linear regression results for the same binary data (data obtained from the UCLA ATS website). User can choose which table is displayed or display both. R code <a href="examples/R/exLogisticDynDoc.R">here</a>
+      </dd>
+    </li>
+  </dt>
+      
 </dl>
-
 
 <h2>Installation</h2>
 <p>Installation instructions ship with RFirefox, but can also be found below.</p>
 <p>
 Installation Instructions for: <br />
-<a href="macInstall.txt">Mac OS X</a> <br />
-<a href="Installation.txt">Linux</a>  (tested/developed on Ubuntu 10.04)  <br />
+<a href="macInstall.txt">Mac OS X </a> (tested on 10.6.6)  <br />
+<a href="Installation.txt">Linux</a> (tested/developed on Ubuntu 10.04)  <br />
 </p>
 
 <h2>Windows Support</h2>
@@ -80,19 +102,19 @@ Installation Instructions for: <br />
   </dt>
   <dt>
     <li><a href="www.omegahat.org/SpiderMonkey">SpiderMonkey</a>
-      <dd> The SpiderMonkey package gives (for the most part) a 1-to-1 mapping to the C-level API (JSAPI) for Mozilla's SpiderMonkey javascript engine. NOTE: If you intend to use SpiderMonkey along with the RFirefox R package you should be sure to load SpiderMonkey first, as there are a few functions which should be masked by RFirefox.
+      <dd> The SpiderMonkey package gives (for the most part) a 1-to-1 mapping to the C-level API (JSAPI) for Mozilla's SpiderMonkey javascript engine. NOTE: If you intend to use SpiderMonkey along with the RFirefox R package you should be sure to load SpiderMonkey first, as there are a few functions which need to be masked by RFirefox.
       </dd>
     </li>
   </dt>
 </dl>
 
 <hr>
-<address><a href="http://www.stat.ucdavis.edu/~duncan">Duncan Temple Lang</a>
-<a href=mailto:duncan@wald.ucdavis.edu>&lt;duncan@wald.ucdavis.edu&gt;</a></address>
 <address>Gabriel Becker
 <a href=mailto:gmbecker@ucdavis.edu>&lt;gmbecker@ucdavis.edu&gt;</a></address>
+<address><a href="http://www.stat.ucdavis.edu/~duncan">Duncan Temple Lang</a>
+<a href=mailto:duncan@wald.ucdavis.edu>&lt;duncan@wald.ucdavis.edu&gt;</a></address>
 <!-- hhmts start -->
 
-Last modified: Thu Aug  11 08:03:51 PDT 2011
+Last modified: Thu Aug  15 08:03:51 PDT 2011
 <!-- hhmts end -->
 </body> </html>

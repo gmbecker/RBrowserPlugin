@@ -1,20 +1,20 @@
-These are installation instructions for the RFirefox package and extension.
+These are installation instructions for the RFirefox package and extension in Linux. For instructions to install RFirefox on Mac OS X please see macInstall.txt
 
 For any questions please see the AFAQ (anticipated frequently asked questions)
 
 Steps:
 
-1. Install the current version of Firefox (currently 5) . It doesn't have to be your main installation so long as you can get at it.
-2. Obtain the Mozilla Xulrunner SDK (Also known as the Gecko SDK) for that version (curently 5.0). Check https://developer.mozilla.org/en/Gecko_SDK.
+1. Install the current version of Firefox (currently 5) . It doesn't have to be your main installation so long as you can get at it. You will need to know the directory it is installed into.
+2. Obtain the Mozilla Xulrunner SDK (Also known as the Gecko SDK) for that version (curently 5.0). Check https://developer.mozilla.org/en/Gecko_SDK. It is available for all major modern architectures.
 3. Edit configuration and make files. Currently there is no "smart" configuration so you will need to point the variables to the correct directories (this will eventually change). The following should be a complete list of files you will need to change and what in them to change (though the latter is likely to be obvious):
-   a) configure.in - XUL_SDK
+   a) configure.in - XUL_SDK should point to the directory you unpacked the Gecko SDK into.
    b) /inst/components/GNUmakefile - GECKO_SDK, DLIBEXT (the extension for dynamic shared libraries for your OS)
    c) /inst/runfirefox.sh - FF (location of your Firefox executable) FFOPTS (command line options to use when running firefox. It is strongly encouraged that you create a separate profile for R powered web page developement and use --no-remote -P <your new profile name>, -g runs firefox in a debugger if one is available, and is strictly optional)
-4. Install the package:  Set your LD_LIBRARY_PATH (or OS-appropriate equivalent indicator of where to search for shared libraries) to include <path to xulrunner sdk>/lib. Then simply run R CMD INSTALL RFirefox.
-5. Build the Extension: navigate to RFirefox/inst/components and type make.
-6. Install the Extension: Start up Firefox 3.6.x using RFirefox/inst/runfirefox.sh. At this point you have two options.
-   a) Create a zip file containing the contents (including relative paths) of /RFirefox/inst/extension and rename it to <anyfiilename>.xpi. Then open the file with firefox and install the extension.
-   b) Install a Firefox extension, such as the Add-on Developer Helper, which gives you the ability to install unpacked extension. Then do so using the /RFirefox/inst/extension directory.
-7. Open the webpage of your choice in RFirefox/inst/tests or RFirefox/inst/examples to test that everything worked.
-8. Enjoy
-8.5 Do not open more than one tab with R enabled webpages at the same time. This will cause firefox to crash. It is a known issue and we are working on it.
+4. Install RFirefox's Dependencies: bitops from CRAN and RGraphicsDevice (and dependencies) from omegahat.
+5. Install the package:  Set your LD_LIBRARY_PATH (or OS-appropriate equivalent indicator of where to search for shared libraries) to include <path to xulrunner sdk>/lib. Then simply run R CMD INSTALL RFirefox.
+6. Build the Extension: navigate to RFirefox/inst/components and type make.
+7. Install the Extension: Start up Firefox using RFirefox/inst/runfirefox.sh. Open RFirefox/inst/RFirefox.xpi. This should install the extension
+  
+8.  open inst/tests/raphaeltest.html in Firefox. If (after a few seconds) a familiar looking type of graph appears, you have successfully run your first R code within a web browser.
+9. Enjoy
+9.5 Do not open more than one tab with R enabled webpages at the same time. This will cause firefox to crash. It is a known issue and we are working on it.

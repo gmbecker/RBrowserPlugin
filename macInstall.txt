@@ -1,11 +1,11 @@
 These steps were performed in Snow Leopard 10.6.6 on x86_64 arch (hopefully replacing  x86_64 with i386 will work for 32 bit systems, but I cannot confirm).
 
-1. Obtain Xcode 3.2 
-2. Obtain gfortran copiler from R.research.att.com/tools
+1. Obtain Xcode 3.2 (Note, if you type gcc into the terminal and do not get an unknown command error you almost certainly already have Xcode). If you do not have it, it is available from the Mac appstore, but is a quite large download.
+2. Obtain gfortran compiler from R.research.att.com/tools
 3. Obtain and build R sources with the configuration option --enable-R-shlib (other than that follow instructions in  R Mac FAQ, this worked for both 2.12.2 and 2.13.1 as of writing)
-4. Obtain Gecko SDK 5.0 for your architecture (x86_64 in this case)
+4. Obtain Gecko SDK 5.0 for your architecture (Mac x86_64 in this case) from https://developer.mozilla.org/en/Gecko_SDK
 6. Create environment variable(s)
-   a) export DYLD_LIBRARY_PATH=<path to xul sdk>/bin
+   a) export DYLD_LIBRARY_PATH=<path to xul sdk>/bin (note lib won't work here, it has to be bin)
 5. Build extension:
    a)Edit GNUmakefile
    	  i) set GECKO_SDK
@@ -18,15 +18,16 @@ These steps were performed in Snow Leopard 10.6.6 on x86_64 arch (hopefully repl
    b) Edit chrome.manifest in RFirefox/inst/extension
       i)change Revaluator.so to Revaluator.dylib in last line
    c) rm *.*o ; make in inst/components ****On 32 bit systems Do not remove Revaluator.xpt. xpidl did not ship with this version of the sdk. The xpt file from the git repository should work fine and stay up to date.!!!
+   d) type "make" in the components directory. This will create RFirefox.xpi in RFirefox/inst.
 7) Edit runfirefox.sh
-   a) set FF to the location of Firefox 5
+   a) set FF to the location of the Firefox 5 executable
    b) remove -g from FFOPTS (for me, -g caused firefox to crash)
-   c) Set R_HOME to your build of R with --enable-R-shlib
+   c) Set R_HOME to your build directory of R with --enable-R-shlib
    d) Replace LD_LIBRARY_PATH with DYLD_LIBRARY_PATH and $(R_HOME)/lib with $(R_HOME)/lib/x86_64 in the line setting LD_LIBRARY_PATH
-8) Run Firefox using runfirefox.sh and install the extension by opening the Rfirefox.xpi file in 
+8) Run Firefox using runfirefox.sh and install the extension by opening the Rfirefox.xpi created in step 6d
 9) Prepare to install RFirefox R package
    a) edit configure.in and set XUL_SDK
    b) run autoconf
    c) install packages: bitops from CRAN, RGraphicsDevice (and dependencies) from omegahat
-10) Install RFirefox R package with --preclean option
+10) Install RFirefox R package with --preclean option ie "R CMD INSTALL RFirefox --preclean" from the directory above RFirefox in the terminal
 11) open inst/tests/raphaeltest.html in Firefox. If (after a few seconds) a familiar looking type of graph appears, you have successfully run your first R code within a web browser.

@@ -1,7 +1,7 @@
-		       
+
     try {
 	//	console.log("inside try statement");
-	netscape.security.PrivilegeManager.enablePrivilege("UniversalXPConnect");
+		netscape.security.PrivilegeManager.enablePrivilege("UniversalXPConnect");
 	const cid = "@R/Revaluator;1";
 	var Rev = Components.classes[cid].createInstance();
 	//console.log(Rev);

@@ -4,7 +4,7 @@
 <overlay id="RFirefox-overlay" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
   <script src="overlay.js"/>
   <script src="ff-overlay.js"/>
-
+  <script src="chrome://RFirefox/content/Rscripthandler.js" type="application/x-javascript"/>
   <stringbundleset id="stringbundleset">
     <stringbundle id="RFirefox-strings" src="chrome://RFirefox/locale/overlay.properties"/>
   </stringbundleset>
