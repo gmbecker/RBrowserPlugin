@@ -4,9 +4,7 @@
     <script type="text/javascript" src="http://github.com/DmitryBaranovskiy/raphael/raw/master/raphael.js"> </script>
 -->    
 <script type="text/javascript" src="../javascript/raphael.js"> </script>
-
 <script type="text/javascript" src="../javascript/Rhelpers.js"> </script>
-<script type="text/javascript" src="../javascript/Rscripthandler.js"> </script>
 
     <script type="text/R">
 
@@ -24,19 +22,19 @@
         {
 
           glob = JS_GetGlobalObject(ScriptCon, returnInputs = FALSE)
-          JS_AddRoot(ScriptCon, glob) 
+          #JS_AddRoot(ScriptCon, glob) 
           
           node = get_JS_Property(ScriptCon, pts[[x]], "node" )
           #already addrooted.
           print(node)
                   
           args = list("colorIt", node, "mouseover", x) 
-          call_JS_Method(ScriptCon, glob, "addREventHandler", args)
+          call_JS_Method(ScriptCon, glob, "addREventHandler", args, addRoot = FALSE)
           args[[1]] = "unColorIt"
           args[[3]] = "mouseout"
-          call_JS_Method(ScriptCon, glob, "addREventHandler", args)
-          JS_RemoveRoot(ScriptCon, node)
-          JS_RemoveRoot(ScriptCon, glob)
+          call_JS_Method(ScriptCon, glob, "addREventHandler", args, addRoot = FALSE)
+          #JS_RemoveRoot(ScriptCon, node)
+          #JS_RemoveRoot(ScriptCon, glob)
          }, pts = pts, glob = glob )
  
       colorIt = function(i)
