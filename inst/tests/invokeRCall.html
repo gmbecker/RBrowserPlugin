@@ -12,7 +12,10 @@
 {
       call_JS_Method(ScriptCon, JS_GetGlobalObject(ScriptCon), "jsfun",list(), addRoot = FALSE)
 }
-      print(RFun)
+      but = getElementById(ScriptCon, "fromR");
+      args = list("RFun", but, "click", 1)
+      call_JS_Method(ScriptCon, JS_GetGlobalObject(ScriptCon), "addREventHandler", args, addRoot = FALSE);
+
     </script>
     <script type="text/javascript">
  
@@ -33,20 +36,29 @@
 
       }
       
-      function invokeRCallProduction()
+      function doAdd()
       {
-      
+      alert("hi. I'm doAdd");
+      but= document.getElementById("withadd");
+      var fun = function()
+      {
+      jsREventHandler("RFun", 1);
+      }
+      alert(but);
+      but.addEventListener("click",fun, false, true);
 
       }
- 
     </script>
   </head>
-  <body>
+  <body onload="doAdd();">
     <div id="test1"> </div>
     <div id="test2"> </div>
     <div id="test3"> </div>
     <div id="test4"> </div>
     <input type="button" onclick="invokeRCallTest();">Unit Test</input>
     <input type="button" onclick="jsREventHandler('RFun', 1);">Production Code</input>
+    <input type="button" id="withadd">Using addEventListener</input>
+    <input type="button" id="fromR">Listener Added From R</input>
+ 
 </body>
 </html>

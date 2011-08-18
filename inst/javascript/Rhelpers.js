@@ -10,7 +10,7 @@ function createDataElement(evt)
 
 }
 
-document.addEventListener("load", createDataElement, false, false);
+document.addEventListener("load", createDataElement, false, true);
 
 
 function jsREventHandler( name, value)
@@ -37,14 +37,6 @@ function jsREventHandler( name, value)
     //    Rev.call1(name, value,  out);
 }
 
-function addREventHandler( name, targ, event, arg)
-{
-    var fun = function() {
-	var out;
-	jsREventHandler(name, arg);
-    }
-    targ.addEventListener(event, fun, true, true);    
-}
 
 function invokeRCallTest()
 {
@@ -55,3 +47,22 @@ function invokeRCallTest()
 
 
 
+function createHandlerClosure(name, arg)
+{
+    var fun = function() {
+	alert("name:" + name + " arg:" + arg);
+	var out;
+	//Rev.call1(name, arg, out);
+	out = Rev.call(name, arg);
+    }
+    return fun;
+}
+
+function addREventHandler(name, targ, event, arg)
+{
+  
+    targ.addEventListener(event, function(e)
+			  {
+			      jsREventHandler(name, arg);
+			  }, false, true);
+}
