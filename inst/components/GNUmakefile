@@ -58,8 +58,9 @@ NEW_LDFLAGS= -L$(GECKO_SDK)/lib -lnspr4 -lplc4 -lxpcom -lxul
 
 NEW_LINKFLAGS=-Wl,-z,defs
 
-NEW_LD_LOCS= -L$(GECKO_SDK)/bin -L$(GECKO_SDK)/lib -Wl,-rpath-link,$(GECKO_SDK)/bin
-
+#NEW_LD_LOCS= -L$(GECKO_SDK)/bin -L$(GECKO_SDK)/lib -Wl,-rpath-link,$(GECKO_SDK)/bin
+FFBIN=/home/gmbecker/local/firefox5.0-debug/bin/
+NEW_LD_LOCS=-L$(FFBIN) -L$(FFBIN)../lib -Wl,-rpath-link,$(FFBIN)
 NEW_LD_LIBS= -lxpcom -lplc4 -lnspr4 -lxul
 
 OBJ_FILES=Revaluator.o RevaluatorModule.o RVariants.o

@@ -5,6 +5,7 @@
 -->    
 
 <script type="text/javascript" src="../javascript/raphael.js"> </script>
+<script type="text/javascript" src="../javascript/Rhelpers.js"> </script>
 
     <script type="text/R">
       library(RFirefox)
@@ -18,8 +19,8 @@
       lines(sp, col="blue")
 
       #print(thing$getPoints()[[1]])
-      #call_JS_Method(ScriptCon, thing$getPoints()[[3]],
-      #  "attr", c("fill", "#3b4449"))
+      call_JS_Method(ScriptCon, thing$getPoints()[[3]],
+        "attr", c("fill", "#3b4449"))
 
       colorThem = function(e)
       {
@@ -30,8 +31,10 @@
           {
             #if (x %% 2 == 0)
               call_JS_Method(ScriptCon, pts[[x]], "attr", 
-                c("fill", "#3b4449"))
+                c("fill", "#3b4449"), addRoot = FALSE)
+              print("call_JS_Method called")
           })
+         print("I'm leaving the function")
       }
     </script>
   </head>
@@ -41,6 +44,6 @@
     <div id="test3"> </div>
     <div id="test4"> </div>
     <div id="raphcanvas" height="600" width="400" />
-    <button type="buton" id="colbutton" onClick="jsREventHandler('colorThem');"> Color Points </button>
+    <button type="buton" id="colbutton" onClick="jsREventHandler('colorThem', 1);"> Color Points </button>
   </body>
 </html>

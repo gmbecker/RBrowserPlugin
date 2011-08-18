@@ -139,6 +139,8 @@ REvaluatorImpl::Call1(const char *funName, nsIVariant *arg, nsIVariant **_retval
   SEXP ans, e, p;
   int wasError = 0;
   
+  //Testing if this fixes a segfault when calling this from an event handler
+  GetContextForR();
   if(!funName || !funName[0]) {
     // Throw an error to the caller.
     fprintf(stderr, "Empty function name in Call1\n");fflush(stderr);

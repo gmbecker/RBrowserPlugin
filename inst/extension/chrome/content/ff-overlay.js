@@ -1,4 +1,5 @@
-RFirefox.onFirefoxLoad = function(event) {
+
+/*RFirefox.onFirefoxLoad = function(event) {
   document.getElementById("contentAreaContextMenu")
           .addEventListener("popupshowing", function (e){ RFirefox.showFirefoxContextMenu(e); }, false);
 };
@@ -9,3 +10,4 @@ RFirefox.showFirefoxContextMenu = function(event) {
 };
 
 window.addEventListener("load", RFirefox.onFirefoxLoad, false);
+*/

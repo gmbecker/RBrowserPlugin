@@ -1,0 +1,52 @@
+<html>
+  <head>
+<!--
+    <script type="text/javascript" src="http://github.com/DmitryBaranovskiy/raphael/raw/master/raphael.js"> </script>
+-->    
+<script type="text/javascript" src="../javascript/raphael.js"> </script>
+<script type="text/javascript" src="../javascript/Rhelpers.js"> </script>
+
+    <script type="text/R">
+
+      RFun = function(dummy)
+{
+      call_JS_Method(ScriptCon, JS_GetGlobalObject(ScriptCon), "jsfun",list(), addRoot = FALSE)
+}
+      print(RFun)
+    </script>
+    <script type="text/javascript">
+ 
+      function jsfun()
+      {
+      alert("success");
+      var div = document.getElementById("test1");
+       div.innerHTML="Test Complete.";
+      return 0;
+      }
+
+      function invokeRCallTest()
+      {
+      alert("invoking R call");
+      var evt = document.createEvent("Events");
+      evt.initEvent("RJSCallTest", true, false);
+      document.dispatchEvent(evt);
+
+      }
+      
+      function invokeRCallProduction()
+      {
+      
+
+      }
+ 
+    </script>
+  </head>
+  <body>
+    <div id="test1"> </div>
+    <div id="test2"> </div>
+    <div id="test3"> </div>
+    <div id="test4"> </div>
+    <input type="button" onclick="invokeRCallTest();">Unit Test</input>
+    <input type="button" onclick="jsREventHandler('RFun', 1);">Production Code</input>
+</body>
+</html>

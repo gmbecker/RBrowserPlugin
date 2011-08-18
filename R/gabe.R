@@ -60,9 +60,12 @@ JS_RemoveRoot = function(con, ptr)
   .Call("R_JS_RemoveRoot", con, ptr, type)
 }
 
-JS_GetGlobalObject = function(con, ...)
+JS_GetGlobalObject = function(con, addRoot = FALSE, ...)
   {
-    .Call("R_JS_GetGlobalObject", con)
+    glob = .Call("R_JS_GetGlobalObject", con)
+    if(addRoot)
+      JS_AddRoot(con, glob)
+    glob
   }
 
 jsVal = function(addRoot = FALSE)
