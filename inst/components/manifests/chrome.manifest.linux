@@ -1,0 +1,10 @@
+content   RFirefox                 chrome/content/
+skin      RFirefox   classic/1.0   chrome/skin/
+locale    RFirefox   en-US         chrome/locale/en-US/
+
+
+overlay   chrome://browser/content/browser.xul   chrome://RFirefox/content/ff-overlay.xul
+
+
+interfaces components/Revaluator.xpt
+binary-component components/Revaluator.so
