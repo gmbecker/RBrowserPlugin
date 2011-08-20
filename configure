@@ -13,6 +13,12 @@ ac_default_prefix=/usr/local
 # Any additions from configure.in:
 ac_help="$ac_help
    --with-xul-sdk      directory in which the xulrunner-sdk distribution is located"
+ac_help="$ac_help
+   --with-firefox	    firefox executable (including path if necessary)"
+ac_help="$ac_help
+--with-r-home 	    Location of an R build with a shared library"
+ac_help="$ac_help
+--enable-mac	    Configure RFirefox for Mac OS X"
 
 # Initialize some variables set by options.
 # The variables have the same names as the options, with
@@ -530,25 +536,49 @@ if test "${with_xul_sdk+set}" = set; then
   XUL_SDK=${withval}
 fi
 
-
-
-
-
-XUL_SDK="$HOME/local/xulrunner5.0-sdk"
-
-if test -z "${MOZVER}" ; then 
-  echo "No Mozilla version specified, assuming 1.9.2"
-  echo "To set the Mozilla version please edit the configure.in file and set the MOZVER variable or create an environment variable named MOZVER"
-  MOZVER=192
+# Check whether --with-firefox or --without-firefox was given.
+if test "${with_firefox+set}" = set; then
+  withval="$with_firefox"
+  FF=${withval}
+else
+  FF=firefox
 fi
-if test $MOZVER -eq 191; then
-     { echo "configure: error: "Builds based on Mozilla 1.9.1 are no longer supported."" 1>&2; exit 1; }
+
+
+# Check whether --with-r-home or --without-r-home was given.
+if test "${with_r_home+set}" = set; then
+  withval="$with_r_home"
+  R_HOME=${withval}
+else
+  : ${R_HOME=‘R RHOME‘}
 fi
+
+
+# Check whether --enable-mac or --disable-mac was given.
+if test "${enable_mac+set}" = set; then
+  enableval="$enable_mac"
+  IS_MAC=1
+else
+  IS_MAC=0
+fi
+
+
+
+#AC_SUBST(MOZVER)
+
+
+
 
 if ! test -d "$XUL_SDK" ; then
-  echo "Can't compile this package. We need the xulrunner SDK."
-  echo "For now, please edit the configure.in file and set the XUL_SDK variable to the location of the Xulrunner SDK on your system."
+  echo "Can't find the Xulrunner SDK. Unable to prepare the package for compilation."
+  echo "For now, specify the Xulrunner SDK directory using --with-xul-sdk=<path> in configure-args"
   { echo "configure: error: "Eventually this will be detected automatically."" 1>&2; exit 1; } 
+fi
+
+
+if test -z "${R_HOME}"; then
+echo "could not determine R_HOME"
+exit 1
 fi
 
 trap '' 1 2 15
@@ -663,7 +693,7 @@ done
 
 ac_given_srcdir=$srcdir
 
-trap 'rm -fr `echo "src/Makevars" | sed "s/:[^ ]*//g"` conftest*; exit 1' 1 2 15
+trap 'rm -fr `echo "src/Makevars inst/components/GNUmakefile inst/runfirefox.sh" | sed "s/:[^ ]*//g"` conftest*; exit 1' 1 2 15
 EOF
 cat >> $CONFIG_STATUS <<EOF
 
@@ -696,7 +726,8 @@ s%@oldincludedir@%$oldincludedir%g
 s%@infodir@%$infodir%g
 s%@mandir@%$mandir%g
 s%@XUL_SDK@%$XUL_SDK%g
-s%@MOZVER@%$MOZVER%g
+s%@R_HOME@%$R_HOME%g
+s%@IS_MAC@%$IS_MAC%g
 
 CEOF
 EOF
@@ -738,7 +769,7 @@ EOF
 
 cat >> $CONFIG_STATUS <<EOF
 
-CONFIG_FILES=\${CONFIG_FILES-"src/Makevars"}
+CONFIG_FILES=\${CONFIG_FILES-"src/Makevars inst/components/GNUmakefile inst/runfirefox.sh"}
 EOF
 cat >> $CONFIG_STATUS <<\EOF
 for ac_file in .. $CONFIG_FILES; do if test "x$ac_file" != x..; then
@@ -803,4 +834,5 @@ EOF
 chmod +x $CONFIG_STATUS
 rm -fr confdefs* $ac_clean_files
 test "$no_create" = yes || ${CONFIG_SHELL-/bin/sh} $CONFIG_STATUS || exit 1
+
 

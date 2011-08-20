@@ -11,38 +11,9 @@ GCC_FLAGS=-fshort-wchar
 # The symbol is still undefined. But the python extension uses it!
 # -DXPCOM_GLUE_USE_NSPR=1 
 #-lnspr4
-GTKCFLAGS = `pkg-config --cflags gtk+-2.0`
-GTKLIBS = `pkg-config --libs gtk+-2.0`
 EXTRAFLAGS=-fPIC   -fno-rtti -fno-exceptions -Wall -Wpointer-arith -Woverloaded-virtual -Wsynth -Wno-ctor-dtor-privacy -Wno-non-virtual-dtor -Wcast-align -Wno-invalid-offsetof -Wno-long-long -pedantic -fno-strict-aliasing -fshort-wchar -pthread -pipe  -DNDEBUG -DTRIMMED -Os -freorder-blocks -fno-reorder-functions  -pthread -D_REENTRANT     -DMOZILLA_CLIENT
-PKG_CPPFLAGS= -DXPCOM_GLUE $(GCC_FLAGS) -I$(XUL_SDK)/sdk/include -I$(XUL_SDK)/include 
-PKG_CPPFLAGS= -DXPCOM_GLUE -DMOZ_WIDGET_GTK2 $(GCC_FLAGS)  -I$(MOZ_DIST)/include/xpcom -I$(MOZ_DIST)/include -I$(MOZ_DIST)/include/xpconnect -I$(MOZ_DIST)/include/js -I$(MOZ_DIST)/include/content  -I$(MOZ_DIST)/include/widget -I$(MOZ_DIST)/include/dom -I$(MOZ_DIST)/include/layout -I$(XUL_SDK)/sdk/include -I$(XUL_SDK)/include $(GTKCFLAGS) -DMOZVER=$(MOZVER) -Wl,--warn-unresolved-symbols $(EXTRAFLAGS) 
-PKG_CPPFLAGS= -DXPCOM_GLUE -DMOZ_WIDGET_GTK2 $(GCC_FLAGS)  -I$(XUL_SDK)/include/xpcom -I$(XUL_SDK)/include -I$(XUL_SDK)/include/xpconnect -I$(XUL_SDK)/include/js -I$(XUL_SDK)/include/content  -I$(XUL_SDK)/include/widget -I$(XUL_SDK)/include/dom -I$(XUL_SDK)/include/layout -I$(XUL_SDK)/sdk/include -I$(XUL_SDK)/include $(GTKCFLAGS) -DMOZVER=$(MOZVER) -Wl,--warn-unresolved-symbols $(EXTRAFLAGS) 
 
-PKG_LIBS=-L$(XUL_SDK)/lib  -lxpcomglue 
-PKG_LIBS=-L$(MOZ_DIST)/lib -lxpcomglue -lxpcom -lplds4 -lplc4 -lnspr4 $(GTKLIBS)
-PKG_LIBS=-L$(XUL_SDK)/lib -lxpcomglue -lxpcom -lplds4 -lplc4 -lnspr4 $(GTKLIBS)
-# Linking with  -lxpcomglue_s doesn't load. But it does work for the TestXPTCInvoke.cpp example.
-# xpcomglue_s
-
-# Need
-#   sedetenv DYLD_LIBRARY_PATH $(MOZ_DIST)/lib
-#  run
-
-#Frome Makefile.in of Mozilla gtk embed example
-
-#MARSHAL_FILE = gtkmozembedmarshal
-#MARSHAL_PREFIX = gtkmozembed
-#srcdir=.
+PKG_CPPFLAGS= -DXPCOM_GLUE  $(GCC_FLAGS)  -I$(XUL_SDK)/include/xpcom -I$(XUL_SDK)/include -I$(XUL_SDK)/include/xpconnect -I$(XUL_SDK)/include/js -I$(XUL_SDK)/include/content  -I$(XUL_SDK)/include/widget -I$(XUL_SDK)/include/dom -I$(XUL_SDK)/include/layout -I$(XUL_SDK)/sdk/include -I$(XUL_SDK)/include -DMOZVER=$(MOZVER) -Wl,--warn-unresolved-symbols $(EXTRAFLAGS) 
 
 
-#$(MARSHAL_FILE).h: $(MARSHAL_FILE).list
-#	glib-genmarshal --prefix=$(MARSHAL_PREFIX) $(srcdir)/$(MARSHAL_FILE).list --skip-source --header > $@
-
-#$(MARSHAL_FILE).c: $(MARSHAL_FILE).list $(MARSHAL_FILE).h
-#	glib-genmarshal --prefix=$(MARSHAL_PREFIX) $(srcdir)/$(MARSHAL_FILE).list --skip-source --body > $@
-
-#gtkmozembed2.so: $(MARSHAL_FILE).h
-
-
-
-#c++ -o TestGtkEmbed.o -c -I../../../../dist/include/system_wrappers -include /home/gmbecker/gabe/checkedout/FirefoxSource191/config/gcc_hidden.h -DOSTYPE=\"Linux2.6\" -DOSARCH=Linux -DXPCOM_GLUE  -I/home/gmbecker/gabe/checkedout/FirefoxSource191/embedding/browser/gtk/tests -I. -I../../../../dist/include/xpcom -I../../../../dist/include/dom -I../../../../dist/include   -I../../../../dist/include/gtkembedmoz -I/home/gmbecker/gabe/checkedout/FirefoxSource191/obj-xulrunner/dist/include/nspr    -I/home/gmbecker/gabe/checkedout/FirefoxSource191/obj-xulrunner/dist/sdk/include    -fPIC   -fno-rtti -fno-exceptions -Wall -Wpointer-arith -Woverloaded-virtual -Wsynth -Wno-ctor-dtor-privacy -Wno-non-virtual-dtor -Wcast-align -Wno-invalid-offsetof -Wno-long-long -pedantic -fno-strict-aliasing -fshort-wchar -pthread -pipe  -DNDEBUG -DTRIMMED -Os -freorder-blocks -fno-reorder-functions  -pthread -D_REENTRANT     -DMOZILLA_CLIENT -include ../../../../mozilla-config.h -Wp,-MD,.deps/TestGtkEmbed.pp /home/gmbecker/gabe/checkedout/FirefoxSource191/embedding/browser/gtk/tests/TestGtkEmbed.cpp
+PKG_LIBS=-L$(XUL_SDK)/lib -lxpcomglue -lxpcom -lplds4 -lplc4 -lnspr4 

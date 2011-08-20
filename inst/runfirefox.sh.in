@@ -1,0 +1,20 @@
+FF=@FF@
+IS_MAC=@IS_MAC@
+FFOPTS="--no-remote -P dev"
+
+if test "$IS_MAC"="1"
+then
+FFDEBUG=""
+else
+FFDEBUG="-g"
+fi
+
+if test -z "$R_HOME"
+then
+export R_HOME=@R_HOME@
+fi
+
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$R_HOME/lib
+
+$FF $FFDEBUG $FFOPTS
+

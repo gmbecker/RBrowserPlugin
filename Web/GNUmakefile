@@ -12,7 +12,7 @@ EXAMPLE_R=exKSmoothDynDoc exLogisticDynDoc
 
 TEST_HTML=raphaeltest callJSMethod tworaphtest
 
-JAVASCRIPT=raphael Rhelpers Rscripthandler
+JAVASCRIPT=raphael Rhelpers
 
 
 ship: 
