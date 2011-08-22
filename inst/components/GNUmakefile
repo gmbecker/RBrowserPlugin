@@ -1,6 +1,6 @@
 GECKO_SDK=/home/gmbecker/local/xulrunner6.0-sdk
 IS_MAC=0
-R_HOME=/usr/lib64/R
+R_HOME=/usr/lib/R
 
 ifeq ($(IS_MAC), 1)
   DLIBEXT=dylib
