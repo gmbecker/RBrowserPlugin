@@ -1,9 +1,5 @@
 XUL_SDK=@XUL_SDK@
-MOZ_DIST=@MOZ_DIST@
 
-ifndef MOZVER
- MOZVER=@MOZVER@
-endif
 
 # Do we need nspr explicitly
 GCC_FLAGS=-fshort-wchar
@@ -13,7 +9,7 @@ GCC_FLAGS=-fshort-wchar
 #-lnspr4
 EXTRAFLAGS=-fPIC   -fno-rtti -fno-exceptions -Wall -Wpointer-arith -Woverloaded-virtual -Wsynth -Wno-ctor-dtor-privacy -Wno-non-virtual-dtor -Wcast-align -Wno-invalid-offsetof -Wno-long-long -pedantic -fno-strict-aliasing -fshort-wchar -pthread -pipe  -DNDEBUG -DTRIMMED -Os -freorder-blocks -fno-reorder-functions  -pthread -D_REENTRANT     -DMOZILLA_CLIENT
 
-PKG_CPPFLAGS= -DXPCOM_GLUE  $(GCC_FLAGS)  -I$(XUL_SDK)/include/xpcom -I$(XUL_SDK)/include -I$(XUL_SDK)/include/xpconnect -I$(XUL_SDK)/include/js -I$(XUL_SDK)/include/content  -I$(XUL_SDK)/include/widget -I$(XUL_SDK)/include/dom -I$(XUL_SDK)/include/layout -I$(XUL_SDK)/sdk/include -I$(XUL_SDK)/include -DMOZVER=$(MOZVER) -Wl,--warn-unresolved-symbols $(EXTRAFLAGS) 
+PKG_CPPFLAGS= -DXPCOM_GLUE  $(GCC_FLAGS)  -I$(XUL_SDK)/include/xpcom -I$(XUL_SDK)/include -I$(XUL_SDK)/include/xpconnect -I$(XUL_SDK)/include/js -I$(XUL_SDK)/include/content  -I$(XUL_SDK)/include/widget -I$(XUL_SDK)/include/dom -I$(XUL_SDK)/include/layout -I$(XUL_SDK)/sdk/include -I$(XUL_SDK)/include -Wl,--warn-unresolved-symbols $(EXTRAFLAGS) 
 
 
 PKG_LIBS=-L$(XUL_SDK)/lib -lxpcomglue -lxpcom -lplds4 -lplc4 -lnspr4 
