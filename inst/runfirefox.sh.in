@@ -1,12 +1,15 @@
 FF=@FF@
 IS_MAC=@IS_MAC@
 FFOPTS="--no-remote -P dev"
+ARCH=@ARCH@
 
-if test "$IS_MAC"="1"
+if [ "$IS_MAC" = "1"]
 then
 FFDEBUG=""
+R_LIB_LOC=$R_HOME/lib/$ARCH
 else
 FFDEBUG="-g"
+R_LIB_LOC=$R_HOME/lib
 fi
 
 if test -z "$R_HOME"
