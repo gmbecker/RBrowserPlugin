@@ -3,20 +3,22 @@ IS_MAC=@IS_MAC@
 FFOPTS="--no-remote -P dev"
 ARCH=@ARCH@
 
-if [ "$IS_MAC" = "1"]
-then
-FFDEBUG=""
-R_LIB_LOC=$R_HOME/lib/$ARCH
-else
-FFDEBUG="-g"
-R_LIB_LOC=$R_HOME/lib
-fi
-
 if test -z "$R_HOME"
 then
 export R_HOME=@R_HOME@
 fi
 
+if [ "$IS_MAC" = "1"]
+then
+FFDEBUG=""
+R_LIB_LOC=$R_HOME/lib/$ARCH
+export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$R_LIB_LOC
+else
+FFDEBUG="-g"
+R_LIB_LOC=$R_HOME/lib
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$R_LIB_LOC
+fi
+
+
 
 $FF $FFDEBUG $FFOPTS
