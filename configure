@@ -569,6 +569,7 @@ fi
 
 
 
+
 if ! test -d "$XUL_SDK" ; then
   echo "Can't find the Xulrunner SDK. Unable to prepare the package for compilation."
   echo "For now, specify the Xulrunner SDK directory using --with-xul-sdk=<path> in configure-args"
@@ -728,6 +729,7 @@ s%@mandir@%$mandir%g
 s%@XUL_SDK@%$XUL_SDK%g
 s%@R_HOME@%$R_HOME%g
 s%@IS_MAC@%$IS_MAC%g
+s%@FF@%$FF%g
 
 CEOF
 EOF

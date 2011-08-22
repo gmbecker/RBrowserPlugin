@@ -1,8 +1,8 @@
-GECKO_SDK=/home/gmbecker/local/xulrunner5.0-sdk/
+GECKO_SDK=/home/gmbecker/local/xulrunner6.0-sdk
 IS_MAC=0
 R_HOME=/usr/lib64/R
 
-ifeq ($IS_MAC, 1)
+ifeq ($(IS_MAC), 1)
   DLIBEXT=dylib
   R_LD_FLAGS=-L$(R_HOME)/lib/x86_64 -lR
   NEW_LINKFLAGS=

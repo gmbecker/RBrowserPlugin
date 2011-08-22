@@ -1,4 +1,4 @@
-XUL_SDK=/home/gmbecker/local/xulrunner5.0-sdk/
+XUL_SDK=/home/gmbecker/local/xulrunner6.0-sdk
 MOZ_DIST=@MOZ_DIST@
 
 ifndef MOZVER
