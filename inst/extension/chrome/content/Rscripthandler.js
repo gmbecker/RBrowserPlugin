@@ -60,7 +60,7 @@ function ExtjsREventHandler( evt)
     //var RFirefoxData = content.document.getElementById("RFirefoxCallData");
     var name = evt.target.getAttribute("RFunName");//RFirefoxData.getAttribute("FunName");
     var value = evt.target.getAttribute("RFunValue");// RFirefoxData.getAttribute("FunValue");
-    alert("name:" + name + " value:" + value + " target:" + evt.target) ;
+    //  alert("name:" + name + " value:" + value + " target:" + evt.target) ;
     var out;
     Rev.call1(name, value,  out);
 }

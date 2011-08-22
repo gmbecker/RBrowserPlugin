@@ -57,5 +57,6 @@ Gabriel Becker
    
        Currently whenever an element is rooted, a finalizer is created to unroot it when the R object is removed (garbage collected), thus users should not need to worry about removing a root once it is created.
 
-
+     2e. I am trying to call up to a method in the Raphael library to change an existing plot during an R event handling function.
+     	 We know about this issue (there are tests in the test directory which currently fail do to this reason. We are working on the problem and will fix it as soon as possible.
 

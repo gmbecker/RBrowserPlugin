@@ -4,13 +4,13 @@ PACKAGE=RFirefox
 
 TARGET_DIR=www.omegahat.org:/home3/WebSites/Omega/$(PACKAGE)
 
-FILES=AFAQ macInstall.txt Installation.txt
+FILES=AFAQ macInstall.txt linuxInstall.txt
 
 EXAMPLE_HTML=exLinkedPlot exLogisticDynDoc exKSmoothDynDoc
 
 EXAMPLE_R=exKSmoothDynDoc exLogisticDynDoc
 
-TEST_HTML=raphaeltest callJSMethod tworaphtest
+TEST_HTML=raphaeltest callJSMethod tworaphtest invokeRCall
 
 JAVASCRIPT=raphael Rhelpers
 

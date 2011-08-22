@@ -18,6 +18,8 @@ ac_help="$ac_help
 ac_help="$ac_help
 --with-r-home 	    Location of an R build with a shared library"
 ac_help="$ac_help
+--with-arch 		    Specify the architecture of the system. Defaults to x86_64"
+ac_help="$ac_help
 --enable-mac	    Configure RFirefox for Mac OS X"
 
 # Initialize some variables set by options.
@@ -550,7 +552,16 @@ if test "${with_r_home+set}" = set; then
   withval="$with_r_home"
   R_HOME=${withval}
 else
-  : ${R_HOME=‘R RHOME‘}
+  : ${R_HOME='R RHOME'}
+fi
+
+
+# Check whether --with-arch or --without-arch was given.
+if test "${with_arch+set}" = set; then
+  withval="$with_arch"
+  ARCH=${withval}
+else
+  ARCH=x86_64
 fi
 
 
@@ -564,7 +575,7 @@ fi
 
 
 
-#AC_SUBST(MOZVER)
+
 
 
 
@@ -730,6 +741,7 @@ s%@XUL_SDK@%$XUL_SDK%g
 s%@R_HOME@%$R_HOME%g
 s%@IS_MAC@%$IS_MAC%g
 s%@FF@%$FF%g
+s%@ARCH@%$ARCH%g
 
 CEOF
 EOF

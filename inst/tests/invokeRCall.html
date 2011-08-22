@@ -21,7 +21,7 @@
  
       function jsfun()
       {
-      alert("success");
+ 
       var div = document.getElementById("test1");
        div.innerHTML="Test Complete.";
       return 0;
@@ -38,13 +38,12 @@
       
       function doAdd()
       {
-      alert("hi. I'm doAdd");
-      but= document.getElementById("withadd");
+       but= document.getElementById("withadd");
       var fun = function()
       {
       jsREventHandler("RFun", 1);
       }
-      alert(but);
+   
       but.addEventListener("click",fun, false, true);
 
       }

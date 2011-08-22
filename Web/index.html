@@ -6,7 +6,7 @@
 
 <body>
 <p align="right"><a href="RFirefox_0.1-5.tar.gz">RFirefox_0.1-5.tar.gz</a></p>
-<p align="right">15 Aug 2011</p>
+<p align="right">22 Aug 2011</p>
 <h1>RFirefox</h1>
 
 <p>
@@ -47,21 +47,30 @@ The RFirefox project currently includes both an R package and a Firefox extensio
     </li>
   </dt>
   <dt>
+    <li> <a href="examples/invokeRCall.html">Using R functions as Event Handlers</a>
+      <dd>This page contains 4 buttons, each of which use a different method to add an R function as an event handler. Furthermore, the R function in question calls back into javascript in order to alter the page directly.
+    </li>
+  </dt>
+  <dt>
     <li> <a href="examples/tworaphtest.html">Two live R plots on a single page</a>
       <dd> A webpage containing two R plots which are drawn to using the included Raphael graphics device</dd>
     </li>
   </dt>
+<!-- 
+DANGER: Does not work! Something about an R function event handler being added from R and then calling up to a Raphael function causes as segfault.
   <dt>
     <li> <a href="examples/exLinkedPlot.html">Linked Plots</a>
       <dd>Two plots which are linked using R code (and javascript which ships with RFirefox)</dd>
     </li>
   </dt>
+The below also currently doesn't work.
   <dt>
     <li><a href="examples/exKSmoothDynDoc.html">Accepting Input from Users to set Nuisance Paramters</a>
       <dd>
 	A number of plots relating to the Kernel Smoothing of the mtcars dataset, with basic interaction so that the viewer can set the bandwith and choose which measurements to use. R code <a href="examples/R/exKSmoothDynDoc.R">here</a></dd>
     </li>
   </dt>
+-->
   <dt>
     <li> <a href="examples/exLogisticDynDoc.html"> Comparing Two Analyses Methods</a>
       <dd>
@@ -77,7 +86,7 @@ The RFirefox project currently includes both an R package and a Firefox extensio
 <p>
 Installation Instructions for: <br />
 <a href="macInstall.txt">Mac OS X </a> (tested on 10.6.6)  <br />
-<a href="Installation.txt">Linux</a> (tested/developed on Ubuntu 10.04)  <br />
+<a href="linuxInstall.txt">Linux</a> (tested/developed on Ubuntu 10.04)  <br />
 </p>
 
 <h2>Windows Support</h2>
@@ -115,6 +124,6 @@ Installation Instructions for: <br />
 <a href=mailto:duncan@wald.ucdavis.edu>&lt;duncan@wald.ucdavis.edu&gt;</a></address>
 <!-- hhmts start -->
 
-Last modified: Thu Aug  15 08:03:51 PDT 2011
+Last modified: Thu Aug  22 13:44:51 PDT 2011
 <!-- hhmts end -->
 </body> </html>
