@@ -50,7 +50,7 @@ function invokeRCallTest()
 function createHandlerClosure(name, arg)
 {
     var fun = function() {
-	alert("name:" + name + " arg:" + arg);
+
 	var out;
 	//Rev.call1(name, arg, out);
 	out = Rev.call(name, arg);

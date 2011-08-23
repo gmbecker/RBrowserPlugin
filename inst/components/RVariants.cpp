@@ -7,8 +7,9 @@
 
 /* Order is important. The two above here need to be first as we redefine Realloc() in R. */
 #include "RXPCOM.h"
-
-
+#include "nsIXPConnect.h"
+#include "RobjJS.h"
+#include "nsServiceManagerUtils.h"
 SEXP convertVariantToRVector(nsIVariant * var);
 
 
@@ -145,7 +146,27 @@ convertVariantToR(nsIVariant * var)
       ans = convertVariantToRVector(var);
       break;
      default:
-  fprintf(stderr, "JS->R: no conversion for  variant\n");fflush(stderr);
+       {
+	 fprintf(stderr, "JS->R: no conversion for  variant\nChecking for wrapped R object: ");fflush(stderr);
+	JSContext *jscon = GetContextForR(0);
+	nsresult rv;
+
+	nsCOMPtr<nsIXPConnect> xpc_;
+	xpc_ = do_GetService("@mozilla.org/js/xpc/XPConnect;1", &rv);
+	JSClass *kl;
+	jsval val;
+	rv = xpc_->VariantToJS(jscon, JS_GetGlobalObject(jscon), var, &val);
+	kl = JS_GET_CLASS(jscon, JSVAL_TO_OBJECT(val)); 
+	if (kl -> name == "RFunction" || kl -> name == "RObject")
+	  {
+	    ans = (SEXP) JS_GetPrivate(jscon, JSVAL_TO_OBJECT(val));
+	    fprintf(stderr, "%s found.\n", kl -> name); fflush(stderr);
+	  }
+	else
+	  {
+	    fprintf(stderr, "No R objects found."); fflush(stderr);
+	  }
+       }
        break;
   }
   return(ans);
@@ -187,17 +208,32 @@ RElementAsVariant(SEXP ans, int index, nsIVariant **ret)
 	var->SetAsString(CHAR(STRING_ELT(ans, index)));
         
 	break;
-      case CLOSXP:
+      default:
+	{
 	//it would be much easier to just construct the js object (jsval/JSObject) we want directly but then how do we return it?? Find and call the xpconnect conversion function directly?
 	//nsIVariant JSToVariant(in JSContextPtr ctx, in jsval value); from nsIXPConnect, but we'll need to get that object (which I think will give us the context we need as well).
+	
+	char tmp[255];
+	JSContext *jscon = GetContextForR(0);
+	nsresult rv;
 
-
-	fprintf(stderr, "R->JS: Function, stored as INT64 %lld", ans);fflush(stderr);
-	var->SetAsInt64((long long int) ans);
+	nsCOMPtr<nsIXPConnect> xpc_;
+	xpc_ = do_GetService("@mozilla.org/js/xpc/XPConnect;1", &rv);
+	JSClass *kl;
+	if (TYPEOF(ans) == CLOSXP)
+	  kl = &Rfun;
+	else
+	  kl = &Robj;
+	JSObject *obj = JS_NewObject(jscon, kl,  NULL, JS_GetGlobalObject(jscon));
+	JS_SetPrivate(jscon, obj, ans);
+	jsval val = OBJECT_TO_JSVAL(obj);
+	nsCOMPtr<nsIVariant> funvar;
+	rv = xpc_ -> JSToVariant(jscon, val, getter_AddRefs(funvar));
+	*ret = funvar;
+	fprintf(stderr, "R->JS: No conversion found. Returning wrapped R object.");fflush(stderr);
+	return(NS_OK);
+	}
 	break;
-      default:
-          fprintf(stderr, "R->JS: failed to convert %d\n", TYPEOF(ans));fflush(stderr);
-          break;
       }
 
 

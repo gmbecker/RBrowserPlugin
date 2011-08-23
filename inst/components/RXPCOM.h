@@ -13,6 +13,7 @@
 #include <Rdefines.h>
 #include <Rinternals.h>
 #include <Rembedded.h>
+#include "jsapi.h"
 
 typedef bool boolean;
 
@@ -21,6 +22,7 @@ boolean convertRToVariant(SEXP ans, nsIVariant **_returnValue);
 
 typedef int*(*R_INT_PTR)(SEXP);
 
+JSContext *GetContextForR(int add);
 //extern R_INT_PTR Rf__INTEGER;
 #define Rf__INTEGER(x) ((int *) DATAPTR(x))
 #endif

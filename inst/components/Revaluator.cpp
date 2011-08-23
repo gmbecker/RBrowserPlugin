@@ -25,11 +25,10 @@
 //#include "nsIServiceManager.h"
 #include "nsServiceManagerUtils.h"
 
-
 NS_IMPL_ISUPPORTS1(REvaluatorImpl, REvaluator)
 
 void R_getServiceManager();
-JSContext *GetContextForR();
+
 JSBool FunCallTest(nsIPrincipal *principal, JSContext *con);
 SEXP jscriptTest2();
 nsresult TestnsScriptContext(nsIScriptContext *context, nsIPrincipal *principal);
@@ -140,7 +139,7 @@ REvaluatorImpl::Call1(const char *funName, nsIVariant *arg, nsIVariant **_retval
   int wasError = 0;
   
   //Testing if this fixes a segfault when calling this from an event handler
-  GetContextForR();
+  GetContextForR(1);
   if(!funName || !funName[0]) {
     // Throw an error to the caller.
     fprintf(stderr, "Empty function name in Call1\n");fflush(stderr);
@@ -273,7 +272,7 @@ REvaluatorImpl::Eval(const char *funName, nsIVariant **_retval)
   JSContext *jscon;
 #if 1
   nsresult rv;
- jscon = GetContextForR();
+ jscon = GetContextForR(1);
  
   nsCOMPtr<nsIJSContextStack> stack(do_GetService("@mozilla.org/js/xpc/ContextStack;1"));
   //Grab context;
@@ -453,7 +452,7 @@ R_getServiceManager()
 static int spidermonkey = 0;
 
 JSContext *
-GetContextForR()
+GetContextForR(int add)
 {
   fprintf(stderr, "GetContextForR is running"); fflush(stderr);
   nsresult rv;
@@ -517,19 +516,22 @@ GetContextForR()
 
   NS_IF_RELEASE(principal);
   NS_IF_RELEASE(globj);
-  //Create R object and place it in global environment.
-  SEXP klass, ans, ptr;
-  PROTECT( klass = MAKE_CLASS( "JSContextRef" ) );
-  PROTECT( ans = NEW( klass ) );
-  PROTECT( ptr = R_MakeExternalPtr( jscon,
-				    Rf_install( "JSContext" ),
-				    R_NilValue));
-  
-  //finalizer here if needed
-  R_RegisterCFinalizerEx(ptr , R_nsISupportsFinalizer, (Rboolean) TRUE);
-  SET_SLOT(ans, Rf_install("ref"), ptr);
-  Rf_defineVar(Rf_install("ScriptCon"), ans, R_GlobalEnv);
-  UNPROTECT(3);
+  if (add)
+    {
+      //Create R object and place it in global environment.
+      SEXP klass, ans, ptr;
+      PROTECT( klass = MAKE_CLASS( "JSContextRef" ) );
+      PROTECT( ans = NEW( klass ) );
+      PROTECT( ptr = R_MakeExternalPtr( jscon,
+					Rf_install( "JSContext" ),
+					R_NilValue));
+      
+      //finalizer here if needed
+      R_RegisterCFinalizerEx(ptr , R_nsISupportsFinalizer, (Rboolean) TRUE);
+      SET_SLOT(ans, Rf_install("ref"), ptr);
+      Rf_defineVar(Rf_install("ScriptCon"), ans, R_GlobalEnv);
+      UNPROTECT(3);
+    }
   return jscon;
 }
 
