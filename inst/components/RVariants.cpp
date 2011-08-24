@@ -100,9 +100,36 @@ convertVariantToR(nsIVariant * var)
      case nsIDataType::VTYPE_WSTRING_SIZE_IS:
       {
 	char *str;
-  fprintf(stderr, "JS->R: string type\n");fflush(stderr);
 	nr = var->GetAsString(&str);
-	ans = ScalarString(mkChar(str));
+	char *tmp2;
+	fprintf(stderr, "JS->R: string type. Checking for encoded SEXP object.\n");fflush(stderr);
+	//check for "_SEXP:Function_:"
+	char *tmp = strstr(str, "_SEXP:Function_:");
+	if (tmp)
+	  {
+	    char *tmp2 = str + 16;
+	    ans = (SEXP) atol(tmp2);
+	    fprintf(stderr, "R Function found.");fflush(stderr);
+	  }
+	else
+	  {
+	    tmp = strstr(str, "_SEXP:Object_:");
+	    
+	    if (tmp)
+	      {
+		fprintf(stderr, "R Object found."); fflush(stderr);
+		char *tmp2 = str + 14;
+		ans = (SEXP) atol(tmp2);
+
+	      }
+	    else
+	      {
+		fprintf(stderr, "No encoded SEXP found."); fflush(stderr);
+		
+		ans = ScalarString(mkChar(str));
+	      }
+	  }
+	  
       }
       break;
 
@@ -147,25 +174,6 @@ convertVariantToR(nsIVariant * var)
       break;
      default:
        {
-	 fprintf(stderr, "JS->R: no conversion for  variant\nChecking for wrapped R object: ");fflush(stderr);
-	JSContext *jscon = GetContextForR(0);
-	nsresult rv;
-
-	nsCOMPtr<nsIXPConnect> xpc_;
-	xpc_ = do_GetService("@mozilla.org/js/xpc/XPConnect;1", &rv);
-	JSClass *kl;
-	jsval val;
-	rv = xpc_->VariantToJS(jscon, JS_GetGlobalObject(jscon), var, &val);
-	kl = JS_GET_CLASS(jscon, JSVAL_TO_OBJECT(val)); 
-	if (kl -> name == "RFunction" || kl -> name == "RObject")
-	  {
-	    ans = (SEXP) JS_GetPrivate(jscon, JSVAL_TO_OBJECT(val));
-	    fprintf(stderr, "%s found.\n", kl -> name); fflush(stderr);
-	  }
-	else
-	  {
-	    fprintf(stderr, "No R objects found."); fflush(stderr);
-	  }
        }
        break;
   }
@@ -208,12 +216,20 @@ RElementAsVariant(SEXP ans, int index, nsIVariant **ret)
 	var->SetAsString(CHAR(STRING_ELT(ans, index)));
         
 	break;
+      case CLOSXP:
+	{
+	  char buf[255];
+	  sprintf(buf, "_SEXP:Function_:%ld", ans);
+	  fprintf(stderr, "R->JS: No conversion found. Object encoded in string as %s.", buf);
+	  var->SetAsString(buf);
+	}
+	break;
       default:
 	{
-	//it would be much easier to just construct the js object (jsval/JSObject) we want directly but then how do we return it?? Find and call the xpconnect conversion function directly?
+	//it would be much easier to just construct the js object (jsval/JSObject) we want directly but then how do we return it?? Find and call the xpconnect conversion function directly? This doesn't seem to work. My RFunction objects are showing back up as Array objects.
+
 	//nsIVariant JSToVariant(in JSContextPtr ctx, in jsval value); from nsIXPConnect, but we'll need to get that object (which I think will give us the context we need as well).
-	
-	char tmp[255];
+	  /*	
 	JSContext *jscon = GetContextForR(0);
 	nsresult rv;
 
@@ -232,6 +248,12 @@ RElementAsVariant(SEXP ans, int index, nsIVariant **ret)
 	*ret = funvar;
 	fprintf(stderr, "R->JS: No conversion found. Returning wrapped R object.");fflush(stderr);
 	return(NS_OK);
+	  */
+
+	  char buf[255];
+	  sprintf(buf, "_SEXP:Object:%ld", ans);
+	  fprintf(stderr, "R->JS: No conversion found. Object encoded in string as %s.", buf);
+	  var->SetAsString(buf);
 	}
 	break;
       }
@@ -390,6 +412,11 @@ convertVariantToRVector(nsIVariant * var)
 
     case nsXPTType::T_INTERFACE_IS:
     case nsXPTType::T_INTERFACE: {
+ 
+	    fprintf(stderr, "JS->R: No conversion found"); fflush(stderr);
+	
+
+
       nsISupports **ref = (nsISupports **)pthis;
        NS_ADDREF(*ref);
        SET_VECTOR_ELT(ans, i,  R_MakeJavaScriptReference(*ref));

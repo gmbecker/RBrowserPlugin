@@ -59,7 +59,7 @@ class NS_NO_VTABLE NS_SCRIPTABLE REvaluator : public nsISupports {
   NS_SCRIPTABLE NS_IMETHOD Remove(const char *var, nsIVariant **_retval NS_OUTPARAM) = 0;
 
   /* readonly attribute string version; */
-  NS_SCRIPTABLE NS_IMETHOD GetVersion(char * *aVersion) = 0;
+  NS_SCRIPTABLE NS_IMETHOD GetVersion(char **aVersion) = 0;
 
 };
 
@@ -76,7 +76,7 @@ class NS_NO_VTABLE NS_SCRIPTABLE REvaluator : public nsISupports {
   NS_SCRIPTABLE NS_IMETHOD Get(const char *var, nsIVariant **_retval NS_OUTPARAM); \
   NS_SCRIPTABLE NS_IMETHOD Assign(const char *var, nsIVariant *val, nsIVariant **_retval NS_OUTPARAM); \
   NS_SCRIPTABLE NS_IMETHOD Remove(const char *var, nsIVariant **_retval NS_OUTPARAM); \
-  NS_SCRIPTABLE NS_IMETHOD GetVersion(char * *aVersion); 
+  NS_SCRIPTABLE NS_IMETHOD GetVersion(char **aVersion); 
 
 /* Use this macro to declare functions that forward the behavior of this interface to another object. */
 #define NS_FORWARD_REVALUATOR(_to) \
@@ -89,7 +89,7 @@ class NS_NO_VTABLE NS_SCRIPTABLE REvaluator : public nsISupports {
   NS_SCRIPTABLE NS_IMETHOD Get(const char *var, nsIVariant **_retval NS_OUTPARAM) { return _to Get(var, _retval); } \
   NS_SCRIPTABLE NS_IMETHOD Assign(const char *var, nsIVariant *val, nsIVariant **_retval NS_OUTPARAM) { return _to Assign(var, val, _retval); } \
   NS_SCRIPTABLE NS_IMETHOD Remove(const char *var, nsIVariant **_retval NS_OUTPARAM) { return _to Remove(var, _retval); } \
-  NS_SCRIPTABLE NS_IMETHOD GetVersion(char * *aVersion) { return _to GetVersion(aVersion); } 
+  NS_SCRIPTABLE NS_IMETHOD GetVersion(char **aVersion) { return _to GetVersion(aVersion); } 
 
 /* Use this macro to declare functions that forward the behavior of this interface to another object in a safe way. */
 #define NS_FORWARD_SAFE_REVALUATOR(_to) \
@@ -102,7 +102,7 @@ class NS_NO_VTABLE NS_SCRIPTABLE REvaluator : public nsISupports {
   NS_SCRIPTABLE NS_IMETHOD Get(const char *var, nsIVariant **_retval NS_OUTPARAM) { return !_to ? NS_ERROR_NULL_POINTER : _to->Get(var, _retval); } \
   NS_SCRIPTABLE NS_IMETHOD Assign(const char *var, nsIVariant *val, nsIVariant **_retval NS_OUTPARAM) { return !_to ? NS_ERROR_NULL_POINTER : _to->Assign(var, val, _retval); } \
   NS_SCRIPTABLE NS_IMETHOD Remove(const char *var, nsIVariant **_retval NS_OUTPARAM) { return !_to ? NS_ERROR_NULL_POINTER : _to->Remove(var, _retval); } \
-  NS_SCRIPTABLE NS_IMETHOD GetVersion(char * *aVersion) { return !_to ? NS_ERROR_NULL_POINTER : _to->GetVersion(aVersion); } 
+  NS_SCRIPTABLE NS_IMETHOD GetVersion(char **aVersion) { return !_to ? NS_ERROR_NULL_POINTER : _to->GetVersion(aVersion); } 
 
 #if 0
 /* Use the code below as a template for the implementation class for this interface. */
@@ -191,7 +191,7 @@ NS_IMETHODIMP _MYCLASS_::Remove(const char *var, nsIVariant **_retval NS_OUTPARA
 }
 
 /* readonly attribute string version; */
-NS_IMETHODIMP _MYCLASS_::GetVersion(char * *aVersion)
+NS_IMETHODIMP _MYCLASS_::GetVersion(char **aVersion)
 {
     return NS_ERROR_NOT_IMPLEMENTED;
 }

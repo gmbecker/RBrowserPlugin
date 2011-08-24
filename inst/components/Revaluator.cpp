@@ -75,8 +75,6 @@ REvaluatorImpl::Init(const char **args, PRUint32 nargs, PRBool *_retval)
   if(isInitialized)
     return(NS_OK);
 
-
-
   R_getServiceManager();
 
   rargs = (char **) malloc(nargs * sizeof(char *));
@@ -94,32 +92,7 @@ REvaluatorImpl::Init(const char **args, PRUint32 nargs, PRBool *_retval)
   Rf_PrintValue(Rf_eval(e, R_GlobalEnv));
 #endif
 
-  //We're going to want to ifdef this out because it is only required on
-  // linux (ubuntu specifically), so far. If both Mac and Windows don't 
-  // need it then it is a large waste of memory on those OSes.
-  /* 
-void *h = dlopen("/home/gmbecker/Downloads/R-2.12.0/lib/libR.so", RTLD_NOW);
-  if(h == NULL)
-    PROBLEM "dlopen failed" ERROR;
-
-  Rf__INTEGER = (R_INT_PTR)dlsym(h, "INTEGER");
-  if (Rf__INTEGER == NULL)
-    PROBLEM "dlsym failed" ERROR;
-  */
-  /* Testing Gabe */
-
-#if 0  
-  SEXP test;
-  PROTECT(test = allocVector(INTSXP, 5));
-  int *tmp = Rf__INTEGER(test); //-Bstatic when linking libR does not seem to have helped, -static causes linking to fail altogether
-  tmp[1]=5;
-  Rf_PrintValue(test);
-  //fprintf(stderr, "INTEGER test: %d\n", INTEGER(test)[0]);
-  UNPROTECT(1);
-#endif
- 
-  //Loading RFirefox (which loads SpiderMonkey. We need these for
-  //parseEval and JSContextRef class.
+  //Loading RFirefox
   nsIVariant *retval;
   this -> Library("RFirefox", &retval);
   PRBool loaded;
@@ -163,12 +136,13 @@ REvaluatorImpl::Call1(const char *funName, nsIVariant *arg, nsIVariant **_retval
   //we seem to need the internal version of strings, etc here. Including nsContentUtils.h without them causes errors. nsIContentUtils does not contain the class we need for the variable argument call method
 //#include <nsContentUtils.h>
 
+
+
 nsresult
 //We have to get the arguments from the javascript call through xpconnect. see nsGlobalWindow::OpenDialog in nsGlobalWindow.cpp
 REvaluatorImpl::Call(const char *funName, nsIVariant **_retval)
 {
 
-#if TRUE
   SEXP ans, e, p;
   int wasError = 0;
   nsresult rv;
@@ -178,6 +152,7 @@ REvaluatorImpl::Call(const char *funName, nsIVariant **_retval)
     fprintf(stderr, "Empty function name in Call\n");fflush(stderr);
     return(NS_ERROR_BASE);
   }
+  
   
   //From nsGClobalWindow.cpp
   //if (!nsContentUtils::IsCallerTrustedForWrite()) {
@@ -212,7 +187,21 @@ REvaluatorImpl::Call(const char *funName, nsIVariant **_retval)
   //  fprintf(stderr, "Calling function %s\n", funName);fflush(stderr);
   PROTECT(e = allocVector(LANGSXP, argc));
 
-  SETCAR(e, Rf_install( funName ) ); 
+  fprintf(stderr, "Checking for encoded SEXP in name string.\n"); fflush(stderr);
+
+  char *ctmp = strstr((char *) funName, "_SEXP:Function_:");
+  int prot = 3;
+  if(ctmp)
+    {
+      fprintf(stderr, "Encoded SEXP found.");fflush(stderr);
+      SEXP Rtmp;
+      PROTECT(Rtmp = (SEXP) atol(funName + 16));
+      SETCAR(e, Rtmp);
+      prot = 4;
+    } else {
+
+    SETCAR(e, Rf_install( funName ) ); 
+  }
   nsIVariant *tmp;
   PROTECT( p = e );
 
@@ -227,11 +216,74 @@ REvaluatorImpl::Call(const char *funName, nsIVariant **_retval)
   PROTECT(ans = R_tryEval( e , R_GlobalEnv , &wasError ) );//gabe added PROTECT
 
   convertRToVariant( ans , _retval );
-  UNPROTECT(3); //gabe added;
-#endif
+  UNPROTECT(prot); //gabe added;
+
   return(NS_OK);
 }
 
+/*
+nsresult
+REvaluatorImpl::Calld(nsIVariant *fun, nsIVariant **_retval)
+{
+
+  SEXP ans, e, p, Rfun;
+  int wasError = 0;
+  nsresult rv;
+  
+  //From nsGClobalWindow.cpp
+  //if (!nsContentUtils::IsCallerTrustedForWrite()) {
+  //  return NS_ERROR_BASE;
+  // }
+  
+  nsCOMPtr<nsIXPConnect> xpc_;
+  xpc_ = do_GetService("@mozilla.org/js/xpc/XPConnect;1", &rv);
+
+  nsAXPCNativeCallContext *ncc = nsnull;
+
+  rv = xpc_ -> GetCurrentNativeCallContext(&ncc);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  if (!ncc)
+    return NS_ERROR_NOT_AVAILABLE;
+
+  JSContext *cx = nsnull;
+
+  rv = ncc->GetJSContext(&cx);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  PRUint32 argc;
+  jsval *argv = nsnull;
+
+  // XXX - need to get this as nsISupports?
+  ncc->GetArgc(&argc);
+  ncc->GetArgvPtr(&argv);
+
+  fprintf(stderr, "argc: %u", argc); fflush(stderr);
+ 
+  //  fprintf(stderr, "Calling function %s\n", funName);fflush(stderr);
+  PROTECT(Rfun = convertVariantToR(fun));
+  PROTECT(e = allocVector(LANGSXP, argc));
+
+  SETCAR(e, Rfun ); 
+  nsIVariant *tmp;
+  PROTECT( p = e );
+
+  
+  for (int i=1; i < argc; i++) 
+    {
+      p = CDR( p );
+      rv = xpc_ -> JSToVariant(cx, argv[i], &tmp);
+      SETCAR( p , convertVariantToR( tmp ) );
+    }
+  Rf_PrintValue(e);
+  PROTECT(ans = R_tryEval( e , R_GlobalEnv , &wasError ) );//gabe added PROTECT
+
+  convertRToVariant( ans , _retval );
+  UNPROTECT(4); //gabe added;
+
+  return(NS_OK);
+}
+*/
 #include "nsCOMPtr.h"
 //#include <xpcom/nsComponentManagerUtils.h>
 #include <nsComponentManagerUtils.h>

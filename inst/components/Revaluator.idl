@@ -9,7 +9,11 @@ interface REvaluator : nsISupports {
 
     /* Invoke the function by name with just one argument */
   nsIVariant call1(in string funName, in nsIVariant arg);
+  /*Invoke the function by name with any/variable number of arguments*/
   nsIVariant call(in string funName); //have to grab the variable number of arguments from javascript via xpconnect
+  /*Invoke the function directly by extracting a SEXP from an RFunction JS object */
+  //This isn't need. We pass SEXPs encoded as strings into call.
+  //nsIVariant calld(in nsIVariant fun);
 
   nsIVariant library(in string library);
 
