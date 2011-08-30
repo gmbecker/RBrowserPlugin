@@ -18,15 +18,11 @@ Gabriel Becker
 
        This is a known issue which will be fixed in future releases. For now the only solution is to only open one R enabled website at a time.
 
-   2b. Firefox crashes as soon as I try to load a webpage which uses the extension.
+   2b. Firefox crashes as soon as I enter the Firefox profile in which I have RFirefox install
 
        It is possible that the R_HOME environmental variable is not being set properly (this is required to start the embedded R instance). For now, be sure you are using a properly edited copy of the runfirefox.sh script provided in the package to start firefox with the appropriate environtmental variables set (see installation instructions).
 
    2c. Some R code (eg the tests/examples provided) works but other R enabled pages cause firefox to crash.
-       
-       Any uncaught (eg not inside a try or tryCatch call) R error will cause firefox to crash. This is not an issue with RFirefox, but rather with the embedding mechanism for the R engine, and as such is somewhat out of our control. In the future we may figure out a way around this, but for now it is advised that you wrap all R code being called from javascript/evaluated in javascript in tryCatch blocks.
-
-   2d. I have wrapped all my code in tryCatch blocks and it still crashes.
 
        It is likely you are running into a memory management issue with the javascript engine. We are trying to automate memory management as much as possible, so this should not happen unless you have chosen have altered the default behavior. 
 
@@ -57,6 +53,6 @@ Gabriel Becker
    
        Currently whenever an element is rooted, a finalizer is created to unroot it when the R object is removed (garbage collected), thus users should not need to worry about removing a root once it is created.
 
-     2e. I am trying to call up to a method in the Raphael library to change an existing plot during an R event handling function.
+     2d. I am trying to call up to a method in the Raphael library to change an existing plot during an R event handling function.
      	 We know about this issue (there are tests in the test directory which currently fail do to this reason. We are working on the problem and will fix it as soon as possible.
 
