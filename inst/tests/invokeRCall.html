@@ -15,6 +15,10 @@
       but = getElementById(ScriptCon, "fromR");
       args = list("RFun", but, "click", 1)
       call_JS_Method(ScriptCon, JS_GetGlobalObject(ScriptCon), "addREventHandler", args, addRoot = FALSE);
+      but2 = getElementById(ScriptCon, "fromR2");
+      args[[1]] = RFun
+      args[[2]] = but2
+      call_JS_Method(ScriptCon, JS_GetGlobalObject(ScriptCon), "addREventHandler", args, addRoot = FALSE);
 
     </script>
     <script type="text/javascript">
@@ -47,6 +51,11 @@
       but.addEventListener("click",fun, false, true);
 
       }
+      
+      function clearButton()
+      {
+      document.getElementById("test1").innerHTML = "";
+      }
     </script>
   </head>
   <body onload="doAdd();">
@@ -58,6 +67,9 @@
     <input type="button" onclick="jsREventHandler('RFun', 1);">Production Code</input>
     <input type="button" id="withadd">Using addEventListener</input>
     <input type="button" id="fromR">Listener Added From R</input>
+    <input type="button" id="fromR2">From R with Function Object</input>
+    <br />
+    <input type="button" onclick="clearButton();">Clear Result</input>
  
 </body>
 </html>

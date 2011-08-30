@@ -7,7 +7,7 @@ GCC_FLAGS=-fshort-wchar
 # The symbol is still undefined. But the python extension uses it!
 # -DXPCOM_GLUE_USE_NSPR=1 
 #-lnspr4
-EXTRAFLAGS=-fPIC   -fno-rtti -fno-exceptions -Wall -Wpointer-arith -Woverloaded-virtual -Wsynth -Wno-ctor-dtor-privacy -Wno-non-virtual-dtor -Wcast-align -Wno-invalid-offsetof -Wno-long-long -pedantic -fno-strict-aliasing -fshort-wchar -pthread -pipe  -DNDEBUG -DTRIMMED -Os -freorder-blocks -fno-reorder-functions  -pthread -D_REENTRANT     -DMOZILLA_CLIENT
+EXTRAFLAGS=-fPIC   -fno-exceptions -Wall -Wpointer-arith -Wcast-align  -Wno-long-long -pedantic -fno-strict-aliasing -fshort-wchar -pthread -pipe  -DNDEBUG -DTRIMMED -Os -freorder-blocks -fno-reorder-functions  -pthread -D_REENTRANT     -DMOZILLA_CLIENT
 
 PKG_CPPFLAGS= -DXPCOM_GLUE  $(GCC_FLAGS)  -I$(XUL_SDK)/include/xpcom -I$(XUL_SDK)/include -I$(XUL_SDK)/include/xpconnect -I$(XUL_SDK)/include/js -I$(XUL_SDK)/include/content  -I$(XUL_SDK)/include/widget -I$(XUL_SDK)/include/dom -I$(XUL_SDK)/include/layout -I$(XUL_SDK)/sdk/include -I$(XUL_SDK)/include -Wl,--warn-unresolved-symbols $(EXTRAFLAGS) 
 

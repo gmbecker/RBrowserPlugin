@@ -73,7 +73,7 @@ R_JS_ValueToObject(SEXP con, SEXP valptr, SEXP _retobj)
 ret = (JSObject *) R_ExternalPtrAddr( GET_SLOT( _retobj , Rf_install( "ref" ) ) );
 
   JSBool success = JS_ValueToObject(jscon, *val, &ret);
-  JS_AddValueRoot(jscon, &ret);
+  JS_AddObjectRoot(jscon, &ret);
   JSClass *class = JS_GET_CLASS(jscon, ret);
   fprintf(stderr, "resulting object class: %s\n", class->name);fflush(stderr);
   if (!success)
@@ -199,8 +199,7 @@ SEXP
 R_InspectJSClass(SEXP con, SEXP Rclass)
 {
   JSClass *class = (JSClass *) R_ExternalPtrAddr( GET_SLOT( Rclass , Rf_install( "ref" ) ) );
-  JSContext *jscon = (JSContext *) R_ExternalPtrAddr(GET_SLOT( con , Rf_install( "ref" ) ) );
-
+ 
   fprintf(stderr, "class name: %s\n", class->name); fflush(stderr);
 
   return ScalarLogical(TRUE);
@@ -211,7 +210,7 @@ SEXP
 R_JS_GetClass(SEXP con, SEXP Robj)
 {
 
-  JSObject *obj = (JSClass *) R_ExternalPtrAddr( GET_SLOT( Robj , Rf_install( "ref" ) ) );
+  JSObject *obj = (JSObject *) R_ExternalPtrAddr( GET_SLOT( Robj , Rf_install( "ref" ) ) );
   JSContext *jscon = (JSContext *) R_ExternalPtrAddr(GET_SLOT( con , Rf_install( "ref" ) ) );
 
   JSClass *class = JS_GET_CLASS(jscon, obj);
@@ -233,9 +232,9 @@ SEXP
 R_JS_CallFunctionName(SEXP con, SEXP Rparent, SEXP Rname,
 		      SEXP Rargc, SEXP Rargv, SEXP Rret)
 {
-  JSObject *par = (JSClass *) R_ExternalPtrAddr( GET_SLOT( Rparent , Rf_install( "ref" ) ) );
+  JSObject *par = (JSObject *) R_ExternalPtrAddr( GET_SLOT( Rparent , Rf_install( "ref" ) ) );
   JSContext *jscon = (JSContext *) R_ExternalPtrAddr(GET_SLOT( con , Rf_install( "ref" ) ) );
-  const char * name = CHARACTER_DATA(STRING_ELT(Rname, 0));
+  const char * name = CHAR(STRING_ELT(Rname, 0));
   int argc = INTEGER(Rargc)[0];
 
   jsval *ret = (jsval *) R_ExternalPtrAddr( GET_SLOT( Rret , Rf_install( "ref" ) ) );

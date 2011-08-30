@@ -62,7 +62,7 @@ R_GetPropertyCh(SEXP Rcon, SEXP Robjptr, SEXP Rname, SEXP Rret)
 }
   
 SEXP
-R_Call_JS_Method(SEXP Rcon, SEXP Robjptr, SEXP Rname, SEXP Rargs, SEXP Rtypes, SEXP RobjIsVal, SEXP Rout)
+R_Call_JS_Method(SEXP Rcon, SEXP Robjptr, SEXP Rname, SEXP Rargs, SEXP RobjIsVal, SEXP Rout)
 {  
   unsigned int n = (unsigned int) LENGTH(Rargs);
   JSBool success;
@@ -89,13 +89,90 @@ R_Call_JS_Method(SEXP Rcon, SEXP Robjptr, SEXP Rname, SEXP Rargs, SEXP Rtypes, S
   jsval tmpval;
   JS_AddValueRoot(jscon, &tmpval);
   
-  jsval *tmpval2;
   //JS_AddRoot(jscon, tmpval2);
-  int curtype;
   int strrooted = 0;
-  
+  SEXP tmp;
+  const char *kl;
+  PROTECT(tmp = R_NilValue);
   for (int i = 0; i < n; i++)
     {
+      tmp = VECTOR_ELT(Rargs, i);
+
+      switch(TYPEOF(tmp)) {
+
+      case LGLSXP:  
+	fprintf(stderr, "R->JS: logical %d\n", LOGICAL(tmp)[0]);fflush(stderr);
+	args[i] = BOOLEAN_TO_JSVAL(LOGICAL(tmp)[0]);
+	break;
+      case INTSXP:  
+	  fprintf(stderr, "R->JS: integer %d\n", INTEGER(tmp) [0]);fflush(stderr);
+	  args[i] = INT_TO_JSVAL( INTEGER( tmp ) [ 0 ] );
+	  break;
+      case REALSXP:  
+          fprintf(stderr, "R->JS: numeric %lf\n", REAL( tmp )[0]);fflush(stderr);
+	  JS_NewNumberValue(jscon, (jsdouble) REAL( tmp )[ 0 ] , &tmpval  );
+	  args[i] = tmpval;
+	  
+          break;
+      case STRSXP:  
+	{
+	fprintf(stderr, "R->JS: character %s\n", CHAR(STRING_ELT(tmp, 0)));fflush(stderr);
+	tmpstr = JS_NewStringCopyZ( jscon , CHAR( STRING_ELT( tmp , 0) ) );
+	  
+	  if (!strrooted)
+	    {
+	      JS_AddStringRoot(jscon, &tmpstr);
+	      strrooted = 1;
+	    }
+	  
+	  //JS_AddRoot(jscon, &tmpstr);
+	  args[i]  = STRING_TO_JSVAL(tmpstr);
+	}
+	  break;
+      case CLOSXP:
+	{
+	  char buf[255];
+	  sprintf(buf, "_SEXP:Function_:%ld", tmp);
+	  fprintf(stderr, "R->JS: No conversion found. Object encoded in string as %s.", buf);fflush(stderr);
+	  tmpstr = JS_NewStringCopyZ( jscon , buf ) ;
+	  
+	  if (!strrooted)
+	    {
+	      JS_AddStringRoot(jscon, &tmpstr);
+	      strrooted = 1;
+	    }
+	  
+	  //JS_AddRoot(jscon, &tmpstr);
+	  args[i]  = STRING_TO_JSVAL(tmpstr);
+	  
+	}
+	break;
+      default:
+	{
+	  kl = CHAR(asChar(getAttrib(tmp, R_ClassSymbol)));
+	  if ( strstr(kl, "jsvalRef"))
+	    args[i] = *((jsval *) R_ExternalPtrAddr( GET_SLOT( tmp , Rf_install( "ref" ) ) )); 
+	  else
+	    {
+	      
+	  char buf[255];
+	  sprintf(buf, "_SEXP:Object:%ld", tmp);
+	  fprintf(stderr, "R->JS: No conversion found. Object encoded in string as %s.", buf);fflush(stderr);
+	  tmpstr = JS_NewStringCopyZ( jscon , buf ) ;
+	  
+	if (!strrooted)
+	    {
+	      JS_AddStringRoot(jscon, &tmpstr);
+	      strrooted = 1;
+	    }
+	  
+	  //JS_AddRoot(jscon, &tmpstr);
+	args[i]  = STRING_TO_JSVAL(tmpstr);
+	    }
+	}
+	break;
+      }
+      /*
       curtype = INTEGER(Rtypes)[i];
       switch ( curtype )
 	{
@@ -128,7 +205,11 @@ R_Call_JS_Method(SEXP Rcon, SEXP Robjptr, SEXP Rname, SEXP Rargs, SEXP Rtypes, S
 	  tmpval2 = (jsval *)  R_ExternalPtrAddr( GET_SLOT( VECTOR_ELT( Rargs , i ) , Rf_install( "ref" ) ) );  
 	  args[i] = *tmpval2;
 	  break;
+	default:
+	  
 	}
+      */
+      
 	  
      JS_AddValueRoot(jscon, &(args[i]));
     }
@@ -142,10 +223,11 @@ R_Call_JS_Method(SEXP Rcon, SEXP Robjptr, SEXP Rname, SEXP Rargs, SEXP Rtypes, S
     JS_RemoveStringRoot(jscon, &tmpstr);
   JS_RemoveValueRoot(jscon, &tmpval);
   //JS_RemoveRoot(jscon, tmpval2);
-for(int j = 0; j < n; j++)
-  JS_RemoveValueRoot(jscon, &(args[j]));
-  
-  return ScalarLogical(success);
+  for(int j = 0; j < n; j++)
+    JS_RemoveValueRoot(jscon, &(args[j]));
+ 
+ UNPROTECT(1);
+ return ScalarLogical(success);
 }
   
 

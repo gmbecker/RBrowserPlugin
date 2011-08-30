@@ -104,8 +104,8 @@ convertVariantToR(nsIVariant * var)
 	char *tmp2;
 	fprintf(stderr, "JS->R: string type. Checking for encoded SEXP object.\n");fflush(stderr);
 	//check for "_SEXP:Function_:"
-	char *tmp = strstr(str, "_SEXP:Function_:");
-	if (tmp)
+	char *tmp = strstr(str, "SEXP:Function_:");
+	if (tmp != NULL)
 	  {
 	    char *tmp2 = str + 16;
 	    ans = (SEXP) atol(tmp2);

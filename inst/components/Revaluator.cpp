@@ -127,17 +127,16 @@ REvaluatorImpl::Call1(const char *funName, nsIVariant *arg, nsIVariant **_retval
 
   PROTECT(ans = R_tryEval(e, R_GlobalEnv, &wasError));//gabe added PROTECT
 
-  convertRToVariant(ans, _retval);
+  if(!wasError)
+    convertRToVariant(ans, _retval);
+  else
+    convertRToVariant(R_NilValue, _retval);
   UNPROTECT(2); //gabe added;
   return(NS_OK);
 }
 
 
-  //we seem to need the internal version of strings, etc here. Including nsContentUtils.h without them causes errors. nsIContentUtils does not contain the class we need for the variable argument call method
-//#include <nsContentUtils.h>
-
-
-
+ 
 nsresult
 //We have to get the arguments from the javascript call through xpconnect. see nsGlobalWindow::OpenDialog in nsGlobalWindow.cpp
 REvaluatorImpl::Call(const char *funName, nsIVariant **_retval)
@@ -215,7 +214,10 @@ REvaluatorImpl::Call(const char *funName, nsIVariant **_retval)
   Rf_PrintValue(e);
   PROTECT(ans = R_tryEval( e , R_GlobalEnv , &wasError ) );//gabe added PROTECT
 
-  convertRToVariant( ans , _retval );
+  if (!wasError)
+    convertRToVariant( ans , _retval );
+  else
+    convertRToVariant( R_NilValue , _retval );
   UNPROTECT(prot); //gabe added;
 
   return(NS_OK);
@@ -350,7 +352,10 @@ REvaluatorImpl::Eval(const char *funName, nsIVariant **_retval)
 
   PROTECT(ans = R_tryEval(e, R_GlobalEnv, &errorOccurred)); //gabe added PROTECT
   
-  convertRToVariant(ans, _retval);
+  if(!errorOccurred)
+    convertRToVariant(ans, _retval);
+  else
+    convertRToVariant( R_NilValue, _retval ) ;
   UNPROTECT(2);
 
   

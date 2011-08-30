@@ -13,7 +13,6 @@
   
   glob = JS_GetGlobalObject(ScriptCon, returnInputs=FALSE)
   print(paste("glob class: ", class(glob), "\n"))
-  JS_AddRoot(ScriptCon, glob)
   res1 = call_JS_Method(ScriptCon, glob, "testfun", list("char", "hi there"))
   res2 = call_JS_Method(ScriptCon, glob, "testfun", list("int", 5L))
   res3 = call_JS_Method(ScriptCon, glob, "testfun", list("numeric", pi))

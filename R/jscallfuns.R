@@ -28,24 +28,9 @@ call_JS_Method = function(con, obj, name, args, addRoot = TRUE, multArgs = TRUE)
     else
       isval = FALSE
     
-    types = sapply(args,
-      function(x)
-      {
-        if(is(x, "character"))
-          1L
-        else if (is(x, "integer"))
-          2L
-        else if (is(x, "numeric"))
-          3L
-        else if (class(x) == "jsvalRef")
-          4L
-        else
-          stop("unsupported class detected: ", class(x))
-      })
     out = jsVal()
     JS_AddRoot(con, out)
-    #.Call("R_Call_JS_Method", con, obj, name, args, types, isval, out)
-    .Call(calljsmeth, con, obj, name, args, types, isval, out)
+     .Call(calljsmeth, con, obj, name, args, isval, out)
     if(!addRoot)
       {
         rm(out)

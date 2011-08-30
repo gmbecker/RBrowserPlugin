@@ -62,7 +62,7 @@ function ExtjsREventHandler( evt)
     var value = evt.target.getAttribute("RFunValue");// RFirefoxData.getAttribute("FunValue");
     //  alert("name:" + name + " value:" + value + " target:" + evt.target) ;
     var out;
-    Rev.call1(name, value,  out);
+    out = Rev.call(name, value);
 }
 
 function addREventHandler( name, targ, event, arg)
