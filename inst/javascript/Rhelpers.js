@@ -30,9 +30,10 @@ function jsREventHandler( name, value)
 	    RFirefoxData = document.getElementById("RFirefoxCallData");
 	}
     RFirefoxData.setAttribute("RFunName", name);
-    RFirefoxData.setAttribute("RFunValue", value);
+    RFirefoxData.setAttribute("RFunValue", JSON.stringify(value));
     
-        RFirefoxData.dispatchEvent(evt);
+    RFirefoxData.dispatchEvent(evt);
+    return JSON.parse(RFirefoxData.getAttribute("RResult"));
     
     //    Rev.call1(name, value,  out);
 }

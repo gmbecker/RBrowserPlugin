@@ -19,6 +19,7 @@ typedef bool boolean;
 
 SEXP convertVariantToR(nsIVariant * var);
 boolean convertRToVariant(SEXP ans, nsIVariant **_returnValue);
+SEXP CheckForSEXPFun( const char *fun );
 
 typedef int*(*R_INT_PTR)(SEXP);
 

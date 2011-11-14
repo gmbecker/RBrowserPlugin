@@ -25,6 +25,9 @@
 //#include "nsIServiceManager.h"
 #include "nsServiceManagerUtils.h"
 
+//From src directory of package
+#include "JSConversions.h"
+
 NS_IMPL_ISUPPORTS1(REvaluatorImpl, REvaluator)
 
 void R_getServiceManager();
@@ -151,7 +154,7 @@ REvaluatorImpl::Call(const char *funName, nsIVariant **_retval)
     fprintf(stderr, "Empty function name in Call\n");fflush(stderr);
     return(NS_ERROR_BASE);
   }
-  
+ 
   
   //From nsGClobalWindow.cpp
   //if (!nsContentUtils::IsCallerTrustedForWrite()) {
@@ -185,22 +188,8 @@ REvaluatorImpl::Call(const char *funName, nsIVariant **_retval)
  
   //  fprintf(stderr, "Calling function %s\n", funName);fflush(stderr);
   PROTECT(e = allocVector(LANGSXP, argc));
+  SETCAR(e, CheckForSEXPFun(funName));
 
-  fprintf(stderr, "Checking for encoded SEXP in name string.\n"); fflush(stderr);
-
-  char *ctmp = strstr((char *) funName, "_SEXP:Function_:");
-  int prot = 3;
-  if(ctmp)
-    {
-      fprintf(stderr, "Encoded SEXP found.");fflush(stderr);
-      SEXP Rtmp;
-      PROTECT(Rtmp = (SEXP) atol(funName + 16));
-      SETCAR(e, Rtmp);
-      prot = 4;
-    } else {
-
-    SETCAR(e, Rf_install( funName ) ); 
-  }
   nsIVariant *tmp;
   PROTECT( p = e );
 
@@ -218,17 +207,16 @@ REvaluatorImpl::Call(const char *funName, nsIVariant **_retval)
     convertRToVariant( ans , _retval );
   else
     convertRToVariant( R_NilValue , _retval );
-  UNPROTECT(prot); //gabe added;
+  UNPROTECT(3); //gabe added;
 
   return(NS_OK);
 }
 
-/*
 nsresult
-REvaluatorImpl::Calld(nsIVariant *fun, nsIVariant **_retval)
+REvaluatorImpl::ListCall(const char *fun, nsIVariant **_retval)
 {
 
-  SEXP ans, e, p, Rfun;
+  SEXP ans, e, p, Rfun, args;
   int wasError = 0;
   nsresult rv;
   
@@ -254,7 +242,7 @@ REvaluatorImpl::Calld(nsIVariant *fun, nsIVariant **_retval)
   NS_ENSURE_SUCCESS(rv, rv);
 
   PRUint32 argc;
-  jsval *argv = nsnull;
+  jsval *argv = nsnull;  
 
   // XXX - need to get this as nsISupports?
   ncc->GetArgc(&argc);
@@ -263,29 +251,32 @@ REvaluatorImpl::Calld(nsIVariant *fun, nsIVariant **_retval)
   fprintf(stderr, "argc: %u", argc); fflush(stderr);
  
   //  fprintf(stderr, "Calling function %s\n", funName);fflush(stderr);
-  PROTECT(Rfun = convertVariantToR(fun));
-  PROTECT(e = allocVector(LANGSXP, argc));
+  PROTECT(e = allocVector(LANGSXP, 3));
 
-  SETCAR(e, Rfun ); 
-  nsIVariant *tmp;
+  SETCAR(e, Rf_install("do.call"));
   PROTECT( p = e );
-
+  p = CDR( p );
+  SETCAR(p, CheckForSEXPFun(fun) ); 
+  p = CDR( p );
+  jsval *tmp = (jsval *) &(argv[1]);
+  JS_AddValueRoot(cx, tmp);
   
-  for (int i=1; i < argc; i++) 
-    {
-      p = CDR( p );
-      rv = xpc_ -> JSToVariant(cx, argv[i], &tmp);
-      SETCAR( p , convertVariantToR( tmp ) );
-    }
+  PROTECT(args = JSRefToR(cx, tmp));
+  if(TYPEOF(args) != VECSXP)
+    args = AS_LIST(args);
+  SETCAR(p, args );
+    
   Rf_PrintValue(e);
   PROTECT(ans = R_tryEval( e , R_GlobalEnv , &wasError ) );//gabe added PROTECT
-
+  
   convertRToVariant( ans , _retval );
-  UNPROTECT(4); //gabe added;
-
+  JS_RemoveValueRoot(cx, tmp);
+  UNPROTECT(3); //gabe added;
+  
   return(NS_OK);
 }
-*/
+
+
 #include "nsCOMPtr.h"
 //#include <xpcom/nsComponentManagerUtils.h>
 #include <nsComponentManagerUtils.h>
@@ -801,86 +792,7 @@ JSBool FunCallTest(nsIPrincipal *principal, JSContext *con)
  
  return success;
 }
-/*
-nsresult doContextPush(nsIPrincipal *principal, JSContext *jscon)
-{
-  nsresult rv;
-  nsCOMPtr<nsIScriptSecurityManager> secManOld = 
-    do_GetService(NS_SCRIPTSECURITYMANAGER_CONTRACTID, &rv);  
 
-  nsCOMPtr<nsIScriptSecurityManager_1_9_2> secMan = do_QueryInterface(secManOld, &rv);
-  if (NS_FAILED(rv)) {
-    fprintf(stderr, "Failed to get Script Security Manager 1.9.2: %u \n", rv); fflush(stderr);
-    return(JS_FALSE);
-  }
- 
-  JSObject * glob = JS_GetGlobalObject(jscon);
-  
-  JSPrincipals *jsprinc;
-  principal -> GetJSPrincipals( jscon , &jsprinc);
-  //We need to do JSPRINCIPALS_DROP before returning as per nsJSEnvironment.cpp;
-
-  
-  PRBool ok = PR_FALSE;
-  rv = secMan -> CanExecuteScripts(jscon, principal, &ok);
-  
-  if (NS_FAILED( rv ) )
-    {
-      JSPRINCIPALS_DROP( jscon, jsprinc );
-      fprintf(stderr, "CanExecuteScripts failed."); fflush( stderr );
-    }
-
-  nsCOMPtr<nsIJSContextStack> stack =
-    do_GetService("@mozilla.org/js/xpc/ContextStack;1", &rv);
-
-  
-  if (NS_FAILED(rv) || NS_FAILED( stack -> Push( jscon ) ) ) {
-    JSPRINCIPALS_DROP( jscon , jsprinc );
-    fprintf(stderr, "Failed to push context onto context stack."); fflush( stderr );
-    }		 
-  
-  rv = secMan -> PushContextPrincipal( jscon, nsnull, principal);
-  if ( NS_FAILED(rv) )
-    {
-      JSPRINCIPALS_DROP( jscon , jsprinc );
-      fprintf(stderr, "Failed To push context principal"); fflush( stderr );
-    }
-  return rv;
-}
-
-nsresult doContextPop(nsIPrincipal *principal, JSContext *jscon)
-{
-  nsresult rv;
-  nsCOMPtr<nsIScriptSecurityManager> secManOld = 
-    do_GetService(NS_SCRIPTSECURITYMANAGER_CONTRACTID, &rv);  
-  
-  nsCOMPtr<nsIScriptSecurityManager_1_9_2> secMan = do_QueryInterface(secManOld, &rv);
-  if (NS_FAILED(rv)) {
-    fprintf(stderr, "Failed to get Script Security Manager 1.9.2: %u \n", rv); fflush(stderr);
-  }
-  
-  secMan -> PopContextPrincipal( jscon );  
-
-  nsCOMPtr<nsIJSContextStack> stack =
-    do_GetService("@mozilla.org/js/xpc/ContextStack;1", &rv);
-
-  JSPrincipals *jsprinc;
-  principal -> GetJSPrincipals( jscon , &jsprinc);
-  
-  if (NS_FAILED(rv))
-    {
-      fprintf(stderr, "Failed to grab JSContextStack: %u", rv); fflush(stderr);
-    }
-  
-  if ( NS_FAILED( stack -> Pop( nsnull ) ) )
-    {
-      fprintf( stderr , "Failed to pop context off of stack."); fflush( stderr );
-    }
-  
-  JSPRINCIPALS_DROP( jscon , jsprinc );
-
-}
-*/
 JSBool TestJSContextFunCall(nsIPrincipal *principal, JSContext *jscon)
 {
   //doContextPush(principal, jscon);
@@ -946,4 +858,22 @@ nsresult rv;
   globj = doc -> GetScriptGlobalObject();
   NS_IF_ADDREF(globj);
   return globj;
+} 
+
+SEXP CheckForSEXPFun( const char *funName )
+{
+
+  fprintf(stderr, "Checking for encoded SEXP in name string.\n"); fflush(stderr);
+  SEXP ret;
+  char *ctmp = strstr((char *) funName, "_SEXP:Function_:");
+  if(ctmp)
+    {
+      fprintf(stderr, "Encoded SEXP function found.");fflush(stderr);
+      PROTECT( ret = (SEXP) atol( funName + 16 ) );
+    } else {
+    PROTECT(ret = Rf_install(funName));
+  }
+  
+  UNPROTECT(1);
+  return(ret);
 }

@@ -59,10 +59,18 @@ function ExtjsREventHandler( evt)
     //alert("In ExtjsREventHandler");
     //var RFirefoxData = content.document.getElementById("RFirefoxCallData");
     var name = evt.target.getAttribute("RFunName");//RFirefoxData.getAttribute("FunName");
-    var value = evt.target.getAttribute("RFunValue");// RFirefoxData.getAttribute("FunValue");
+    var value = JSON.parse(evt.target.getAttribute("RFunValue"));// RFirefoxData.getAttribute("FunValue");
     //  alert("name:" + name + " value:" + value + " target:" + evt.target) ;
+    if(!(value instanceof Array))
+	{
+	    var tmp = [];
+	    tmp[0] = value;
+	    value = tmp;
+	}
     var out;
-    out = Rev.call(name, value);
+    out = Rev.listCall(name, value);
+    evt.target.setAttribute("RResult", JSON.stringify(out));
+    return 0;
 }
 
 function addREventHandler( name, targ, event, arg)

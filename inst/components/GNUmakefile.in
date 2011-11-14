@@ -57,7 +57,7 @@ NEW_LDFLAGS= -L$(GECKO_SDK)/lib -lnspr4 -lplc4 -lxpcom -lxul
 
 NEW_LD_LIBS= -lxpcom -lplc4 -lnspr4 -lxul
 
-OBJ_FILES=Revaluator.o RevaluatorModule.o RVariants.o
+OBJ_FILES=Revaluator.o RevaluatorModule.o RVariants.o JSConversions.o
 
 
 
@@ -79,8 +79,10 @@ testjsapifun : extension
 %.h: %.idl
 	$(XPIDL) -m header -I$(GECKO_SDK)/idl $<
 
+GetCode:
+	cp ../../src/JSConversions.cpp ../../src/JSConversions.h ./
 
-%.o: %.cpp Revaluator.h
+%.o: %.cpp Revaluator.h GetCode
 	echo $(TEST_DEFINES)
 	$(CXX)  -c -o $@ $(TEST_DEFINES) $(GECKO_CONFIG_INCLUDE) $(NEW_DEFINES) $(GECKO_INCLUDES) $(R_INCLUDES) $(RFF_INCLUDES) $(CPPFLAGS) $(CXXFLAGS) $<
 
@@ -97,3 +99,5 @@ extension: Revaluator.$(DLIBEXT) Revaluator.xpt
 	cp Revaluator.xpt $(EXTEN_DIR)/
 	cp $(CHROME) $(CHROME_DIR)/chrome.manifest
 	cd ../extension ; zip RFirefox.xpi * -r ; mv RFirefox.xpi ../
+#	rm JSConversions.cpp
+#	rm JSConversions.h

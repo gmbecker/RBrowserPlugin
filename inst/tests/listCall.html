@@ -1,0 +1,30 @@
+
+<html>
+  <head>
+  
+    <script type="text/javascript" src="../javascript/raphael.js"> </script>
+    <script type="text/javascript" src="../javascript/Rhelpers.js"> </script>
+    <script type="text/R">
+      testfun = function(x, y)
+      {
+       x^2 + sqrt(y)
+
+      }
+    </script>
+    <script type="text/javascript">
+      function doIt()
+      {
+        arr = [ [ 1, 2, 3, 4],
+                  [4, 4, 9] ];
+
+      res = jsREventHandler("testfun", arr);
+      alert(res);
+
+        return res;
+      }
+      </script>
+  </head>
+  <body>
+    <input type="button" onclick="doIt();"></input>
+  </body>
+</html>

@@ -1,0 +1,26 @@
+These are installation instructions for the RFirefox package and extension in Linux. For instructions to install RFirefox on Mac OS X please see macInstall.txt
+
+For any questions please see the AFAQ (anticipated frequently asked questions)
+
+Steps:
+
+1. Install the current version of Firefox (currently 6) . It doesn't have to be your main installation so long as you can get at it. You will need to know the directory it is installed into.
+2. Obtain the Mozilla Xulrunner SDK (Also known as the Gecko SDK) for that version (curently 6.0). Check https://developer.mozilla.org/en/Gecko_SDK. It is available for all major modern architectures. If the version of the SDK is not available at that site, it will be available in ftp.mozilla.org/pub/xulrunner/releases/<release number>/sdk/
+3. Unpack the RFirefox tarball
+4. In the terminal type: 
+   export LD_LIBRARY_PATH=<path-to-gecko-sdk>/bin 
+5.  from the parent directory you unpacked RFirefox into type: 
+    R CMD INSTALL --configure-args="--with-xul-sdk=<path to the sdk> --with-firefox=<location of firefox executable>" --preclean RFirefox
+(5.5). If you have installed RFirefox before, in RFirefox/inst/components type 
+       rm *.*o
+6. in RFirefox/inst/components type:
+   make
+7. All that is left is to open firefox with the correct environment variables set. You have 2 options:
+   1. use RFirefox/inst/runfirefox.sh (this may require you to change the permissions on that file to allow execution, eg "chmod +x runfirefox.sh")
+   2. type the following into the terminal:
+      export R_HOME=<path-to-R-installation>
+      export LD_LIBRARY_PATH=<path-to-xulrunner-sdk>/bin:$R_HOME/bin
+      <path-to-firefox-executable>/firefox --no-remote -P dev
+8. The first time you do this it will bring to you the profile creation screen for firefox. it is STRONGLY recommended that you create a separate profile for use with RFirefox as it is experimental and not yet fully stable (see AFAQ). runfirefox.sh and the instructions in 7.2 assume that you will name this profile "dev".
+7. Open the relevent version of Firefox. Once Firefox is open, go to the file menu and open RFirefox/inst/RFirefox.xpi. This will install the extension then force you to restart. Repeat step 7 to restart firefox.
+9. Open one of the test pages to confirm everything works.

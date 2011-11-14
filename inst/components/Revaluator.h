@@ -40,6 +40,9 @@ class NS_NO_VTABLE NS_SCRIPTABLE REvaluator : public nsISupports {
   /* nsIVariant call (in string funName); */
   NS_SCRIPTABLE NS_IMETHOD Call(const char *funName, nsIVariant **_retval NS_OUTPARAM) = 0;
 
+  /* nsIVariant listCall (in string funName); */
+  NS_SCRIPTABLE NS_IMETHOD ListCall(const char *funName, nsIVariant **_retval NS_OUTPARAM) = 0;
+
   /* nsIVariant library (in string library); */
   NS_SCRIPTABLE NS_IMETHOD Library(const char *library, nsIVariant **_retval NS_OUTPARAM) = 0;
 
@@ -70,6 +73,7 @@ class NS_NO_VTABLE NS_SCRIPTABLE REvaluator : public nsISupports {
   NS_SCRIPTABLE NS_IMETHOD Init(const char **args, PRUint32 length, PRBool *_retval NS_OUTPARAM); \
   NS_SCRIPTABLE NS_IMETHOD Call1(const char *funName, nsIVariant *arg, nsIVariant **_retval NS_OUTPARAM); \
   NS_SCRIPTABLE NS_IMETHOD Call(const char *funName, nsIVariant **_retval NS_OUTPARAM); \
+  NS_SCRIPTABLE NS_IMETHOD ListCall(const char *funName, nsIVariant **_retval NS_OUTPARAM); \
   NS_SCRIPTABLE NS_IMETHOD Library(const char *library, nsIVariant **_retval NS_OUTPARAM); \
   NS_SCRIPTABLE NS_IMETHOD Eval(const char *cmd, nsIVariant **_retval NS_OUTPARAM); \
   NS_SCRIPTABLE NS_IMETHOD Exists(const char *var, nsIVariant **_retval NS_OUTPARAM); \
@@ -83,6 +87,7 @@ class NS_NO_VTABLE NS_SCRIPTABLE REvaluator : public nsISupports {
   NS_SCRIPTABLE NS_IMETHOD Init(const char **args, PRUint32 length, PRBool *_retval NS_OUTPARAM) { return _to Init(args, length, _retval); } \
   NS_SCRIPTABLE NS_IMETHOD Call1(const char *funName, nsIVariant *arg, nsIVariant **_retval NS_OUTPARAM) { return _to Call1(funName, arg, _retval); } \
   NS_SCRIPTABLE NS_IMETHOD Call(const char *funName, nsIVariant **_retval NS_OUTPARAM) { return _to Call(funName, _retval); } \
+  NS_SCRIPTABLE NS_IMETHOD ListCall(const char *funName, nsIVariant **_retval NS_OUTPARAM) { return _to ListCall(funName, _retval); } \
   NS_SCRIPTABLE NS_IMETHOD Library(const char *library, nsIVariant **_retval NS_OUTPARAM) { return _to Library(library, _retval); } \
   NS_SCRIPTABLE NS_IMETHOD Eval(const char *cmd, nsIVariant **_retval NS_OUTPARAM) { return _to Eval(cmd, _retval); } \
   NS_SCRIPTABLE NS_IMETHOD Exists(const char *var, nsIVariant **_retval NS_OUTPARAM) { return _to Exists(var, _retval); } \
@@ -96,6 +101,7 @@ class NS_NO_VTABLE NS_SCRIPTABLE REvaluator : public nsISupports {
   NS_SCRIPTABLE NS_IMETHOD Init(const char **args, PRUint32 length, PRBool *_retval NS_OUTPARAM) { return !_to ? NS_ERROR_NULL_POINTER : _to->Init(args, length, _retval); } \
   NS_SCRIPTABLE NS_IMETHOD Call1(const char *funName, nsIVariant *arg, nsIVariant **_retval NS_OUTPARAM) { return !_to ? NS_ERROR_NULL_POINTER : _to->Call1(funName, arg, _retval); } \
   NS_SCRIPTABLE NS_IMETHOD Call(const char *funName, nsIVariant **_retval NS_OUTPARAM) { return !_to ? NS_ERROR_NULL_POINTER : _to->Call(funName, _retval); } \
+  NS_SCRIPTABLE NS_IMETHOD ListCall(const char *funName, nsIVariant **_retval NS_OUTPARAM) { return !_to ? NS_ERROR_NULL_POINTER : _to->ListCall(funName, _retval); } \
   NS_SCRIPTABLE NS_IMETHOD Library(const char *library, nsIVariant **_retval NS_OUTPARAM) { return !_to ? NS_ERROR_NULL_POINTER : _to->Library(library, _retval); } \
   NS_SCRIPTABLE NS_IMETHOD Eval(const char *cmd, nsIVariant **_retval NS_OUTPARAM) { return !_to ? NS_ERROR_NULL_POINTER : _to->Eval(cmd, _retval); } \
   NS_SCRIPTABLE NS_IMETHOD Exists(const char *var, nsIVariant **_retval NS_OUTPARAM) { return !_to ? NS_ERROR_NULL_POINTER : _to->Exists(var, _retval); } \
@@ -150,6 +156,12 @@ NS_IMETHODIMP _MYCLASS_::Call1(const char *funName, nsIVariant *arg, nsIVariant 
 
 /* nsIVariant call (in string funName); */
 NS_IMETHODIMP _MYCLASS_::Call(const char *funName, nsIVariant **_retval NS_OUTPARAM)
+{
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+/* nsIVariant listCall (in string funName); */
+NS_IMETHODIMP _MYCLASS_::ListCall(const char *funName, nsIVariant **_retval NS_OUTPARAM)
 {
     return NS_ERROR_NOT_IMPLEMENTED;
 }

@@ -1,0 +1,95 @@
+<html>
+  <head>
+    <!--CSS file (default YUI Sam Skin) -->
+    <link type="text/css" rel="stylesheet" href="http://yui.yahooapis.com/2.9.0/build/datatable/assets/skins/sam/datatable.css">
+    
+    <!-- Dependencies -->
+    <script src="http://yui.yahooapis.com/2.9.0/build/yahoo-dom-event/yahoo-dom-event.js"></script>
+    <script src="http://yui.yahooapis.com/2.9.0/build/element/element-min.js"></script>
+    <script src="http://yui.yahooapis.com/2.9.0/build/datasource/datasource-min.js"></script>
+    
+    <!-- OPTIONAL: JSON Utility (for DataSource) -->
+    <script src="http://yui.yahooapis.com/2.9.0/build/json/json-min.js"></script>
+    
+    <!-- OPTIONAL: Connection Manager (enables XHR for DataSource) -->
+    <script src="http://yui.yahooapis.com/2.9.0/build/connection/connection-min.js"></script>
+    
+    <!-- OPTIONAL: Get Utility (enables dynamic script nodes for DataSource) -->
+    <script src="http://yui.yahooapis.com/2.9.0/build/get/get-min.js"></script>
+    
+    <!-- OPTIONAL: Drag Drop (enables resizeable or reorderable columns) -->
+    <script src="http://yui.yahooapis.com/2.9.0/build/dragdrop/dragdrop-min.js"></script>
+    
+    <!-- OPTIONAL: Calendar (enables calendar editors) -->
+    <script src="http://yui.yahooapis.com/2.9.0/build/calendar/calendar-min.js"></script>
+    
+    <!-- Source files -->
+    <script src="http://yui.yahooapis.com/2.9.0/build/datatable/datatable-min.js"></script>
+    <script type="text/javascript" src="../javascript/Rhelpers.js"> </script>
+    <script type="text/R">
+      library(RJSONIO)
+      getCarDat = function(args)
+      {
+      if(missing(args))
+      {
+        args = list(mtcars)
+      } else {
+        args = c(mtcars, args)
+      }
+       toJSON(do.call(subset, args))
+      }
+    </script>
+    <script type="text/javascript"> 
+      function carsDat(request)
+      {
+      var json =  jsREventHandler("getCarDat", request);
+      var obj = JSON.parse(json);
+
+      var arr = [];
+      var row = [];
+      for (var i =0; i< obj["mpg"].length; i++) 
+      {
+        row = [];
+        for (var field in obj)
+	  {
+           row.push(obj[field][i]);
+	}
+       
+          arr.push(row);
+      }
+
+      return arr;
+      }
+      
+      var dsFunction = new YAHOO.util.FunctionDataSource(carsDat);
+ //     dsFunction.responseType = TYPE_JSON;
+      dsFunction.responseSchema = {
+    //    resultsList : "results",
+        fields : [ "mpg" , "cyl" , "hp", "drat", "wt", "qseq", "vs", "am", "gear", "carb" ] 
+      };
+      var myColumnDefs = [
+        {key:"mpg", label :"mpg"},
+        {key:"cyl", label :"cyl"},
+        {key:"hp", label :"hp"},
+        {key:"drat", label :"drat"},
+        {key:"wt", label :"wt"},
+        {key:"qseq", label :"vs"},
+        {key:"am", label :"am"},
+        {key:"gear", label :"gear"},
+        {key:"carb", label :"carb"}
+      ];
+
+      // Defer instantiation
+      YAHOO.util.Event.addListener(window, "load", function() {
+      var myDataTableDeferred = new YAHOO.widget.DataTable("table", myColumnDefs, dsFunction);
+      });
+ 
+      
+    </script>
+  </head>
+  <body class="yui-skin-sam">
+    <div id = "table"
+    
+    
+  </body>
+</html>
