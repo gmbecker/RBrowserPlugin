@@ -53,11 +53,14 @@ SEXP JSRefToR(JSContext *jscon, jsval *jsobj)
 	ans = NEW_CHARACTER( 1 );
 	JSString *jsstrval = JS_ValueToString( jscon , *jsobj);
 	
-	unsigned int siz = JS_GetStringEncodingLength(jscon, jsstrval);
-	char *tmpchr;
+	unsigned int siz = JS_GetStringEncodingLength(jscon, jsstrval) + 1;
+	char *tmpchr = (char *) JS_malloc(jscon, siz*sizeof(char));
+	
 	JS_EncodeStringToBuffer(jsstrval, tmpchr, siz);
+	tmpchr[siz -1] = '\0';
 	const char *strval = (const char *) tmpchr;
 	SET_STRING_ELT( ans, 0, mkChar(strval));
+	JS_free(jscon, tmpchr);
 	break;
       }
     case JSTYPE_OBJECT:
@@ -69,7 +72,7 @@ SEXP JSRefToR(JSContext *jscon, jsval *jsobj)
 	    JS_AddObjectRoot( jscon , &myobj);
 	    if(JS_IsArrayObject( jscon , myobj ) )
 	      {
-		ans = JSArrayToList(jscon, myobj);
+		ans = JSArrayToList(jscon , myobj , 0 );
 		
 	      } else {
 	      fprintf(stderr, "Non-Array JSObject detected. Conversion to R object not supported at this time");
@@ -90,7 +93,8 @@ SEXP JSRefToR(JSContext *jscon, jsval *jsobj)
   return(ans);
 }
 
-SEXP JSArrayToList(JSContext *jscon, JSObject *array)
+static int depth = 0;
+SEXP JSArrayToList(JSContext *jscon, JSObject *array, int simplify)
 {
   unsigned int len;
   int wasError = 0;
@@ -101,15 +105,18 @@ SEXP JSArrayToList(JSContext *jscon, JSObject *array)
   SEXP ans, simplifyCall, p;
   PROTECT( ans = NEW_LIST( len ) );
   JS_AddValueRoot(jscon, &tmp);
+  depth++;
   for(int i = 0; i < len ; i++)
     {
       JS_GetElement( jscon , array , i , &tmp );
       SET_ELEMENT( ans , i , JSRefToR( jscon , &tmp ) );
     }
+  depth--;
   JS_RemoveValueRoot(jscon, &tmp);
   //We only want to unlist if it really should be a vector (ie a list of length 5 with 5 numerics of length 1 in it), otherwise the elements represent different arguments for the do.call so the list should be preserved.
   //XXX This check is still not perfect, is there a better way to tell whether to unlist or not?
-  int simplify = 1;
+  /*  
+int simplify = 1;
   for (int j=0; j < LENGTH( ans ) ; j++)
     {
       if (LENGTH(VECTOR_ELT(ans, j ) ) > 1)
@@ -118,7 +125,9 @@ SEXP JSArrayToList(JSContext *jscon, JSObject *array)
 	  break;
 	}
     }
-  if(simplify)
+  */
+  //we always leave the lowest level unsimplified
+  if( depth > 0 || simplify )
     {
       
       PROTECT( simplifyCall = allocVector( LANGSXP , 3 ) );

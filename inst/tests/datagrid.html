@@ -28,67 +28,29 @@
     <script type="text/javascript" src="../javascript/Rhelpers.js"> </script>
     <script type="text/R">
       library(RJSONIO)
+      cardatenv =  new.env()
+      cardatenv$mtcars = mtcars
       getCarDat = function(args)
       {
       if(missing(args))
       {
-        args = list(mtcars)
+        args = list(cardatenv$mtcars)
       } else {
-        args = c(mtcars, args)
+        args = c(cardatenv$mtcars, args)
       }
        toJSON(do.call(subset, args))
       }
+      editCarDat = function(row, col, newval)
+      {
+        cardatenv$mtcars[row, col] = newval
+      }
     </script>
-    <script type="text/javascript"> 
-      function carsDat(request)
-      {
-      var json =  jsREventHandler("getCarDat", request);
-      var obj = JSON.parse(json);
-
-      var arr = [];
-      var row = [];
-      for (var i =0; i< obj["mpg"].length; i++) 
-      {
-        row = [];
-        for (var field in obj)
-	  {
-           row.push(obj[field][i]);
-	}
-       
-          arr.push(row);
-      }
-
-      return arr;
-      }
-      
-      var dsFunction = new YAHOO.util.FunctionDataSource(carsDat);
- //     dsFunction.responseType = TYPE_JSON;
-      dsFunction.responseSchema = {
-    //    resultsList : "results",
-        fields : [ "mpg" , "cyl" , "hp", "drat", "wt", "qseq", "vs", "am", "gear", "carb" ] 
-      };
-      var myColumnDefs = [
-        {key:"mpg", label :"mpg"},
-        {key:"cyl", label :"cyl"},
-        {key:"hp", label :"hp"},
-        {key:"drat", label :"drat"},
-        {key:"wt", label :"wt"},
-        {key:"qseq", label :"vs"},
-        {key:"am", label :"am"},
-        {key:"gear", label :"gear"},
-        {key:"carb", label :"carb"}
-      ];
-
-      // Defer instantiation
-      YAHOO.util.Event.addListener(window, "load", function() {
-      var myDataTableDeferred = new YAHOO.widget.DataTable("table", myColumnDefs, dsFunction);
-      });
- 
-      
+    <script type="text/javascript" src="datagrid.js"> 
     </script>
   </head>
   <body class="yui-skin-sam">
-    <div id = "table"
+    <div id = "table" height="400">
+      </div>
     
     
   </body>

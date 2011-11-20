@@ -13,9 +13,11 @@ function createDataElement(evt)
 document.addEventListener("load", createDataElement, false, true);
 
 
-function jsREventHandler( name, value)
+function jsREventHandler( name, value, singleArg)
 {
 
+    //default value
+    singleArg = typeof singleArg != "undefined" ? singleArg : "false";
     
     
     //build event to pass to chrome.
@@ -31,7 +33,7 @@ function jsREventHandler( name, value)
 	}
     RFirefoxData.setAttribute("RFunName", name);
     RFirefoxData.setAttribute("RFunValue", JSON.stringify(value));
-    
+    RFirefoxData.setAttribute("RsingleArg", singleArg);
     RFirefoxData.dispatchEvent(evt);
     return JSON.parse(RFirefoxData.getAttribute("RResult"));
     
