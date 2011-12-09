@@ -69,7 +69,7 @@ R_Call_JS_Method(SEXP Rcon, SEXP Robjptr, SEXP Rname, SEXP Rargs, SEXP RobjIsVal
   JSContext *jscon =  (JSContext *) R_ExternalPtrAddr(GET_SLOT( Rcon , Rf_install( "ref" ) ) );
   int objAdded = 0;
   const char *name = CHAR(STRING_ELT(Rname, 0));
-  JSObject *obj; 
+  JSObject *obj = JS_NewObject(jscon, NULL, NULL, NULL); 
     jsval *valobj;
   if (LOGICAL(RobjIsVal)[0])
     {
