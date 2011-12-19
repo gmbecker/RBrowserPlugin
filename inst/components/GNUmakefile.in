@@ -61,7 +61,7 @@ OBJ_FILES=Revaluator.o RevaluatorModule.o RVariants.o JSConversions.o
 
 
 
-default: extension
+default: GetCode extension
 Revaluator.h: Revaluator.idl
 Revaluator.o: Revaluator.h Revaluator.cpp
 Revaluator.$(DLIBEXT): $(OBJ_FILES)
@@ -82,12 +82,12 @@ testjsapifun : extension
 GetCode:
 	cp ../../src/JSConversions.cpp ../../src/JSConversions.h ./
 
-%.o: %.cpp Revaluator.h GetCode
+%.o: %.cpp Revaluator.h
 	echo $(TEST_DEFINES)
 	$(CXX)  -c -o $@ $(TEST_DEFINES) $(GECKO_CONFIG_INCLUDE) $(NEW_DEFINES) $(GECKO_INCLUDES) $(R_INCLUDES) $(RFF_INCLUDES) $(CPPFLAGS) $(CXXFLAGS) $<
 
 Revaluator.$(DLIBEXT): $(OBJ_FILES) 
-	$(CXX) -Wall -Os $^  -Bstatic $(R_LD_FLAGS) -Bdynamic $(NEW_LD_LOCS) $(LD_FLAGS) $(NEW_LINKFLAGS) $(JS_LDFLAGS) -lxpcomglue_s -lxpcom -lnspr4 -ldl -o $@
+	$(CXX) -Wall -Os $^ $(R_LD_FLAGS) $(NEW_LD_LOCS) $(LD_FLAGS) $(NEW_LINKFLAGS) $(JS_LDFLAGS) -lxpcomglue_s -lxpcom -lnspr4 -ldl -o $@
 
 
 # How to build the type table information from the idl.
