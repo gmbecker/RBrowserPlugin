@@ -1,10 +1,11 @@
 GECKO_SDK=@XUL_SDK@
 IS_MAC=@IS_MAC@
 R_HOME=@R_HOME@
+ARCH=@ARCH@
 
 ifeq ($(IS_MAC), 1)
   DLIBEXT=dylib
-  R_LD_FLAGS=-L$(R_HOME)/lib/x86_64 -lR
+  R_LD_FLAGS=-L$(R_HOME)/lib/$(ARCH) -lR
   NEW_LINKFLAGS=
   JS_LDFLAGS=-L$(GECKO_SDK)/lib -lmozalloc $(GECKO_SDK)/bin/XUL -lplds4 -lplc4 -lnspr4 \
 	-lpthread -ldl -ldl -lm -lm -ldl
