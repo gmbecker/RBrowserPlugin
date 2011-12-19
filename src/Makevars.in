@@ -1,6 +1,5 @@
 XUL_SDK=@XUL_SDK@
 
-
 # Do we need nspr explicitly
 GCC_FLAGS=-fshort-wchar
 # To get nsID->ToString(), we define XPCOM_GLUE_USE_NSPR and link against nspr4.  But it doesn't do the job. 
@@ -13,3 +12,12 @@ PKG_CPPFLAGS= -DXPCOM_GLUE  $(GCC_FLAGS)  -I$(XUL_SDK)/include/xpcom -I$(XUL_SDK
 
 
 PKG_LIBS=-L$(XUL_SDK)/lib -lxpcomglue -lxpcom -lplds4 -lplc4 -lnspr4 
+
+.PHONY: all cpcode
+
+all: $(SHLIB)
+$(SHLIB): cpcode
+
+#we use this code in both the package and the extension, but only want to maintain one copy, so the copy in RFirefox/src is considered the master copy
+cpcode:
+	cp JSConversions.* ../inst/components

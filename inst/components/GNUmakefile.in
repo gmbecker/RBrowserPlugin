@@ -61,7 +61,7 @@ OBJ_FILES=Revaluator.o RevaluatorModule.o RVariants.o JSConversions.o
 
 
 
-default: GetCode extension
+default: extension
 Revaluator.h: Revaluator.idl
 Revaluator.o: Revaluator.h Revaluator.cpp
 Revaluator.$(DLIBEXT): $(OBJ_FILES)
@@ -78,9 +78,6 @@ testjsapifun : extension
 
 %.h: %.idl
 	$(XPIDL) -m header -I$(GECKO_SDK)/idl $<
-
-GetCode:
-	cp ../../src/JSConversions.cpp ../../src/JSConversions.h ./
 
 %.o: %.cpp Revaluator.h
 	echo $(TEST_DEFINES)
