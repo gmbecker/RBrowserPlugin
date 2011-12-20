@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<article xmlns="http://docbook.org/ns/docbook" version="5.0" xml:lang="en">
+<info>
+  <title>Communicating Between R and Javascript Using RFirefox</title>
+</info>
+<sect1>
+  <title>Invoking R Code in a Webpage</title>
+  <sect2>
+    <title>Running R code on Startup</title>
+    <para>
+      R code can be set to be run as soon as a web page is loaded by including it in an R script tag. This functionality can be used to define R functions which will later be used as event handlers, as well as to set up any R objects which will be used by later R function calls. It can also be used to draw graphics or write results to the webpage for cases which do not require user interaction.
+    </para>
+    <para>
+      Like all script tags, R script tags can be placed anywhere in the HTML document, but are generally placed within the head tag.  These tags behave similarly to javascript script tags (though the js tags are evaluated before the web page has loaded while R script tags are run after). R script tags also nearly identical to js script tags in their construction as can be seen below.
+    </para>
+    <para>
+      A JavaScript script tag:
+      <programlisting>
+	<![CDATA[
+	<script type="text/javascript">
+	  var x = "hello";
+	  alert(x + " world");
+	</script>
+	]]>
+      </programlisting>
+      This script tag can be identified as javascript by the value of its type attribute, which is "text/javascript". The text within the script tag is JavaScript code which will be evaluated as the script tag is being processed by the web browser as the page loads.
+    </para>
+    <para>
+      An R script tag:
+      <programlisting>
+	<![CDATA[
+	<script type="text/R">
+	  #generate some data!
+	  x = rnorm(100)
+	  y = rnorm(100, x^2, 1)
+
+	  newdata = function()
+	  {
+	    x <<- rnorm(100)
+	    y <<- rnorm(100, x^2, 1)
+	    TRUE
+	  }
+	</script>
+	]]>
+      </programlisting>
+      The type attribute (set to "text/R") in the above script tag indicates that it contains R code, which must be passed to the R engine for parsing (this is done automatically by javascript contained in the RFirefox extension itself and does not require any additional action by the author beyond setting the type attribute on the tag).
+    </para>
+    <para>
+      In particular, we can see that the above R script tag will, when evaluated, create two numeric vectors, x and y, as well as a function, newdata, in the global R environment. These objects will persist for as long as the instance of firefox is open, so long as they are not removed or overwritten by subsequent R code.
+    </para>
+    <para>
+      Script tags, regardless of type, have the option to indicate an external file where the associated code is stored, rather than including the code as text withing the tag. R script tags are no different, and this can be achieved uing the src tag attribute as follows:
+      <programlisting>
+	<![CDATA[
+	<script type="text/R" src="myRCode.R"></script>
+	]]>
+      </programlisting>
+      The above R script tag indicates that its associated R code is stored on disk in the file myRCode.R. When the tag is evaluated, that code will be loaded from the file and run as if it had been contained within the tag directly in the html file.
+    </para>
+    <para>
+      NOTE: It is important to have separate beginning and ending tags for an R script element, even when the associated code is included using the src attribute. Due to the mechanism used to find and evaluate the tags, self-closing R script tags will not be found and thus their code will not be run.
+    </para>
+  </sect2>
+  <sect2>
+    <title>Calling R functions from JavaScript Code</title>
+  </sect2>
+  <sect2>
+    <title>R functions as Javascript Event Handlers</title>
+  </sect2>
+</sect1>
+<sect1>
+  <title>Invoking Javascript Code from R</title>
+  <sect2>
+    <title>Representing Javascript Objects Within R</title>
+  </sect2>
+  <sect2>
+    <title>Directly Calling Javascript Functions/Methods by Name</title>
+  </sect2>
+  <sect2>
+    <title>Directly Calling Javascript Functions by Reference</title>
+  </sect2>
+  <sect2>
+    <title>Evaluating Javascript Code</title>
+  </sect2>
+  <sect2>
+    <title> Adding Event Listeners from Within R</title>
+  </sect2>
+</sect1>
+
+</article>
