@@ -30,7 +30,7 @@ call_JS_Method = function(con, obj, name, args, addRoot = TRUE, multArgs = TRUE)
     
     out = jsVal()
     JS_AddRoot(con, out)
-     .Call(calljsmeth, con, obj, name, args, isval, out)
+     .Call("R_Call_JS_Method", con, obj, name, args, isval, out)
     if(!addRoot)
       {
         rm(out)

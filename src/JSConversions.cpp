@@ -66,7 +66,6 @@ SEXP JSRefToR(JSContext *jscon, jsval *jsobj)
     case JSTYPE_OBJECT:
       {
 	JSObject *myobj = JS_NewObject(jscon, NULL, NULL, NULL);
-	JSBool res = JS_ValueToObject( jscon , *jsobj , &myobj );
 	if (myobj)
 	  {
 	    JS_AddObjectRoot( jscon , &myobj);
@@ -106,7 +105,7 @@ SEXP JSArrayToList(JSContext *jscon, JSObject *array, int simplify)
   PROTECT( ans = NEW_LIST( len ) );
   JS_AddValueRoot(jscon, &tmp);
   depth++;
-  for(int i = 0; i < len ; i++)
+  for(int i = 0; i < (int) len ; i++)
     {
       JS_GetElement( jscon , array , i , &tmp );
       SET_ELEMENT( ans , i , JSRefToR( jscon , &tmp ) );

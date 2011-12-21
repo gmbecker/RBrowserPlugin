@@ -36,8 +36,8 @@ CPPFLAGS += $(shell R CMD config --cppflags ) \
 	  -fshort-wchar \
           -gstabs+      \
 
-$(warning "CPPFLAGS is " $(CPPFLAGS))
 
+$(warning "CPPFLAGS is " $(CPPFLAGS))
 
 XPIDL=$(GECKO_SDK)/bin/xpidl
 

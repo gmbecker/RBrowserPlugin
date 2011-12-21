@@ -53,7 +53,7 @@ R_JS_ConvertValue(SEXP con, SEXP Rvalptr, SEXP type, SEXP _retv)
   fprintf(stderr, "sizeof val: %zu\n", sizeof(*val)); fflush(stderr);
 
   JSType ty = (JSType) INTEGER(type)[0];
-  fprintf(stderr, "vaptr addr %lx %ld val %ld %lx", (void *) val, val, *val, *val);fflush(stderr);
+  
   JSBool success = JS_ConvertValue(jscon, *val, ty, ret);
 
  if (!success)
@@ -306,6 +306,10 @@ SEXP R_EvaluateScript(SEXP Rcon, SEXP Rparent, SEXP Rscript, SEXP Rnumchar, SEXP
 
   JSBool success = JS_EvaluateScript(jscon, jsparent, script, numchar, title, linenum, jsret);
 
+  if(!success)
+    {
+      fprintf(stderr, "Evaluation of Script failed.");fflush(stderr);
+    }
   
   return ScalarLogical(1);
 

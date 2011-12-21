@@ -132,7 +132,7 @@ R_Call_JS_Method(SEXP Rcon, SEXP Robjptr, SEXP Rname, SEXP Rargs, SEXP RobjIsVal
       case CLOSXP:
 	{
 	  char buf[255];
-	  sprintf(buf, "_SEXP:Function_:%ld", tmp);
+	  sprintf(buf, "_SEXP:Function_:%ld", (long int) tmp);
 	  fprintf(stderr, "R->JS: No conversion found. Object encoded in string as %s.", buf);fflush(stderr);
 	  tmpstr = JS_NewStringCopyZ( jscon , buf ) ;
 	  
@@ -156,7 +156,7 @@ R_Call_JS_Method(SEXP Rcon, SEXP Robjptr, SEXP Rname, SEXP Rargs, SEXP RobjIsVal
 	    {
 	      
 	  char buf[255];
-	  sprintf(buf, "_SEXP:Object:%ld", tmp);
+	  sprintf(buf, "_SEXP:Object:%ld", (long int) tmp);
 	  fprintf(stderr, "R->JS: No conversion found. Object encoded in string as %s.", buf);fflush(stderr);
 	  tmpstr = JS_NewStringCopyZ( jscon , buf ) ;
 	  

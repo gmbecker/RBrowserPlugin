@@ -15,7 +15,9 @@ PKG_LIBS=-L$(XUL_SDK)/lib -lxpcomglue -lxpcom -lplds4 -lplc4 -lnspr4
 
 .PHONY: all cpcode
 
-all: $(SHLIB)
+all: $(SHLIB) extension
+extension: $(SHLIB) cpcode
+	  (cd ../inst/components ; make)
 $(SHLIB): cpcode
 
 #we use this code in both the package and the extension, but only want to maintain one copy, so the copy in RFirefox/src is considered the master copy

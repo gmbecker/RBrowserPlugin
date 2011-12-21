@@ -63,6 +63,7 @@
   </sect2>
   <sect2>
     <title>Calling R functions from JavaScript Code</title>
+    In addition to blocks of R code found in R script tags, we can also invoke R functions directly by name (or "reference", more on this later) from JavaScript code. The mechanism used to do this is somewhat circuitous under the hood, but it is necessary for security reasons, and is quite transparent to the end user.
   </sect2>
   <sect2>
     <title>R functions as Javascript Event Handlers</title>
