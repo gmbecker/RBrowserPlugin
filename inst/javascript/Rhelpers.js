@@ -13,12 +13,12 @@ function createDataElement(evt)
 document.addEventListener("load", createDataElement, false, true);
 
 
-function jsREventHandler( name, value, singleArg)
+//function jsREventHandler( name, value, singleArg)
+function callRFunction( name, args, singleArg)
 {
 
     //default value
     singleArg = typeof singleArg != "undefined" ? singleArg : "false";
-    
     
     //build event to pass to chrome.
     var evt = document.createEvent("Events");
@@ -32,7 +32,7 @@ function jsREventHandler( name, value, singleArg)
 	    RFirefoxData = document.getElementById("RFirefoxCallData");
 	}
     RFirefoxData.setAttribute("RFunName", name);
-    RFirefoxData.setAttribute("RFunValue", JSON.stringify(value));
+    RFirefoxData.setAttribute("RFunValue", JSON.stringify(args));
     RFirefoxData.setAttribute("RsingleArg", singleArg);
     RFirefoxData.dispatchEvent(evt);
     return JSON.parse(RFirefoxData.getAttribute("RResult"));
@@ -66,6 +66,6 @@ function addREventHandler(name, targ, event, arg)
   
     targ.addEventListener(event, function(e)
 			  {
-			      jsREventHandler(name, arg);
+			      callRFunction(name, arg);
 			  }, false, true);
 }

@@ -57,6 +57,7 @@ SEXP JSRefToR(JSContext *jscon, jsval *jsobj)
 	char *tmpchr = (char *) JS_malloc(jscon, siz*sizeof(char));
 	
 	JS_EncodeStringToBuffer(jsstrval, tmpchr, siz);
+	//We need to manually make it null-terminated
 	tmpchr[siz -1] = '\0';
 	const char *strval = (const char *) tmpchr;
 	SET_STRING_ELT( ans, 0, mkChar(strval));
@@ -66,6 +67,7 @@ SEXP JSRefToR(JSContext *jscon, jsval *jsobj)
     case JSTYPE_OBJECT:
       {
 	JSObject *myobj = JS_NewObject(jscon, NULL, NULL, NULL);
+	JSBool res = JS_ValueToObject( jscon , *jsobj, &myobj);
 	if (myobj)
 	  {
 	    JS_AddObjectRoot( jscon , &myobj);
@@ -74,7 +76,7 @@ SEXP JSRefToR(JSContext *jscon, jsval *jsobj)
 		ans = JSArrayToList(jscon , myobj , 0 );
 		
 	      } else {
-	      fprintf(stderr, "Non-Array JSObject detected. Conversion to R object not supported at this time");
+	      fprintf(stderr, "Non-Array JSObject detected. Conversion to R object not supported at this time. Returning NULL.");
 	    }
 	    JS_RemoveObjectRoot( jscon , &myobj );
 	  }

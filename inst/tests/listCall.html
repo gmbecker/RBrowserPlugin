@@ -7,6 +7,8 @@
     <script type="text/R">
       testfun = function(x, y)
       {
+      print(x)
+      print(y)
        x^2 + sqrt(y)
 
       }
@@ -14,10 +16,10 @@
     <script type="text/javascript">
       function doIt()
       {
-        arr = [ [ 1, 2, 3, 4],
+        var arr = [ [ 1, 2, 3, 4],
                   [4, 4, 9] ];
 
-      res = jsREventHandler("testfun", arr);
+      res = callRFunction("testfun", arr);
       alert(res);
 
         return res;

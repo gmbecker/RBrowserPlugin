@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<article xmlns="http://docbook.org/ns/docbook" version="5.0" xml:lang="en">
+<article xmlns="http://docbook.org/ns/docbook" version="5.0" xml:lang="en"
+	 xmlns:r="http://www.r-project.org"
+	 xmlns:js="http://www.ecma-international.org/publications/standards/Ecma-262.htm">
 <info>
   <title>Communicating Between R and Javascript Using RFirefox</title>
 </info>
@@ -43,7 +45,7 @@
 	</script>
 	]]>
       </programlisting>
-      The type attribute (set to "text/R") in the above script tag indicates that it contains R code, which must be passed to the R engine for parsing (this is done automatically by javascript contained in the RFirefox extension itself and does not require any additional action by the author beyond setting the type attribute on the tag).
+      The type attribute (set to "text/R") in the above script tag indicates that it contains R code, which must be passed to the R engine for parsing and evaluation (this is done automatically by javascript contained in the RFirefox extension itself and does not require any additional action by the author of the page beyond setting the type attribute on the tag).
     </para>
     <para>
       In particular, we can see that the above R script tag will, when evaluated, create two numeric vectors, x and y, as well as a function, newdata, in the global R environment. These objects will persist for as long as the instance of firefox is open, so long as they are not removed or overwritten by subsequent R code.
@@ -60,10 +62,46 @@
     <para>
       NOTE: It is important to have separate beginning and ending tags for an R script element, even when the associated code is included using the src attribute. Due to the mechanism used to find and evaluate the tags, self-closing R script tags will not be found and thus their code will not be run.
     </para>
+    <para>
+      NOTE: While all code in all R script tags will be run once the page is loaded, the results will not be returned to/stored on the javascript side (all objects will still exist as normal on the R side).
+    </para>
   </sect2>
   <sect2>
     <title>Calling R functions from JavaScript Code</title>
-    In addition to blocks of R code found in R script tags, we can also invoke R functions directly by name (or "reference", more on this later) from JavaScript code. The mechanism used to do this is somewhat circuitous under the hood, but it is necessary for security reasons, and is quite transparent to the end user.
+    <para>
+      In addition to blocks of R code found in R script tags, we can also invoke R functions directly by name (or "reference", more on this later) from JavaScript code. The mechanism used to do this is somewhat circuitous under the hood, but it is necessary for security reasons, and is quite transparent to the end user. To do this, we need to include some JavaScript code which is distributed with the RFirefox package. Specifically we need the <js:function>callRFunction</js:function> javascript function, which, as its name implies, will allow us to invoke an R function from JavaScript code. This function, as well as other useful JavaScript functions can be found in the file RFirefox/inst/javascript/Rhelpers.js within the sources of the package (or RFirefox/javascript/Rhelpers.js within an installed version of the package). Web pages which want to do more than run blocks of R code upon loading will need to include this file within a script tag, like so (note the path within the src attribute will need to change to reflect where this file is relative to one of the two locations of Rhelpers.js mentioned above):
+      <programlisting>
+	<![CDATA[
+		 <script type="text/javascript" src="../javascript/Rhelpers.js"></script>
+	]]>
+      </programlisting>
+    </para>
+    <para>
+      The <js:function>callRFunction</js:function> is designed to offer <r:function>do.call</r:function>-like functionality. As such, regardless of the function being called, it has exactly three arguments, which, in order, are :
+      <itemizedlist>
+	<listitem>
+	  <para>
+	    name -- This argument expects a javascript string either containing the name of the R function to be called or directly representing an R function object (see section Returning R Values to Javascript).
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>
+	    args -- This argument accepts a (possibly nested) JavaScript array representing the list of all arguments to be passed to the function (see section Mapping JavaScript Arrays to R Lists).
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>
+	    singleArg -- This argument is currently ignored (and will probably be renamed) but will eventually serve to give the user more direct control over how a JavaScript array is translated into an R list.
+	  </para>
+	</listitem>
+      </itemizedlist>
+    </para>
+  </sect2>
+  <sect2>
+    <title>Mapping JavaScript Arrays to R Lists</title>
+  </sect2>
+  <sect2>
+    <title>Returning R Values to Javascript</title>
   </sect2>
   <sect2>
     <title>R functions as Javascript Event Handlers</title>
