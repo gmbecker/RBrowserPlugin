@@ -96,9 +96,62 @@
 	</listitem>
       </itemizedlist>
     </para>
+    <para>
+      Once we have included Rhelpers.js, we can utilize the <js:function>callRFunction</js:function> in our JavaScript code like so:
+      <programlisting>
+	<![CDATA[
+		 <script type="text/javascript">
+		   var args =[ [ 1, 1.5, 1, 2, 1, 3], [3, 4, 5, 6, 7, 5] ];
+		   var cor = callRFunction("cor", args);
+		   alert(cor);
+		 </script>
+	  ]]>
+      </programlisting>
+    </para>
+    <para>
+      When <js:function>callRFunction</js:function> is used the following steps are taken internally to generate the resulting value:
+      <itemizedlist>
+	<listitem>
+	  The function to be called is identified. If the name of the function is passed in then nothing needs to be done at this stage. If the string passed into the name argument directly represents an R function object (more on how this can happen in the next section) then it is converted into the R function object in question.
+	</listitem>
+	<listitem>
+	  The JavaScript array passed in as the args parameter is converted into an R list containing the 0 or more arguments to be passed to the function identified in the above step.
+	</listitem>
+	<listitem>
+	  An R expression representing a call to <r:function>do.call</r:function> utilizing with respect to the function and arguments identified above is constructed and evaluated.
+	</listitem>
+	<listitem>
+	  The return value from the <r:function>do.call</r:function> call is converted back to JavaScript and returned. NOTE: This is a simplification. See the next section for a detailed description of the process.
+	</listitem>
+      </itemizedlist>
+    </para>
   </sect2>
   <sect2>
-    <title>Mapping JavaScript Arrays to R Lists</title>
+    <title>Communicating with the R Engine (Details)</title>
+    <para>
+      There are a couple of structural hurdles which prevent the communication with R of JavaScript running in our webpage(s) from being a simple and straightforward matter. The first and most important is that there are actually two types of JavaScript in play when we call R functions, privileged code and unprivileged code.
+    </para>
+    <para>
+      Privileged JavaScript code is code that ships with the RFirefox Firefox extension itself. This code is able to communicate with compiled C code also included in the extension, which in turn allows it to start and communicate with the embedded R session.
+    </para>
+    <para>
+      Unprivileged JavaScript code, on the other hand, is code included using script tags into the webpage itself. This is often (though not always) written directly by the author of the webpage. The problem being that unprivileged code cannot see or communicate directly with privileged code. This means that the privileged javascript function capable of calling down to an R function cannot be directly seen or called by the JavaScript in our webpages. This prohibition is enforced as a completely understandable security feature (one does not, in generally, want JavaScript code written by anonymous webpage authors to have full (relatively) unfettered access to the client's system, which access to compiled C code can grant -- and, in fact, does in our case).
+    </para>
+    <para>
+      To get around this issue (which from a security standpoint we arguably should not be doing, but which is necessary to get RFirefox off the ground) we exploit a somewhat subtle fact about the Firefox extension framework. That is that Privileged code is able to attach event handlers. What this means is that functions created in privileged code can be called in response to JavaScript events. This, combined with the fact that unprivileged code can create and fire events, allows for de facto communication between privileged and unpriveleged code.
+    </para>
+    <para>
+      This may sound like a serious security bug in danger of being closed at any time, but it is actually allowed by design. In fact the above solution was found in the official Mozilla page regarding communication between privileged and unprivileged code, found <a href="https://developer.mozilla.org/en/Code_snippets/Interaction_between_privileged_and_non-privileged_pages" >here</a>
+    </para>
+    <para>
+      It should be noted that privileged and non-privileged code are still not directly communicating with eachother. That is, we cannot call a privileged code function with arguments that are variables in non-privileged code. What we can (and have) do, however, is to design our privileged code to expect the arguments to be passed as an attribute of the target of the event, and add said attribute before firing the event from non-privileged code.
+    </para>
+    <para>
+      It is notable here that DOM element (in this case the target of our custom event) attributes must be strings. This is much less of a restriction than it may seem, however, because (nearly) any JavaScript object can be serialized to a string using JSON (JavaScript Object Notation), the facilities for which are built into the JavaScript engine.
+    </para>
+    <para>
+      To return the results of our R call, we simply reverse the above communication protocol, setting a different attribute on the target to the JSON version of the JavaScript version of the returned R object.
+    </para>
   </sect2>
   <sect2>
     <title>Returning R Values to Javascript</title>
@@ -106,6 +159,35 @@
   <sect2>
     <title>R functions as Javascript Event Handlers</title>
   </sect2>
+  <sect2>
+    <title>Mapping JavaScript Arrays to R Lists</title>
+    <para>
+      There is not a one-to-one mapping between JavaScript Arrays and R Lists. To see why we consider a number of illustrative examples, the first of which is the series of numbers between 1 and 3 (inclusive). In JavaScript there is only one (standard) way to represent these numbers in an Array:
+      <js:code>
+	var myArray = [1, 2, 3];
+      </js:code>
+      This creates a one-dimensional array of length 5 containing the values in the series (there are other ways to create the same array, but the array itself, not how we create it, is the important point here).
+    </para>
+    <para>
+      In R, on the other hand, we have two ways to represent this series
+      <r:code>
+	myVec = 1:3
+	print(myVec)
+      </r:code>
+      and 
+      <r:code>
+	myList = list(1, 2, 3)
+	print(myList)
+      </r:code>
+    </para>
+    <para>
+      The problem arises when we go to automatically translate the JavaScript object myArray created in the JS snippet above into an R object. Should it be converted into a vector (a la myVec) or a list (a la myList)? It is fairly clear that the "most correct" R object for storing the series of numbers is a vector. Why then do we have a problem?
+    </para>
+    <para>
+      The problem is that while similar, the <r:object>myVec</r:object> and <r:object>myList</r:object> R objects are actually syntatically different
+    </para>
+  </sect2>
+ 
 </sect1>
 <sect1>
   <title>Invoking Javascript Code from R</title>

@@ -70,7 +70,7 @@ R_Call_JS_Method(SEXP Rcon, SEXP Robjptr, SEXP Rname, SEXP Rargs, SEXP RobjIsVal
   int objAdded = 0;
   const char *name = CHAR(STRING_ELT(Rname, 0));
   JSObject *obj = JS_NewObject(jscon, NULL, NULL, NULL); 
-    jsval *valobj;
+  jsval *valobj;
   if (LOGICAL(RobjIsVal)[0])
     {
       valobj = (jsval *) R_ExternalPtrAddr( GET_SLOT( Robjptr , Rf_install( "ref" ) ) );  
