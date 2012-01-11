@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<article xmlns="http://docbook.org/ns/docbook" version="5.0" xml:lang="en"
+	 xmlns:r="http://www.r-project.org"
+	 xmlns:js="http://www.ecma-international.org/publications/standards/Ecma-262.htm">
+<info>
+  <title>Status Report</title>
+</info>
+  <sect1>
+    <title>Stability</title>
+    <itemizedlist>
+      <listitem>
+	RFirefox remains completely stable on Ubuntu x86_64 (Gabe's laptop)
+      </listitem>
+      <listitem>
+	RFirefox consistently crashes on Ubuntu x686 (Gabe's desktop)
+      </listitem>
+      <listitem>
+	There are no obvious (to me) reasons why RFirefox should behave differently on these two different architectures under the same OS. (eg no hardcoded malloc sizes, no direct accessing of bits in jsvals, etc)
+      </listitem>
+      <listitem>
+	Currently I am trying to reproduce the crash on a second system. My first choice is to compile everything in 32bit mode on my laptop. R doesn't seem to want to compile in 32bit mode on the laptop though, so I may set up a virtual instance of 32bit Ubuntu on the laptop using VirtualBox. Once I have another Ubuntu 32bit build of RFirefox I will be able to determine whether the crash is something peculiar to my desktop setup or a widespread problem for 32bit environments.
+      </listitem>
+    </itemizedlist>
+  </sect1>
+  <sect1>
+    <title>Installation</title>
+    <itemizedlist>
+      <listitem>
+	Currently RFirefox will install on Ubuntu (32 and 64 bit) and 64bit OSX
+      </listitem>
+      <listitem>
+	We have not yet successfully installed RFirefox on 32bit OSX (Deb's computer). I have made and committed some changes to the compiling and linking flags which may fix the problem but I do not have a test machine to try it out. If this does not work I will keep looking at what the problem might be.
+      </listitem>
+    </itemizedlist>
+  </sect1>
+  <sect1>
+    <title>Tutorial and Writeup</title>
+    <itemizedlist>
+      <listitem>
+	I am working on writing the tutorial and a longer, more in depth discussion of RFirefox's functionality in the same document. I figure this should be good practice for me as well as being a useful document and potentially a good testcase for the type of document which only has one (or none as in this case) analysis but multiple levels of detail.
+      </listitem>
+      <listitem>
+	The document is roughly half done, with the calling R from JavaScript portion mostly completed and the calling JavaScript from R portion not yet started.
+      </listitem>
+      <listitem>
+	It should be noted that this (even the full detail view) is separate from the actual RFirefox paper I will start work on shortly (and have been thinking about).
+      </listitem>
+    </itemizedlist>
+  </sect1>
+  <sect1>
+    <title>Graphics</title>
+    <itemizedlist>
+      <listitem>
+	I haven't had much time to work on the graphics. My time has been spent on the above issues.
+      </listitem>
+      <listitem>
+	That having been said, I have Duncan's canvas graphics device (which generates Javascript to be evaluated) and R code from firepaint (which calls the canvas related JavaScript functions directly but is currently in vectorized form for each of the primatives, an easy fix, possibly not even necessary). Thus once the stability and installation issues are resolved the graphics should be banged out very quickly.
+      </listitem>
+    </itemizedlist>
+  </sect1>
+
+</article>
