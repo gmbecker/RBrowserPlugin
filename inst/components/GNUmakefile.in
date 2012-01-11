@@ -11,6 +11,7 @@ ifeq ($(IS_MAC), 1)
 	-lpthread -ldl -ldl -lm -lm -ldl
   NEW_LD_LOCS= -L$(GECKO_SDK)/bin 
   CHROME=manifests/chrome.manifest.mac
+  TYPE=-dynamiclib	
 else
   DLIBEXT=so
   R_LD_FLAGS=-L$(R_HOME)/lib -lR
@@ -19,6 +20,7 @@ else
 	-lpthread -ldl -ldl -lm -lm -ldl
   NEW_LD_LOCS= -L$(GECKO_SDK)/bin -Wl,-rpath-link,$(GECKO_SDK)/bin
   CHROME=manifests/chrome.manifest.linux
+  TYPE=-shared
 endif
 
 EXTEN_DIR=../extension/components
@@ -85,7 +87,7 @@ testjsapifun : extension
 	$(CXX)  -c -o $@ $(TEST_DEFINES) $(GECKO_CONFIG_INCLUDE) $(NEW_DEFINES) $(GECKO_INCLUDES) $(R_INCLUDES) $(RFF_INCLUDES) $(CPPFLAGS) $(CXXFLAGS) $<
 
 Revaluator.$(DLIBEXT): $(OBJ_FILES) 
-	$(CXX) -Wall -Os $^ $(R_LD_FLAGS) $(NEW_LD_LOCS) $(LD_FLAGS) $(NEW_LINKFLAGS) $(JS_LDFLAGS) -lxpcomglue_s -lxpcom -lnspr4 -ldl -o $@
+	$(CXX) -Wall -Os $^ $(R_LD_FLAGS) $(NEW_LD_LOCS) $(TYPE) $(NEW_LINKFLAGS) $(JS_LDFLAGS) -lxpcomglue_s -lxpcom -lnspr4 -ldl -o $@
 
 
 # How to build the type table information from the idl.

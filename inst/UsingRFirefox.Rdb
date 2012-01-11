@@ -141,7 +141,7 @@
       To get around this issue (which from a security standpoint we arguably should not be doing, but which is necessary to get RFirefox off the ground) we exploit a somewhat subtle fact about the Firefox extension framework. That is that Privileged code is able to attach event handlers. What this means is that functions created in privileged code can be called in response to JavaScript events. This, combined with the fact that unprivileged code can create and fire events, allows for de facto communication between privileged and unpriveleged code.
     </para>
     <para>
-      This may sound like a serious security bug in danger of being closed at any time, but it is actually allowed by design. In fact the above solution was found in the official Mozilla page regarding communication between privileged and unprivileged code, found <a href="https://developer.mozilla.org/en/Code_snippets/Interaction_between_privileged_and_non-privileged_pages" >here</a>
+      This may sound like a serious security bug in danger of being closed at any time, but it is actually allowed by design. In fact the above solution was found in the official Mozilla page regarding communication between privileged and unprivileged code, found here: https://developer.mozilla.org/en/Code_snippets/Interaction_between_privileged_and_non-privileged_pages
     </para>
     <para>
       It should be noted that privileged and non-privileged code are still not directly communicating with eachother. That is, we cannot call a privileged code function with arguments that are variables in non-privileged code. What we can (and have) do, however, is to design our privileged code to expect the arguments to be passed as an attribute of the target of the event, and add said attribute before firing the event from non-privileged code.
@@ -184,7 +184,7 @@
       The problem arises when we go to automatically translate the JavaScript object myArray created in the JS snippet above into an R object. Should it be converted into a vector (a la myVec) or a list (a la myList)? It is fairly clear that the "most correct" R object for storing the series of numbers is a vector. Why then do we have a problem?
     </para>
     <para>
-      The problem is that while similar, the <r:object>myVec</r:object> and <r:object>myList</r:object> R objects are actually syntatically different
+      The problem is that while similar, the <r:object>myVec</r:object> and <r:object>myList</r:object> R objects are actually syntatically different, while on the JavaScript side they correspond to the same Array.
     </para>
   </sect2>
  
