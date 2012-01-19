@@ -274,7 +274,7 @@ SEXP R_JS_GetGlobalObject(SEXP Rcon)
 SEXP R_jsVal(SEXP Rcon)
 {
   JSContext *jscon = (JSContext *) R_ExternalPtrAddr(GET_SLOT( Rcon , Rf_install( "ref" ) ) );
-  jsval *ret = JS_malloc(jscon, sizeof(jsval*));
+  jsval *ret = JS_malloc(jscon, sizeof(jsval));
 
   SEXP klass, ans, Rptr;
   PROTECT( klass = MAKE_CLASS( "jsvalRef" ) );
