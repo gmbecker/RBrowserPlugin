@@ -15,10 +15,10 @@
       but = getElementById(ScriptCon, "fromR");
       args = list("RFun", but, "click", 1)
       call_JS_Method(ScriptCon, JS_GetGlobalObject(ScriptCon), "addREventHandler", args, addRoot = FALSE);
-      #but2 = getElementById(ScriptCon, "fromR2");
-      #args[[1]] = RFun
-      #args[[2]] = but2
-      #call_JS_Method(ScriptCon, JS_GetGlobalObject(ScriptCon), "addREventHandler", args, addRoot = FALSE);
+      but2 = getElementById(ScriptCon, "fromR2");
+      args[[1]] = RFun
+      args[[2]] = but2
+      call_JS_Method(ScriptCon, JS_GetGlobalObject(ScriptCon), "addREventHandler", args, addRoot = FALSE);
 
     </script>
     <script type="text/javascript">
