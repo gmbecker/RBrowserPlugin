@@ -41,7 +41,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-
+#include <R.h>
+#include <Rdefines.h>
+#include <Rembedded.h>
 
 #define PLUGIN_NAME        "WebR Plug-in"
 #define PLUGIN_DESCRIPTION PLUGIN_NAME " WebR"
@@ -98,6 +100,10 @@ drawWindow(InstanceData* instanceData, GdkDrawable* gdkWindow)
   g_object_unref(gdkContext);
 }
 */
+
+int initR( const char **args, int nargs);
+
+static int isInitialized=0;
 NP_EXPORT(NPError)
 NP_Initialize(NPNetscapeFuncs* bFuncs, NPPluginFuncs* pFuncs)
 {
@@ -107,6 +113,10 @@ NP_Initialize(NPNetscapeFuncs* bFuncs, NPPluginFuncs* pFuncs)
   // last member we need.
   if (pFuncs->size < (offsetof(NPPluginFuncs, setvalue) + sizeof(void*)))
     return NPERR_INVALID_FUNCTABLE_ERROR;
+
+  const char *arg = "R";
+    
+  initR( &arg , 1);
 
   pFuncs->newp = NPP_New;
   pFuncs->destroy = NPP_Destroy;
@@ -262,3 +272,21 @@ NPP_SetValue(NPP instance, NPNVariable variable, void *value) {
   return NPERR_GENERIC_ERROR;
 }
 
+  
+  int initR( const char **args, int nargs)
+  {
+    char **rargs;
+    unsigned int i;
+    
+    if(isInitialized)
+      return 0;
+    
+    rargs = (char **) malloc(nargs * sizeof(char *));
+    for(i = 0 ; i < nargs; i++)
+      rargs[i] = strdup(args[i]);
+    fprintf(stderr, "Attempting to start embedded R.\n");fflush(stderr);
+    Rf_initEmbeddedR(nargs, rargs);
+    fprintf(stderr, "R initialization done.\n"); fflush(stderr);
+    
+    return 0;
+  }

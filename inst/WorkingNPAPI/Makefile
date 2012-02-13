@@ -37,13 +37,14 @@
 # ***** END LICENSE BLOCK *****
 
 # Basic plugin requires GTK and X11
-CFLAGS = -Wall -DXP_UNIX=1 -DMOZ_X11=1 -fPIC -g -I/home/gmbecker/gabe/checkedout/npapi-sdk-read-only/headers
+R_HOME = `R RHOME`
+CFLAGS = -Wall -DXP_UNIX=1 -DMOZ_X11=1 -fPIC -g -I/home/gmbecker/gabe/checkedout/npapi-sdk-read-only/headers -I/usr/share/R/include
 
 workingWebR.so : WorkingWebR.o
 	cc $(CFLAGS) -shared WorkingWebR.o -o workingWebR.so
 
 workingWebR.o : WorkingWebR.c WorkingWebR.h
-	cc `pkg-config --cflags gtk+-2.0` $(CFLAGS) -c WorkingWebR.c
+	cc $(CFLAGS) -c WorkingWebR.c
 
 clean :
 	rm *.o
