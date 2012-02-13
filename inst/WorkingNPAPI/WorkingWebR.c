@@ -31,7 +31,7 @@
  * use your version of this file under the terms of the MPL, indicate your
  * decision by deleting the provisions above and replace them with the notice
  * and other provisions required by the GPL or the LGPL. If you do not delete
- * the provisions above, a recipient may use your version of this file under
+ * the provisions above, a recipient may use your version of this file underb
  * the terms of any one of the MPL, the GPL or the LGPL.
  *
  * ***** END LICENSE BLOCK ***** */
@@ -42,9 +42,6 @@
 #include <string.h>
 #include <stdio.h>
 
-#include <gdk/gdk.h>
-#include <gdk/gdkx.h>
-#include <gtk/gtk.h>
 
 #define PLUGIN_NAME        "WebR Plug-in"
 #define PLUGIN_DESCRIPTION PLUGIN_NAME " WebR"
@@ -56,7 +53,7 @@ typedef struct InstanceData {
   NPP npp;
   NPWindow window;
 } InstanceData;
-
+/*
 static void
 drawWindow(InstanceData* instanceData, GdkDrawable* gdkWindow)
 {
@@ -100,7 +97,7 @@ drawWindow(InstanceData* instanceData, GdkDrawable* gdkWindow)
 
   g_object_unref(gdkContext);
 }
-
+*/
 NP_EXPORT(NPError)
 NP_Initialize(NPNetscapeFuncs* bFuncs, NPPluginFuncs* pFuncs)
 {
@@ -164,6 +161,7 @@ NP_Shutdown()
 
 NPError
 NPP_New(NPMIMEType pluginType, NPP instance, uint16_t mode, int16_t argc, char* argn[], char* argv[], NPSavedData* saved) {
+  
   // Make sure we can render this plugin
   NPBool browserSupportsWindowless = false;
   sBrowserFuncs->getvalue(instance, NPNVSupportsWindowless, &browserSupportsWindowless);
@@ -231,6 +229,7 @@ NPP_Print(NPP instance, NPPrint* platformPrint) {
 
 int16_t
 NPP_HandleEvent(NPP instance, void* event) {
+  /*
   InstanceData *instanceData = (InstanceData*)(instance->pdata);
   XEvent *nativeEvent = (XEvent*)event;
 
@@ -244,8 +243,8 @@ NPP_HandleEvent(NPP instance, void* event) {
   GdkDrawable* gdkWindow = GDK_DRAWABLE(gdk_window_foreign_new(nativeWinId));  
   drawWindow(instanceData, gdkWindow);
   g_object_unref(gdkWindow);
-
-  return 1;
+  */
+  return 0;
 }
 
 void
