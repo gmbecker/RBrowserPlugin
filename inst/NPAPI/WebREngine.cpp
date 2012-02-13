@@ -5,13 +5,13 @@
 #include <stdio.h>
 #include <sys/stat.h>
 
-#include "ScriptableObject.h"
-#include "plugin.h"
+#include "WebR.h"
+//#include "plugin.h"
 
 
 using namespace std;
 
-WebREngine::ScriptableObject (NPP instance) 
+WebREngine::WebREngine (NPP instance) 
 {
   this->instance = instance;
   this->m_getVersion_id = NPN_GetStringIdentifier("getVersion");
@@ -54,12 +54,13 @@ bool WebREngine::Invoke(NPIdentifier name, const NPVariant *args, uint32_t argCo
     PROTECT(Rargs[i] = ConvertNPToR(args[i], this->instance));
   SEXP ans;
   int error = 0;
+  int ret = 0;
   if(name == NPN_GetStringIdentifier("eval"))
     {
       SEXP call;
       PROTECT(call = allocVector(LANGSXP, 2));
       SETCAR(call, Rf_install("parseEval"));
-      SETCAR(CDR, Rargs[0]);
+      SETCAR(CDR(call), Rargs[0]);
       PROTECT(ans = R_tryEval(call, R_GlobalEnv, &error));
       if(!error)
 	ConvertRToNP(ans, this->instance,result);

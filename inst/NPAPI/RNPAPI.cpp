@@ -1,14 +1,26 @@
-static NPNetscapeFuncs* sBrowserFuncs = NULL;
+#include <WebR.h>
+#include <npfunctions.h>
+#include <Rembedded.h>
+#include <RNPAPI.h>
+
 
 #define PLUGIN_NAME        "WebR Plug-in"
 #define PLUGIN_DESCRIPTION PLUGIN_NAME " Plugin for embedding R in browsers"
 #define PLUGIN_VERSION     "0.1.0.0"
 
-NP_EXPORT(NPError)
+typedef struct InstanceData {
+  NPP npp;
+  NPWindow window;
+} InstanceData;
+
+static NPNetscapeFuncs* sBrowserFuncs = NULL;
+static int isInitialized = 0;
+int initR( const char **args, int nargs);
+
+NPError 
 NP_Initialize(NPNetscapeFuncs* bFuncs, NPPluginFuncs* pFuncs)
 {
-  const char *arg;
-  arg[0] = "R";
+   const char *arg = "R";
   
   initR( &arg , 1);
  
@@ -27,7 +39,7 @@ NP_Initialize(NPNetscapeFuncs* bFuncs, NPPluginFuncs* pFuncs)
   pFuncs->setvalue = NPP_SetValue;
 }
 
-NP_EXPORT(NPError)
+NPError
 NP_Shutdown()
 {
   Rf_endEmbeddedR(0);
@@ -53,13 +65,13 @@ int initR( const char **args, int nargs)
 }
 
 
-NP_EXPORT(char*)
+char*
 NP_GetPluginVersion()
 {
-  return PLUGIN_VERSION;
+  return (char *) PLUGIN_VERSION;
 }
 
-NP_EXPORT(const char*)
+const char*
 NP_GetMIMEDescription()
 {
   return "application/basic-plugin:bsc:Basic plugin";
