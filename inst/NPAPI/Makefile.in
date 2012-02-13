@@ -1,13 +1,16 @@
 NPAPI_SDK=@NPAPI_SDK@
 R_HOME=@R_HOME@
 IS_MAC=@IS_MAC@
+PKGCONFIG=pkg-config
+MOZILLA_PLUGIN_CFLAGS=`$(PKGCONFIG) --cflags mozilla-plugin`
+MOZILLA_PLUGIN_LIBS=`$(PKGCONFIG) --libs mozilla-plugin`
 
 CXX=g++
 CPPFLAGS += $(shell R CMD config --cppflags ) \
 	-I$(NPAPI_SDK)/headers \
 	-I$(R_HOME)/include \
 	-I./ \
-	-fPIC
+	-fPIC 
 
 ifeq ($(IS_MAC), 1)
   DLIBEXT=dylib
@@ -17,13 +20,19 @@ else
   DLIBEXT=so
   R_LD_FLAGS=-L$(R_HOME)/lib -lR
   TYPE=-shared
+  CPPFLAGS += -DXP_UNIX=1
 endif
 
 OBJ_FILES = NPConversions.o RNPAPI.o WebREngine.o
 %o: %.cpp
-	$(CXX) -c -o $@ $(CPPFLAGS) $<
+	echo $(EXTRA_CPPFLAGS)
+	$(CXX) -c -o $@ $(CPPFLAGS) $(MOZILLA_PLUGIN_CFLAGS)$<
 
 WebR.$(DLIBEXT): $(OBJ_FILES)
-	$(CXX) -Wall -Os $^ $(R_LD_FLAGS) $(TYPE) -o $@
+	$(CXX) -Wall -Os $^ $(R_LD_FLAGS) $(MOZILLA_PLUGIN_LIBS) $(TYPE) -o $@
 
 default: WebR.$(DLIBEXT)
+
+clean: 
+	rm *.o
+	rm *.so
