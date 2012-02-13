@@ -41,7 +41,7 @@ R_HOME = `R RHOME`
 CFLAGS = -Wall -DXP_UNIX=1 -DMOZ_X11=1 -fPIC -g -I/home/gmbecker/gabe/checkedout/npapi-sdk-read-only/headers -I/usr/share/R/include
 
 workingWebR.so : WorkingWebR.o
-	cc $(CFLAGS) -shared WorkingWebR.o -o workingWebR.so
+	cc $(CFLAGS) -shared -L/usr/lib64/R/lib -lR WorkingWebR.o -o workingWebR.so
 
 workingWebR.o : WorkingWebR.c WorkingWebR.h
 	cc $(CFLAGS) -c WorkingWebR.c

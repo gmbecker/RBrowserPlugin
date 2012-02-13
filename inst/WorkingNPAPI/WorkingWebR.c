@@ -144,7 +144,7 @@ NP_GetPluginVersion()
 NP_EXPORT(const char*)
 NP_GetMIMEDescription()
 {
-  return "application/basic-plugin:bsc:Basic plugin";
+  return "application/WebR:R:WebR plugin";
 }
 
 NP_EXPORT(NPError)
@@ -272,21 +272,21 @@ NPP_SetValue(NPP instance, NPNVariable variable, void *value) {
   return NPERR_GENERIC_ERROR;
 }
 
+
+int initR( const char **args, int nargs)
+{
+  char **rargs;
+  unsigned int i;
   
-  int initR( const char **args, int nargs)
-  {
-    char **rargs;
-    unsigned int i;
-    
-    if(isInitialized)
-      return 0;
-    
-    rargs = (char **) malloc(nargs * sizeof(char *));
-    for(i = 0 ; i < nargs; i++)
-      rargs[i] = strdup(args[i]);
-    fprintf(stderr, "Attempting to start embedded R.\n");fflush(stderr);
-    Rf_initEmbeddedR(nargs, rargs);
-    fprintf(stderr, "R initialization done.\n"); fflush(stderr);
-    
+  if(isInitialized)
     return 0;
-  }
+  
+  rargs = (char **) malloc(nargs * sizeof(char *));
+  for(i = 0 ; i < nargs; i++)
+    rargs[i] = strdup(args[i]);
+  fprintf(stderr, "Attempting to start embedded R.\n");fflush(stderr);
+  Rf_initEmbeddedR(nargs, rargs);
+  fprintf(stderr, "R initialization done.\n"); fflush(stderr);
+  
+  return 0;
+}
