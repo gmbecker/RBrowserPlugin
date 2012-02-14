@@ -44,6 +44,9 @@
 #include <R.h>
 #include <Rdefines.h>
 #include <Rembedded.h>
+#include <plugin.h>
+
+//extern "C" {
 
 #define PLUGIN_NAME        "WebR Plug-in"
 #define PLUGIN_DESCRIPTION PLUGIN_NAME " WebR"
@@ -55,6 +58,7 @@ typedef struct InstanceData {
   NPP npp;
   NPWindow window;
 } InstanceData;
+
 /*
 static void
 drawWindow(InstanceData* instanceData, GdkDrawable* gdkWindow)
@@ -118,6 +122,14 @@ NP_Initialize(NPNetscapeFuncs* bFuncs, NPPluginFuncs* pFuncs)
     
   initR( &arg , 1);
 
+  NP_GetEntryPoints(pFuncs);
+  return NPERR_NO_ERROR;
+}
+
+  NPError NP_GetEntryPoints(NPPluginFuncs *pFuncs)
+  {
+
+
   pFuncs->newp = NPP_New;
   pFuncs->destroy = NPP_Destroy;
   pFuncs->setwindow = NPP_SetWindow;
@@ -132,8 +144,9 @@ NP_Initialize(NPNetscapeFuncs* bFuncs, NPPluginFuncs* pFuncs)
   pFuncs->getvalue = NPP_GetValue;
   pFuncs->setvalue = NPP_SetValue;
 
+
   return NPERR_NO_ERROR;
-}
+  }
 
 NP_EXPORT(char*)
 NP_GetPluginVersion()
@@ -149,6 +162,7 @@ NP_GetMIMEDescription()
 
 NP_EXPORT(NPError)
 NP_GetValue(void* future, NPPVariable aVariable, void* aValue) {
+  fprintf(stderr, "in NP_GetValue\n");fflush(stderr);
   switch (aVariable) {
     case NPPVpluginNameString:
       *((char**)aValue) = PLUGIN_NAME;
@@ -166,12 +180,13 @@ NP_GetValue(void* future, NPPVariable aVariable, void* aValue) {
 NP_EXPORT(NPError)
 NP_Shutdown()
 {
+  fprintf(stderr, "In NP_Shutdown");fflush(stderr);
   return NPERR_NO_ERROR;
 }
 
 NPError
 NPP_New(NPMIMEType pluginType, NPP instance, uint16_t mode, int16_t argc, char* argn[], char* argv[], NPSavedData* saved) {
-  
+  fprintf(stderr, "In NPP_New\n");fflush(stderr);
   // Make sure we can render this plugin
   NPBool browserSupportsWindowless = false;
   sBrowserFuncs->getvalue(instance, NPNVSupportsWindowless, &browserSupportsWindowless);
@@ -179,7 +194,7 @@ NPP_New(NPMIMEType pluginType, NPP instance, uint16_t mode, int16_t argc, char* 
     printf("Windowless mode not supported by the browser\n");
     return NPERR_GENERIC_ERROR;
   }
-
+  
   sBrowserFuncs->setvalue(instance, NPPVpluginWindowBool, (void*)false);
 
   // set up our our instance data
@@ -189,12 +204,13 @@ NPP_New(NPMIMEType pluginType, NPP instance, uint16_t mode, int16_t argc, char* 
   memset(instanceData, 0, sizeof(InstanceData));
   instanceData->npp = instance;
   instance->pdata = instanceData;
-
+  
   return NPERR_NO_ERROR;
 }
 
 NPError
 NPP_Destroy(NPP instance, NPSavedData** save) {
+  fprintf(stderr, "In NPP_Destroy");fflush(stderr);
   InstanceData* instanceData = (InstanceData*)(instance->pdata);
   free(instanceData);
   return NPERR_NO_ERROR;
@@ -239,6 +255,7 @@ NPP_Print(NPP instance, NPPrint* platformPrint) {
 
 int16_t
 NPP_HandleEvent(NPP instance, void* event) {
+  fprintf(stderr, "In NPP_HandleEvent");fflush(stderr);
   /*
   InstanceData *instanceData = (InstanceData*)(instance->pdata);
   XEvent *nativeEvent = (XEvent*)event;
@@ -264,11 +281,56 @@ NPP_URLNotify(NPP instance, const char* URL, NPReason reason, void* notifyData) 
 
 NPError
 NPP_GetValue(NPP instance, NPPVariable variable, void *value) {
-  return NPERR_GENERIC_ERROR;
+  fprintf(stderr, "In NPP_GetValue");fflush(stderr);
+	if(instance == NULL)
+    return NPERR_INVALID_INSTANCE_ERROR;
+
+  NPError rv = NPERR_NO_ERROR;
+
+  if(instance == NULL)
+    return NPERR_GENERIC_ERROR;
+
+  CPlugin * plugin = (CPlugin *)instance->pdata;
+  if(plugin == NULL)
+    return NPERR_GENERIC_ERROR;
+
+  switch (variable) 
+	{
+		case NPPVpluginWindowBool:
+			*((bool *)value) = true;
+			break;
+	
+		case NPPVpluginNameString:
+			*((char **)value) = "Boilerplate Plugin";
+			break;
+  
+		case NPPVpluginDescriptionString:
+			*((char **)value) = "Boilerplate web plugin";
+			break;
+
+		case NPPVpluginScriptableNPObject:
+      fprintf(stderr, "case NPPVpluginScriptableNPObject");fflush(stderr);
+			if (!plugin->isInitialized())
+			{
+				return NPERR_GENERIC_ERROR;
+			}
+			
+			*((NPObject **)value) = plugin->GetScriptableObject();
+
+			break;
+  
+		default:
+			rv = NPERR_GENERIC_ERROR;
+			break;
+  }
+
+  return rv;
+  
 }
 
 NPError
 NPP_SetValue(NPP instance, NPNVariable variable, void *value) {
+  fprintf(stderr, "In NPP_SetValue");fflush(stderr);
   return NPERR_GENERIC_ERROR;
 }
 
@@ -290,3 +352,5 @@ int initR( const char **args, int nargs)
   
   return 0;
 }
+
+//} //extern "C"

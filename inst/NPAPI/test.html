@@ -2,11 +2,13 @@
   <head>
   </head>
   <body>
-    <embed type="application/WebR" />
+    <!-- If we don't set the width and height of the embed to 0, currently it shows up as staticy looking black "window" on the page. Not sure how to avoid this in the plugin itself... -->
+    <object id="Reng" type="application/WebR" style="width:0;height:0"> </object>
     <script type="text/javascript">
-      var Reng = document.embeds[0];
+      var Reng = document.getElementById("Reng");
+      alert(Reng);
       var res = Reng.eval("rnorm(10)");
-      alert(res);
+      
     </script>
   </body>
 </html>
