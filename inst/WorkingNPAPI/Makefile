@@ -31,7 +31,7 @@ WebR.$(DLIBEXT): $(OBJ_FILES)
 	$(CXX) -Wall -Os $^ $(R_LD_FLAGS) $(TYPE) -o $@
 
 tiny.$(DLIBEXT): tinyplugin.o
-	$(CXX) -Wall -Os $^ $(TYPE) -o $@
+	$(CXX) -Wall -Os $^ $(R_LD_FLAGS) $(TYPE) -o $@
 
 default: WebR.$(DLIBEXT) tiny.$(DLIBEXT)
 
