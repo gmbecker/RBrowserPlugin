@@ -4,7 +4,7 @@
 // Register mime types and description for UNIX
 // (Windows declares it in resources)
 // Plugin's mime types
-#define MIME_TYPE_DESCRIPTION "application/sample-plugin:file-extension:Description"
+#define MIME_TYPE_DESCRIPTION "application/R:R:WebR Plugin"
 const char* NP_GetMIMEDescription() {
   return MIME_TYPE_DESCRIPTION;
 }
@@ -112,11 +112,11 @@ NPP_GetValue(NPP instance, NPPVariable variable, void *value) {
       break;
       
     case NPPVpluginNameString:
-      *((char **)value) = "Boilerplate Plugin";
+      *((char **)value) = "WebR Plugin";
       break;
       
     case NPPVpluginDescriptionString:
-      *((char **)value) = "Boilerplate web plugin";
+      *((char **)value) = "WebR plugin";
       break;
       
     case NPPVpluginScriptableNPObject:
