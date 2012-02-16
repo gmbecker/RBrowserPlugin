@@ -1,7 +1,6 @@
-# Generated automatically from Makefile.in by configure.
-NPAPI_SDK=/home/gmbecker/gabe/checkedout/npapi-sdk-read-only
-R_HOME=/usr/lib64/R
-IS_MAC=0
+NPAPI_SDK=@NPAPI_SDK@
+R_HOME=@R_HOME@
+IS_MAC=@IS_MAC@
 PKGCONFIG=pkg-config
 
 CXX=g++
@@ -30,7 +29,7 @@ OBJ_FILES =  WorkingWebR.o WebREngine.o plugin.o
 WebR.$(DLIBEXT): $(OBJ_FILES)
 	$(CXX) -Wall -Os $^ $(R_LD_FLAGS) $(TYPE) -o $@
 
-tiny.$(DLIBEXT): tinyplugin.o
+tiny.$(DLIBEXT): tinyplugin.o WebREngine.o plugin.o
 	$(CXX) -Wall -Os $^ $(R_LD_FLAGS) $(TYPE) -o $@
 
 default: WebR.$(DLIBEXT) tiny.$(DLIBEXT)

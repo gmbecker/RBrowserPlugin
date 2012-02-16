@@ -130,22 +130,22 @@ NP_Initialize(NPNetscapeFuncs* bFuncs, NPPluginFuncs* pFuncs)
   {
 
 
-  pFuncs->newp = NPP_New;
-  pFuncs->destroy = NPP_Destroy;
-  pFuncs->setwindow = NPP_SetWindow;
-  pFuncs->newstream = NPP_NewStream;
-  pFuncs->destroystream = NPP_DestroyStream;
-  pFuncs->asfile = NPP_StreamAsFile;
-  pFuncs->writeready = NPP_WriteReady;
-  pFuncs->write = NPP_Write;
-  pFuncs->print = NPP_Print;
-  pFuncs->event = NPP_HandleEvent;
-  pFuncs->urlnotify = NPP_URLNotify;
-  pFuncs->getvalue = NPP_GetValue;
-  pFuncs->setvalue = NPP_SetValue;
+    pFuncs->newp = NPP_New;
+    pFuncs->destroy = NPP_Destroy;
+    pFuncs->setwindow = NPP_SetWindow;
+    pFuncs->newstream = NPP_NewStream;
+    pFuncs->destroystream = NPP_DestroyStream;
+    pFuncs->asfile = NPP_StreamAsFile;
+    pFuncs->writeready = NPP_WriteReady;
+    pFuncs->write = NPP_Write;
+    pFuncs->print = NPP_Print;
+    pFuncs->event = NPP_HandleEvent;
+    pFuncs->urlnotify = NPP_URLNotify;
+    pFuncs->getvalue = NPP_GetValue;
+    pFuncs->setvalue = NPP_SetValue;
 
 
-  return NPERR_NO_ERROR;
+    return NPERR_NO_ERROR;
   }
 
 NP_EXPORT(char*)
