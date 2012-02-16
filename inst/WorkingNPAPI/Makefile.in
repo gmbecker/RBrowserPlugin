@@ -29,10 +29,7 @@ OBJ_FILES =  WorkingWebR.o WebREngine.o plugin.o
 WebR.$(DLIBEXT): $(OBJ_FILES)
 	$(CXX) -Wall -Os $^ $(R_LD_FLAGS) $(TYPE) -o $@
 
-tiny.$(DLIBEXT): tinyplugin.o WebREngine.o plugin.o
-	$(CXX) -Wall -Os $^ $(R_LD_FLAGS) $(TYPE) -o $@
-
-default: WebR.$(DLIBEXT) tiny.$(DLIBEXT)
+default: WebR.$(DLIBEXT)
 
 clean: 
 	rm *.o
