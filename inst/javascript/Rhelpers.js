@@ -19,7 +19,8 @@ function callRFunction( name, args, singleArg)
 
     //default value
     singleArg = typeof singleArg != "undefined" ? singleArg : "false";
-    
+    if(typeof args == "undefined")
+	args = [];
     //build event to pass to chrome.
     var evt = document.createEvent("Events");
     evt.initEvent("RFirefoxCall", true, false);

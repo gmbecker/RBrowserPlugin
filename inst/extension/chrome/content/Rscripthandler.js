@@ -60,6 +60,11 @@ function ExtjsREventHandler( evt)
     //var RFirefoxData = content.document.getElementById("RFirefoxCallData");
     var name = evt.target.getAttribute("RFunName");//RFirefoxData.getAttribute("FunName");
     var value = JSON.parse(evt.target.getAttribute("RFunValue"));
+    if(!value)
+	{
+	    alert("undefined value detected.");
+	    value = [];
+	}
     var singleArg = evt.target.getAttribute("RsingleArg");
     var out;
     /*

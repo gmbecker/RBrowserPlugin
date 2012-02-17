@@ -21,6 +21,8 @@ ac_help="$ac_help
 --with-arch 		    Specify the architecture of the system. Defaults to x86_64"
 ac_help="$ac_help
 --enable-mac	    Configure RFirefox for Mac OS X"
+ac_help="$ac_help
+   --with-npapi-sdk directory in which npapi sdk is located"
 
 # Initialize some variables set by options.
 # The variables have the same names as the options, with
@@ -574,6 +576,14 @@ else
 fi
 
 
+# Check whether --with-npapi-sdk or --without-npapi-sdk was given.
+if test "${with_npapi_sdk+set}" = set; then
+  withval="$with_npapi_sdk"
+  NPAPI_SDK=${withval}
+fi
+
+
+
 
 
 
@@ -705,7 +715,7 @@ done
 
 ac_given_srcdir=$srcdir
 
-trap 'rm -fr `echo "src/Makevars inst/components/GNUmakefile inst/runfirefox.sh" | sed "s/:[^ ]*//g"` conftest*; exit 1' 1 2 15
+trap 'rm -fr `echo "src/Makevars inst/components/GNUmakefile inst/runfirefox.sh inst/NPAPI/Makefile inst/WorkingNPAPI/Makefile" | sed "s/:[^ ]*//g"` conftest*; exit 1' 1 2 15
 EOF
 cat >> $CONFIG_STATUS <<EOF
 
@@ -742,6 +752,7 @@ s%@R_HOME@%$R_HOME%g
 s%@IS_MAC@%$IS_MAC%g
 s%@FF@%$FF%g
 s%@ARCH@%$ARCH%g
+s%@NPAPI_SDK@%$NPAPI_SDK%g
 
 CEOF
 EOF
@@ -783,7 +794,7 @@ EOF
 
 cat >> $CONFIG_STATUS <<EOF
 
-CONFIG_FILES=\${CONFIG_FILES-"src/Makevars inst/components/GNUmakefile inst/runfirefox.sh"}
+CONFIG_FILES=\${CONFIG_FILES-"src/Makevars inst/components/GNUmakefile inst/runfirefox.sh inst/NPAPI/Makefile inst/WorkingNPAPI/Makefile"}
 EOF
 cat >> $CONFIG_STATUS <<\EOF
 for ac_file in .. $CONFIG_FILES; do if test "x$ac_file" != x..; then

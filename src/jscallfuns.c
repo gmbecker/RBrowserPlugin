@@ -25,6 +25,10 @@ R_SetPropertyCh(SEXP Rcon, SEXP Robjptr, SEXP Rname, SEXP Rcharval)
   JS_AddValueRoot(jscon, &jvalval);
   
   success = JS_SetProperty(jscon, obj, name, &jvalval);
+  if(!success)
+    {
+      fprintf(stderr, "ERROR: Setting %s property failed", name); fflush(stderr);
+    }
   /*
   JS_RemoveRoot(jscon, &jvalval);
   JS_RemoveRoot(jscon, &jstrval);
@@ -215,6 +219,10 @@ R_Call_JS_Method(SEXP Rcon, SEXP Robjptr, SEXP Rname, SEXP Rargs, SEXP RobjIsVal
     }
   jsval *retval = (jsval *) R_ExternalPtrAddr( GET_SLOT( Rout , Rf_install( "ref" ) ) );  
   success = JS_CallFunctionName(jscon, obj, name, n, args, retval);
+  if(!success)
+    {
+      fprintf(stderr, "ERROR: Call to JavaScript function %s failed.\n", name); fflush(stderr);
+    }
   //addrooted in R code
   //JS_AddRoot(jscon, retval);
   if(objAdded)

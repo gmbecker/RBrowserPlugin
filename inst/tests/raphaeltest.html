@@ -17,7 +17,8 @@
       sp = smooth.spline(x, y)
       plot(x, y, cex=1.5)
       lines(sp, col="blue")
-
+      if(FALSE)
+{
       #print(thing$getPoints()[[1]])
       call_JS_Method(ScriptCon, thing$getPoints()[[3]],
         "attr", c("fill", "#3b4449"))
@@ -36,7 +37,8 @@
           })
          print("I'm leaving the function")
       }
-      colorThem(2)
+      #colorThem(2)
+}
     </script>
   </head>
   <body>
