@@ -8,7 +8,7 @@ then
 export R_HOME=@R_HOME@
 fi
 
-if [ "$IS_MAC" = "1"]
+if [ "$IS_MAC" -eq "1" ];
 then
 FFDEBUG=""
 R_LIB_LOC=$R_HOME/lib/$ARCH
@@ -17,8 +17,10 @@ else
 FFDEBUG="-g"
 R_LIB_LOC=$R_HOME/lib
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$R_LIB_LOC
+FFOPTS="--no-remote $FFOPTS"
 fi
 
+echo "Hi there!"
 
 
 $FF $FFDEBUG $FFOPTS
