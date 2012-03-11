@@ -22,6 +22,24 @@ else
   CPPFLAGS += -DXP_UNIX=1
 endif
 
+ifndef R_HMTL_XSL
+ R_HTML_XSL="http://www.omegahat.org/XSL/html/Rhtml.xsl"  
+endif
+
+ifndef R_FO_XSL
+ R_FO_XSL="http://www.omegahat.org/XSL/fo/Rfo.xsl"
+endif
+
+ifndef FOP
+ FOP=fop
+endif
+
+ifndef XSLTPROC
+ XSLTPROC=xsltproc
+endif
+
+
+
 OBJ_FILES =  WorkingWebR.o WebREngine.o plugin.o
 %o: %.cpp
 	$(CXX) -c -o $@ $(CPPFLAGS) $<
@@ -34,3 +52,14 @@ default: WebR.$(DLIBEXT)
 clean: 
 	rm *.o
 	rm *.so
+
+
+%.html : %.Rdb
+	$(XSLTPROC) -o $@ $(R_HTML_XSL) $<
+%.pdf : %.fo
+	$(FOP) $< $@
+
+%.fo : %.Rdb
+	$(XSLTPROC) -o $@ $(R_FO_XSL) $<
+
+status: status.pdf
