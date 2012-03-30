@@ -4,25 +4,48 @@
 // Register mime types and description for UNIX
 // (Windows declares it in resources)
 // Plugin's mime types
-#define MIME_TYPE_DESCRIPTION "application/R:R:WebR Plugin"
+#define MIME_TYPE_DESCRIPTION "application/r:R:WebR Plugin"
 const char* NP_GetMIMEDescription() {
   return MIME_TYPE_DESCRIPTION;
 }
 NPError NP_GetEntryPoints(NPPluginFuncs* pFuncs);
 // Plugin's name and description
-NPError OSCALL NP_GetValue(void*, NPPVariable, void* out) {
-  return NPERR_NO_ERROR;
+NPError OSCALL NP_GetValue(void* instance, NPPVariable variable, void* out) {
+   fprintf(stderr, "In NP_GetValue\n");fflush(stderr);
+
+  NPError rv = NPERR_NO_ERROR;
+
+  switch (variable) 
+    {
+    case NPPVpluginNameString:
+      *((char **)out) = "WebR Plugin";
+      break;
+      
+    case NPPVpluginDescriptionString:
+      *((char **)out) = "WebR plugin";
+      break;      
+    default:
+      rv = NPERR_GENERIC_ERROR;
+      break;
+    }
+  
+  return rv;
+  
+ return NPERR_NO_ERROR;
 }
 static int isInitialized=0;
 int initR( const char **args, int nargs);
 // Initializes plugin
 
 NPError NP_Initialize(NPNetscapeFuncs* npnfuncs, NPPluginFuncs* nppfuncs) {
+  fprintf(stderr, "In NP_Initialize");fflush(stderr);
+
 if (nppfuncs->size < (offsetof(NPPluginFuncs, setvalue) + sizeof(void*)))
     return NPERR_INVALID_FUNCTABLE_ERROR;
 
   const char *arg = "R";
     
+  
   initR( &arg , 1);
   myNPNFuncs = (NPNetscapeFuncs *)malloc(sizeof(NPNetscapeFuncs));
   CopyNPNFunctions(myNPNFuncs, npnfuncs);
@@ -79,7 +102,8 @@ void CopyNPNFunctions(NPNetscapeFuncs *dstFuncs, NPNetscapeFuncs *srcFuncs)
 
 // Set table of functions called by browser.
 NPError NP_GetEntryPoints(NPPluginFuncs* pFuncs) {
-  if (pFuncs == NULL)
+  fprintf(stderr, "In NP_GetEntryPoints");fflush(stderr);
+ if (pFuncs == NULL)
     return NPERR_INVALID_FUNCTABLE_ERROR;
   pFuncs->version       = (NP_VERSION_MAJOR << 8) | NP_VERSION_MINOR;
   pFuncs->newp          = NPP_New;
@@ -100,8 +124,8 @@ NPError NPP_New(NPMIMEType    pluginType,
 NPError
 NPP_GetValue(NPP instance, NPPVariable variable, void *value) {
   fprintf(stderr, "In NPP_GetValue\n");fflush(stderr);
-  if(instance == NULL)
-    return NPERR_INVALID_INSTANCE_ERROR;
+  //  if(instance == NULL)
+  //  return NPERR_INVALID_INSTANCE_ERROR;
 
   NPError rv = NPERR_NO_ERROR;
 

@@ -1,8 +1,7 @@
 <html>
 <body>
-  <embed type="application/R" ></embed>
+  <embed type="application/test-r" ></embed>
   <script type="text/javascript">
-    alert(navigator.mimeTypes["application/r"].enabledPlugin);
     var Reng = document.embeds[0]; 
     var res = Reng.eval("rnorm(10)");
     var div  = document.getElementById("mydiv");

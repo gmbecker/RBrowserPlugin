@@ -110,11 +110,16 @@ raphaelDev = function(id = "raph_content", dim = c(600, 400),
     assign("paper", tmp, env = storage)
     return(TRUE)
   }
+    #funs@polyline = function(...) TRUE
+    #if(FALSE)
+    #  {
     funs@polyline = function(n, x, y, context, dev)
       {
-        
+        print(paste("x length:", length(x),"class", class(x), "y length:", length(y), "class", class(y), "n:", n))
+
         x = x[1:n]
         y = y[1:n]
+        print(paste("x length:", length(x),"class", class(x), "y length:", length(y), "class", class(y), "n:", n))
         #more storage but much faster
         diffsx = x[ 2 : n ] - x[ -n ]
         diffsy = y[ 2 : n ] - y[ -n ] 
@@ -122,11 +127,16 @@ raphaelDev = function(id = "raph_content", dim = c(600, 400),
         path = paste( paste( "M" , x[1], y[1]),
           paste( "l" , diffsx , diffsy , collapse = " "),
           collapse = " ")
+        if(FALSE)
+          {
         retval = call_JS_Method(jscon, get("paper", env=storage),
           "path", path)
+   #     print(retval)
         assign("polylines", c(get("polylines", storage), retval), envir = storage)
+      }
         return(TRUE)
       }
+  #}
     # No implementations for
     funs@mode = NULL
     funs@metricInfo = NULL

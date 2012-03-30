@@ -58,9 +58,7 @@ slider.subscribe("slideEnd", function() {
     if (val !== roundedVal) {
 setTimeout(function () { slider.setValue(roundedVal); },0);
 
-netscape.security.PrivilegeManager.enablePrivilege("UniversalXPConnect");
-var out;
-Rev.call1("doSlider", roundedVal / scale, out);
+callRFunction("doSlider", roundedVal / scale);
     }
 });
 
@@ -85,6 +83,7 @@ Rev.call1("doSlider", roundedVal / scale, out);
       JS_RemoveRoot(ScriptCon, pls[[len]])
       assign("polylines", pls[-len], env=canv$storage)
     }
+    print(class(fit))
     lines(fit)
   }
 </script>
