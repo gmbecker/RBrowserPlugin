@@ -67,8 +67,8 @@ void    NPP_URLNotify(NPP instance, const char* URL, NPReason reason, void* noti
 NPError NPP_GetValue(NPP instance, NPPVariable variable, void *value);
 NPError NPP_SetValue(NPP instance, NPNVariable variable, void *value);
 
+extern NPNetscapeFuncs *myNPNFuncs;
 
-static NPNetscapeFuncs *myNPNFuncs;
 class WebREngine : public NPObject
 {
 protected:
@@ -111,6 +111,7 @@ public:
  
     static NPClass _npclass;
  
+  NPP instance; //need this for R<->NP conversions
 protected:
     NPP m_Instance;
 	
@@ -118,7 +119,6 @@ private:
 
 	NPIdentifier m_getVersion_id;
 	//Probably don't need this because of m_Instance above!!
-	NPP instance;
 };
 
 

@@ -13,9 +13,13 @@ using namespace std;
 
 WebREngine::WebREngine (NPP instance) 
 {
-  this->instance = instance;
+  
+
   //this->m_getVersion_id = NPN_GetStringIdentifier("getVersion");
-  this->m_getVersion_id = myNPNFuncs->getstringidentifier("getVersion");
+  //  this->m_getVersion_id = myNPNFuncs->getstringidentifier("getVersion");
+  fprintf(stderr, "\nCreating WebREngine object. Instance:%lx", instance);fflush(stderr);
+  this->instance = instance;
+  fprintf(stderr, "\nLeaving WebREngine()\n");fflush(stderr);
 }
 
 
@@ -32,7 +36,10 @@ void WebREngine::Invalidate()
 
 bool WebREngine::HasMethod(NPIdentifier name)
 {
+  fprintf(stderr, "\nIn WebREngine::HasMethod");fflush(stderr);
   int ret = 0;
+  fprintf(stderr, "myNPNFuncs: %lx", myNPNFuncs);fflush(stderr);
+  fprintf(stderr, "myNPNFuncs->getstringidentifier: %lx", myNPNFuncs->getstringidentifier);fflush(stderr);
   if(name == myNPNFuncs->getstringidentifier("eval"))
     ret = 1;
   else if (name == myNPNFuncs->getstringidentifier("listCall"))
@@ -43,13 +50,17 @@ bool WebREngine::HasMethod(NPIdentifier name)
     ret = 1;
   else if (name == myNPNFuncs->getstringidentifier("set"))
     ret = 1;
-
+  fprintf(stderr, "\nLeaving WebREngine::HasMethod");fflush(stderr);
   return (bool) ret;
 }
 
 
 bool WebREngine::Invoke(NPIdentifier name, const NPVariant *args, uint32_t argCount, NPVariant *result)
 {
+  
+  fprintf(stderr, "\nIn WebREngine::Invoke");fflush(stderr);
+  
+
   SEXP Rargs[argCount];
   for(int i=0; i<argCount; i++)
     PROTECT(Rargs[i] = ConvertNPToR(args[i], this->instance));
@@ -85,16 +96,17 @@ bool WebREngine::Invoke(NPIdentifier name, const NPVariant *args, uint32_t argCo
 bool WebREngine::InvokeDefault(const NPVariant *args, uint32_t argCount, NPVariant *result)
 {
 	return false;
-
 }
 
 bool WebREngine::HasProperty(NPIdentifier name)
 {
+  fprintf(stderr, "\nIn WebREngine::HasProperty");fflush(stderr);
 	return false;
 }
 
 bool WebREngine::GetProperty(NPIdentifier name, NPVariant *result)
 {
+  fprintf(stderr, "\nIn WebREngine::GetProperty");fflush(stderr);
 	return false;
 }
 
@@ -110,6 +122,7 @@ bool WebREngine::RemoveProperty(NPIdentifier name)
 
 bool WebREngine::Enumerate(NPIdentifier **identifier, uint32_t *count)
 {
+    fprintf(stderr, "\nIn WebREngine::Enumerate");fflush(stderr);
 	return false;
 }
 
@@ -120,8 +133,11 @@ bool WebREngine::Construct(const NPVariant *args, uint32_t argCount, NPVariant *
 
 NPObject *WebREngine::Allocate(NPP npp, NPClass *aClass)
 {
+  fprintf(stderr, "\nIn WebREngine::Allocate\n");fflush(stderr);
+  
 	NPObject *pObj = (NPObject *)new WebREngine(npp);
 	return pObj;
+	fprintf(stderr, "\nLeaving WebREngine::Allocate\n");fflush(stderr);
 }
 
 void WebREngine::Detatch (void)

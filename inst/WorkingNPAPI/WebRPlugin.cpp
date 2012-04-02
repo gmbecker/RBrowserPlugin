@@ -7,7 +7,7 @@
  * the License. You may obtain a copy of the License at
  * http://www.mozilla.org/MPL/
  *
- * Software distributed under the License is distributed on an "AS IS" basis,
+ * Software distributed under the License is Rdistributed on an "AS IS" basis,
  * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
  * for the specific language governing rights and limitations under the
  * License.
@@ -45,16 +45,19 @@
 #include <gdk/gdk.h>
 #include <gdk/gdkx.h>
 #include <gtk/gtk.h>
+#include <unistd.h>
 
 #define PLUGIN_NAME        "Test R Plugin"
 #define PLUGIN_DESCRIPTION PLUGIN_NAME " Working up to WebR"
 #define PLUGIN_VERSION     "1.0.0.0"
 
 static NPNetscapeFuncs* sBrowserFuncs = NULL;
+NPNetscapeFuncs *myNPNFuncs;
 
 typedef struct InstanceData {
   NPP npp;
   NPWindow window;
+  NPObject *scriptable;
 } InstanceData;
 
 static void
@@ -111,7 +114,7 @@ NP_Initialize(NPNetscapeFuncs* bFuncs, NPPluginFuncs* pFuncs)
   sBrowserFuncs = bFuncs;
 
   const char *arg[] = {"R", "--no-save"};
-  initR( &arg , 2);
+  initR( &arg[0] , 2);
   // Check the size of the provided structure based on the offset of the
   // last member we need.
   if (pFuncs->size < (offsetof(NPPluginFuncs, setvalue) + sizeof(void*)))
@@ -131,8 +134,58 @@ NP_Initialize(NPNetscapeFuncs* bFuncs, NPPluginFuncs* pFuncs)
   pFuncs->getvalue = NPP_GetValue;
   pFuncs->setvalue = NPP_SetValue;
 
+  myNPNFuncs = (NPNetscapeFuncs *)malloc(sizeof(NPNetscapeFuncs));
+  CopyNPNFunctions(myNPNFuncs, bFuncs);
+
   return NPERR_NO_ERROR;
 }
+
+//http://code.firebreath.org/browse/FireBreath/src/NpapiCore/NpapiTypes.cpp?r2=fff31b14375229e4980e98a228250ab20db1dfe7&r1=983c31dfa9f348902c523c2304d777f3552ebc0b&r=09bf0acf08470e56ec9170fcc83935fe4a332443
+void CopyNPNFunctions(NPNetscapeFuncs *dstFuncs, NPNetscapeFuncs *srcFuncs)
+{
+  dstFuncs->size = srcFuncs->size;
+  dstFuncs->version = srcFuncs->version;
+  dstFuncs->geturl = srcFuncs->geturl;
+  dstFuncs->posturl = srcFuncs->posturl;
+  dstFuncs->requestread = srcFuncs->requestread;
+  dstFuncs->newstream = srcFuncs->newstream;
+  dstFuncs->write = srcFuncs->write;
+  dstFuncs->destroystream = srcFuncs->destroystream;
+  dstFuncs->status = srcFuncs->status;
+  dstFuncs->uagent = srcFuncs->uagent;
+  dstFuncs->memalloc = srcFuncs->memalloc;
+  dstFuncs->memfree = srcFuncs->memfree;
+  dstFuncs->memflush = srcFuncs->memflush;
+  dstFuncs->reloadplugins = srcFuncs->reloadplugins;
+  dstFuncs->geturlnotify = srcFuncs->geturlnotify;
+  dstFuncs->posturlnotify = srcFuncs->posturlnotify;
+  dstFuncs->getvalue = srcFuncs->getvalue;
+  dstFuncs->setvalue = srcFuncs->setvalue;
+  dstFuncs->invalidaterect = srcFuncs->invalidaterect;
+  dstFuncs->invalidateregion = srcFuncs->invalidateregion;
+  dstFuncs->forceredraw = srcFuncs->forceredraw;
+  dstFuncs->getstringidentifier = srcFuncs->getstringidentifier;
+  dstFuncs->getstringidentifiers = srcFuncs->getstringidentifiers;
+  dstFuncs->getintidentifier = srcFuncs->getintidentifier;
+  dstFuncs->identifierisstring = srcFuncs->identifierisstring;
+  dstFuncs->utf8fromidentifier = srcFuncs->utf8fromidentifier;
+  dstFuncs->intfromidentifier = srcFuncs->intfromidentifier;
+  dstFuncs->createobject = srcFuncs->createobject;
+  dstFuncs->retainobject = srcFuncs->retainobject;
+  dstFuncs->releaseobject = srcFuncs->releaseobject;
+  dstFuncs->invoke = srcFuncs->invoke;
+  dstFuncs->invokeDefault = srcFuncs->invokeDefault;
+  dstFuncs->evaluate = srcFuncs->evaluate;
+  dstFuncs->getproperty = srcFuncs->getproperty;
+  dstFuncs->setproperty = srcFuncs->setproperty;
+  dstFuncs->removeproperty = srcFuncs->removeproperty;
+  dstFuncs->hasproperty = srcFuncs->hasproperty;
+  dstFuncs->hasmethod = srcFuncs->hasmethod;
+  dstFuncs->releasevariantvalue = srcFuncs->releasevariantvalue;
+  dstFuncs->setexception = srcFuncs->setexception;
+  dstFuncs->construct = srcFuncs->construct;
+}
+
 
 NP_EXPORT(char*)
 NP_GetPluginVersion()
@@ -180,21 +233,25 @@ NPP_New(NPMIMEType pluginType, NPP instance, uint16_t mode, int16_t argc, char* 
 
   sBrowserFuncs->setvalue(instance, NPPVpluginWindowBool, (void*)false);
 
+  
   // set up our our instance data
   InstanceData* instanceData = (InstanceData*)malloc(sizeof(InstanceData));
   if (!instanceData)
     return NPERR_OUT_OF_MEMORY_ERROR;
   memset(instanceData, 0, sizeof(InstanceData));
   instanceData->npp = instance;
+  instanceData->scriptable = NULL;
   instance->pdata = instanceData;
+  
 
-  return NPERR_NO_ERROR;
+   return NPERR_NO_ERROR;
 }
 
 NPError
 NPP_Destroy(NPP instance, NPSavedData** save) {
   InstanceData* instanceData = (InstanceData*)(instance->pdata);
   free(instanceData);
+  //NPN_MemFree(instance->pdata);
   return NPERR_NO_ERROR;
 }
 
@@ -260,10 +317,10 @@ NPP_URLNotify(NPP instance, const char* URL, NPReason reason, void* notifyData) 
 }
 
 NPError
-NPP_GetValue(NPP instance, NPPVariable variable, void *value) {
+NPP_GetValue(NPP_t *instance, NPPVariable variable, void *value) {
   fprintf(stderr, "In NPP_GetValue\n");fflush(stderr);
-  //  if(instance == NULL)
-  //  return NPERR_INVALID_INSTANCE_ERROR;
+  if(instance == NULL)
+    return NPERR_INVALID_INSTANCE_ERROR;
 
   NPError rv = NPERR_NO_ERROR;
 
@@ -284,30 +341,24 @@ NPP_GetValue(NPP instance, NPPVariable variable, void *value) {
     case NPPVpluginScriptableNPObject:
       {
 	fprintf(stderr, "case NPPVpluginScriptableNPObject");fflush(stderr);
-	/*CPlugin * plugin = (CPlugin *)instance->pdata;
-	if(plugin == NULL)
-	  return NPERR_GENERIC_ERROR;
-	fprintf(stderr, "plugin not NULL\n");fflush(stderr);
-	
-	if (!plugin->isInitialized())
-	  {
-	    return NPERR_GENERIC_ERROR;
-	  }
-	*((NPObject **)value) = plugin->GetScriptableObject();
-	*/
-	if(!instance->pdata)
-	  {
-	    //Not a good permanent fix!!
-	    //fprintf(stderr, "myNPNFuncs->createobject %lx\n&WebREngine::_npclass %lx", myNPNFuncs->createobject, &WebREngine::_npclass);fflush(stderr);
-      //instance->pdata = myNPNFuncs->createobject(instance, &WebREngine::_npclass); 
-      fprintf(stderr, "Attempting to create scriptable object");fflush(stderr);
-      instance->pdata = (NPObject *) new WebREngine(instance);
-	    fprintf(stderr, "Scriptable object created %lx", instance->pdata);fflush(stderr);
-	    myNPNFuncs->retainobject((NPObject *) instance->pdata);
-	  }
-	
 
-	*((NPObject **)value) = (NPObject *) instance->pdata;
+  //so I can get into gdb
+  //sleep(5);
+  fprintf(stderr, "\ninstance: %lx\n", &instance);fflush(stderr);
+  //fprintf(stderr, "\nmyNPNFuncs: %lx\n", myNPNFuncs);fflush(stderr);
+  //fprintf(stderr, "\nmyNPNFuncs->createobject: %lx\n", myNPNFuncs->createobject);fflush(stderr);
+	if(!((InstanceData*)instance->pdata)->scriptable)
+	  {
+      fprintf(stderr, "Attempting to create scriptable object");fflush(stderr);
+      ((InstanceData*)instance->pdata)->scriptable = myNPNFuncs->createobject(instance, &WebREngine::_npclass);
+      fprintf(stderr, "Scriptable object created %lx", ((InstanceData*)instance->pdata)->scriptable);fflush(stderr);
+      myNPNFuncs->retainobject((NPObject *)((InstanceData*)instance->pdata)->scriptable);
+      //myNPNFuncs->retainobject(scriptable);
+      
+      }
+	
+	*(NPObject **)value = (NPObject *)((InstanceData*)instance->pdata)->scriptable;
+
       }
       break;
       
@@ -315,7 +366,7 @@ NPP_GetValue(NPP instance, NPPVariable variable, void *value) {
       rv = NPERR_GENERIC_ERROR;
       break;
     }
-  
+  fprintf(stderr, "value set to: %lx", *((NPObject **)value));fflush(stderr);
   return rv;
 }
 
@@ -328,17 +379,21 @@ NPP_SetValue(NPP instance, NPNVariable variable, void *value) {
 int initR( const char **args, int nargs)
 {
   char **rargs;
-  unsigned int i;
-  
   if(isInitialized)
     return 0;
   
   rargs = (char **) malloc(nargs * sizeof(char *));
-  for(i = 0 ; i < nargs; i++)
+  for(int i = 0 ; i < nargs; i++)
     rargs[i] = strdup(args[i]);
   fprintf(stderr, "Attempting to start embedded R.\n");fflush(stderr);
   Rf_initEmbeddedR(nargs, rargs);
   fprintf(stderr, "R initialization done.\n"); fflush(stderr);
-  
-  return 0;
+  int error=0;
+  SEXP call;
+  PROTECT(call = allocVector(LANGSXP, 2));
+  SETCAR(call, Rf_install("library"));
+  SETCAR(CDR(call), Rf_install("RFirefox"));
+  R_tryEval(call, R_GlobalEnv, &error);
+  UNPROTECT(1);
+  return error;
 }

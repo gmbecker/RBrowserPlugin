@@ -43,12 +43,12 @@ R_HOME=/usr/lib64/R
 CPPFLAGS = -Wall -DXP_UNIX=1 -DMOZ_X11=1 -fPIC -g -I$(NPAPI_SDK)/headers -I$ /usr/share/R/include
 
 R_LD_FLAGS=-L$(R_HOME)/lib -lR
-OBJ_FILES =  WebRplugin.o WebREngine.o 
+OBJ_FILES =  WebRPlugin.o WebREngine.o NPConversions.o
 npbasicplugin : $(OBJ_FILES)
-	cc $(CPPFLAGS) $(R_LD_FLAGS) -shared WebRplugin.o -o WebRTest.so
+	cc $(CPPFLAGS) $(R_LD_FLAGS) -shared $(OBJ_FILES) -o WebRTest.so
 
 
-%o: %.cpp
+%.o: %.cpp
 	$(CXX) -c -o $@ `pkg-config --cflags gtk+-2.0` $(CPPFLAGS) $<
 
 clean :

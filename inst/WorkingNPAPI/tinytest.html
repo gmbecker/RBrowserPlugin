@@ -3,6 +3,8 @@
   <embed type="application/test-r" ></embed>
   <script type="text/javascript">
     var Reng = document.embeds[0]; 
+    alert(Reng.eval);
+    
     var res = Reng.eval("rnorm(10)");
     var div  = document.getElementById("mydiv");
     div.innerHTML = res;
