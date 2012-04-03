@@ -49,24 +49,27 @@ bool RVectorToNP(SEXP vec, NPP inst, NPVariant *ret)
   int len = LENGTH(vec);
   fprintf(stderr, "\nIn RVectorToNP. R vector of length: %d; myNPNFuncs-?getstringidentifier address:%lx", len, myNPNFuncs->getstringidentifier); fflush(stderr);
   
-  NPObject *domwin =  (NPObject *) myNPNFuncs->memalloc(sizeof(NPObject));
+  NPObject *domwin = NULL;
   //NPObject domwin;
+  NPVariant arrfun;
   NPVariant *vartmp = (NPVariant *) myNPNFuncs->memalloc(sizeof(NPVariant));
   NPVariant *vartmp2 = (NPVariant *) myNPNFuncs->memalloc(sizeof(NPVariant));
+  NPVariant *vartmp3 = (NPVariant *) myNPNFuncs->memalloc(sizeof(NPVariant));
   NPVariant test;
   //NPN_GetValue(inst, NPNVWindowNPObject , domwin);
   NPError res;
     
-res = myNPNFuncs->getvalue(inst, NPNVWindowNPObject , domwin);
-  fprintf(stderr, "\nres: %d", res);fflush(stderr);
+  res = myNPNFuncs->getvalue(inst, NPNVWindowNPObject , &domwin);
+  //NPObject* window = NULL; NPN_GetValue(aInstance, NPNVWindowNPObject, &window);
+  fprintf(stderr, "\nres: %d domwin._class.Invoke:%lx domwin._class.GetProperty:%lx", res, domwin->_class->invoke, domwin->_class->getProperty);fflush(stderr);
   //documentation isn't entirely clear. Am I getting an NPObject or an NPVariant?
-  
+
+  NPIdentifier arrid = myNPNFuncs->getstringidentifier("Array");
   myNPNFuncs->retainobject(domwin);
-  
-  NPVariant fakeargs[] = {};
   //NPN_Invoke(inst, domwin, NPN_GetStringIdentifier("Array"), NULL, 0, ret);
-  fprintf(stderr, "\nAttempting to create JS array object. domwin address:%lx. instance address:%lx. ret address:%lx", &domwin, inst, ret);fflush(stderr);
-  myNPNFuncs->invoke(inst, domwin, myNPNFuncs->getstringidentifier("Array"), fakeargs, 0, ret);
+  fprintf(stderr, "\nAttempting to create JS array object. domwin address:%lx. instance address:%lx. ret address:%lx", domwin, inst, ret);fflush(stderr);
+  
+  myNPNFuncs->invoke(inst, domwin, arrid, NULL, 0, ret);
   fprintf(stderr, "\nJS array object created.");fflush(stderr);
   SEXP el;
   PROTECT(el = R_NilValue);
@@ -75,18 +78,27 @@ res = myNPNFuncs->getvalue(inst, NPNVWindowNPObject , domwin);
       switch(TYPEOF(vec))
 	{
 	case REALSXP:
+	  vartmp2->type=NPVariantType_Double;
+	  vartmp2->value.doubleValue = REAL(vec)[i];
+	  break;
 	case INTSXP:
+	  vartmp2->type=NPVariantType_Int32;
+	  vartmp2->value.intValue = INTEGER(vec)[i];
+	  break;
 	case LGLSXP:
+	  vartmp2->type=NPVariantType_Int32;
+	  vartmp2->value.intValue = LOGICAL(vec)[i];
+	  break;
 	case VECSXP:
-	  ConvertRToNP(VECTOR_ELT(vec, i), inst, vartmp);
+	  ConvertRToNP(VECTOR_ELT(vec, i), inst, vartmp2);
 	  break;
 	case STRSXP:
-	  ConvertRToNP(STRING_ELT(vec, i), inst, vartmp);
+	  ConvertRToNP(STRING_ELT(vec, i), inst, vartmp2);
 	  break;
 	}
       fprintf(stderr, "\nAttempting push call");fflush(stderr);
       //NPN_Invoke(inst, ret->value.objectValue, NPN_GetStringIdentifier("push"), vartmp, 1, vartmp2);
-      myNPNFuncs->invoke(inst, ret->value.objectValue, myNPNFuncs->getstringidentifier("push"), vartmp, 1, vartmp2);
+      myNPNFuncs->invoke(inst, ret->value.objectValue, myNPNFuncs->getstringidentifier("push"), vartmp2, 1, vartmp3);
     }
 							  //OBJECT_TO_NPVARIANT(rettmp, *ret);
   /*							  
@@ -95,8 +107,7 @@ res = myNPNFuncs->getvalue(inst, NPNVWindowNPObject , domwin);
   NPN_MemFree(vartmp2);
   */
   myNPNFuncs->releaseobject(domwin);
-  myNPNFuncs->memfree(domwin);
-  myNPNFuncs->memfree(vartmp);
+   myNPNFuncs->memfree(vartmp);
   myNPNFuncs->memfree(vartmp2);
   return true;
   

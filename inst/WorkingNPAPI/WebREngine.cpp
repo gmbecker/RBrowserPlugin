@@ -57,10 +57,7 @@ bool WebREngine::HasMethod(NPIdentifier name)
 
 bool WebREngine::Invoke(NPIdentifier name, const NPVariant *args, uint32_t argCount, NPVariant *result)
 {
-  
   fprintf(stderr, "\nIn WebREngine::Invoke");fflush(stderr);
-  
-
   SEXP Rargs[argCount];
   for(int i=0; i<argCount; i++)
     PROTECT(Rargs[i] = ConvertNPToR(args[i], this->instance));
@@ -90,7 +87,7 @@ bool WebREngine::Invoke(NPIdentifier name, const NPVariant *args, uint32_t argCo
     ret = 1;
 
   UNPROTECT(argCount);
-  return false;
+  return true;
 }
 
 bool WebREngine::InvokeDefault(const NPVariant *args, uint32_t argCount, NPVariant *result)

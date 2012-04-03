@@ -317,7 +317,7 @@ NPP_URLNotify(NPP instance, const char* URL, NPReason reason, void* notifyData) 
 }
 
 NPError
-NPP_GetValue(NPP_t *instance, NPPVariable variable, void *value) {
+NPP_GetValue(NPP instance, NPPVariable variable, void *value) {
   fprintf(stderr, "In NPP_GetValue\n");fflush(stderr);
   if(instance == NULL)
     return NPERR_INVALID_INSTANCE_ERROR;
@@ -344,7 +344,7 @@ NPP_GetValue(NPP_t *instance, NPPVariable variable, void *value) {
 
   //so I can get into gdb
   //sleep(5);
-  fprintf(stderr, "\ninstance: %lx\n", &instance);fflush(stderr);
+  fprintf(stderr, "\ninstance: %lx\n", instance);fflush(stderr);
   //fprintf(stderr, "\nmyNPNFuncs: %lx\n", myNPNFuncs);fflush(stderr);
   //fprintf(stderr, "\nmyNPNFuncs->createobject: %lx\n", myNPNFuncs->createobject);fflush(stderr);
 	if(!((InstanceData*)instance->pdata)->scriptable)
