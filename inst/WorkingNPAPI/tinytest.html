@@ -1,15 +1,22 @@
 <html>
 <body>
   <embed type="application/test-r" ></embed>
-  <div id="mydiv" /> 
+ 
+ <div id="mydiv" ></div> 
+ <div id="mydiv2" ></div> 
     <script type="text/javascript">
       var Reng = document.embeds[0]; 
-      alert(Reng.eval);
-      
       var res = Reng.eval("rnorm(2)");
       var div  = document.getElementById("mydiv");
       div.innerHTML = "Reng.eval('rnorm(2)'): " + res;
+
+      //hacky way around, reference return is broken
       
+      var res2 = Reng.rnorm(2, 6)
+      var div2  = document.getElementById("mydiv2");
+      div2.innerHTML = "Reng.rnorm(2, 6): " + res2; 
+      var thing = Reng.eval("rnorm2 = function(...) rnorm(...)");      
+      alert(thing);
   </script>
   </body>
 </html>

@@ -36,21 +36,49 @@ void WebREngine::Invalidate()
 
 bool WebREngine::HasMethod(NPIdentifier name)
 {
-  fprintf(stderr, "\nIn WebREngine::HasMethod");fflush(stderr);
   int ret = 0;
-  fprintf(stderr, "myNPNFuncs: %lx", myNPNFuncs);fflush(stderr);
-  fprintf(stderr, "myNPNFuncs->getstringidentifier: %lx", myNPNFuncs->getstringidentifier);fflush(stderr);
   if(name == myNPNFuncs->getstringidentifier("eval"))
     ret = 1;
   else if (name == myNPNFuncs->getstringidentifier("listCall"))
     ret = 1;
-  else if (name == myNPNFuncs->getstringidentifier("exists"))
-    ret = 1;
-  else if (name == myNPNFuncs->getstringidentifier("get"))
-    ret = 1;
-  else if (name == myNPNFuncs->getstringidentifier("set"))
-    ret = 1;
-  fprintf(stderr, "\nLeaving WebREngine::HasMethod");fflush(stderr);
+  else
+    {
+      //direct access API
+  
+      NPUTF8 *varName = (NPUTF8 *) myNPNFuncs->utf8fromidentifier(name);  
+      fprintf(stderr, "\nLooking for R Function: %s", (const char *)varName);fflush(stderr);
+      bool exists;
+      if(!varName || !varName[0]) {
+	return 0;
+      }
+      SEXP ans;
+      ans = Rf_findVar( Rf_install((const char *)varName), R_GlobalEnv);
+
+      myNPNFuncs->memfree(varName);
+      
+      if(ans == R_UnboundValue)
+	{
+	  fprintf(stderr, "\nNo R object found.");fflush(stderr);
+	  ret = 0;
+	} else {
+	
+	//XXX If it is a promise we need the actual value. Will this come back to bite us by violating lazy loading?
+	if(TYPEOF(ans) == PROMSXP)
+	  ans = PRVALUE(ans);
+	// Methods only correspond to functions! normal variables are properties
+	if(TYPEOF(ans) == CLOSXP)
+	  {
+	    ret = 1;
+	    fprintf(stderr, "\nR function found.");fflush(stderr);
+	  }
+	else
+	  {
+	    fprintf(stderr, "\nNon-function R object detected.");fflush(stderr);
+	    ret = 0;
+	  }
+      }
+      //UNPROTECT(1);
+    }
   return (bool) ret;
 }
 
@@ -62,31 +90,58 @@ bool WebREngine::Invoke(NPIdentifier name, const NPVariant *args, uint32_t argCo
   for(int i=0; i<argCount; i++)
     PROTECT(Rargs[i] = ConvertNPToR(args[i], this->instance));
   SEXP ans;
-  int error = 0;
-  int ret = 0;
-  if(name == myNPNFuncs->getstringidentifier("eval"))
+  SEXP call; 
+ int error = 0;
+  int addProt = 0;
+ if(name == myNPNFuncs->getstringidentifier("eval"))
     {
-      SEXP call;
+      
       PROTECT(call = allocVector(LANGSXP, 2));
       SETCAR(call, Rf_install("parseEval"));
       SETCAR(CDR(call), Rargs[0]);
       PROTECT(ans = R_tryEval(call, R_GlobalEnv, &error));
-      if(!error)
-	ConvertRToNP(ans, this->instance,result);
-      else
-	ConvertRToNP(R_NilValue, this->instance, result);
-      UNPROTECT(2);
+      addProt = 2;
     }
   else if (name == myNPNFuncs->getstringidentifier("listCall"))
-    ret = 1;
+    {
+      error = 1;
+    }
+  else
+    {
+      SEXP ptr;
+      //NPString strname = myNPNFuncs->utf8fromidentifier(name);
+      //const char *ccharname =  NPStringToConstChar(strname);
+      char *charname = (char* )myNPNFuncs->utf8fromidentifier(name);
+      PROTECT(ptr = call = allocVector(LANGSXP, argCount  + 1));
+      SETCAR(ptr, Rf_install( (const char *) charname) );
+      myNPNFuncs->memfree(charname);
+      for(int i=0; i < argCount; i++)
+	{
+	  ptr = CDR( ptr );
+	  SETCAR(ptr, Rargs[i]);
+	}
+
+      fprintf(stderr, "\nDirect API call: ");fflush(stderr);
+      Rf_PrintValue(call);
+      PROTECT(ans = R_tryEval( call, R_GlobalEnv, &error));
+      
+      addProt = 2;
+
+    }
+   /*
   else if (name == myNPNFuncs->getstringidentifier("exists"))
     ret = 1;
   else if (name == myNPNFuncs->getstringidentifier("get"))
     ret = 1;
   else if (name == myNPNFuncs->getstringidentifier("set"))
     ret = 1;
+  */
+  if(!error)
+    ConvertRToNP(ans, this->instance,result);
+  else
+    ConvertRToNP(R_NilValue, this->instance, result);
 
-  UNPROTECT(argCount);
+  UNPROTECT(argCount + addProt);
   return true;
 }
 

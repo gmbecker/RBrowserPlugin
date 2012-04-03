@@ -87,6 +87,7 @@ SEXP ConvertNPToR(NPVariant var, NPP inst) ;
 SEXP NPArrayToR(NPVariant arr, int len, int simplify, NPP inst);
 SEXP makeNPVarRef(NPVariant *ref);
 void CopyNPNFunctions(NPNetscapeFuncs *dstFuncs, NPNetscapeFuncs *srcFuncs);
+const char * NPStringToConstChar(NPString str);
 #endif
 
 

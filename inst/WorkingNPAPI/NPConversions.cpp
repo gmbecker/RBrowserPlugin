@@ -47,30 +47,26 @@ bool ConvertRToNP(SEXP val, NPP inst, NPVariant *ret)
 bool RVectorToNP(SEXP vec, NPP inst, NPVariant *ret)
 {
   int len = LENGTH(vec);
-  fprintf(stderr, "\nIn RVectorToNP. R vector of length: %d; myNPNFuncs-?getstringidentifier address:%lx", len, myNPNFuncs->getstringidentifier); fflush(stderr);
+  fprintf(stderr, "\n R vector of length: %d detected", len); fflush(stderr);
   
   NPObject *domwin = NULL;
-  //NPObject domwin;
-  NPVariant arrfun;
-  NPVariant *vartmp = (NPVariant *) myNPNFuncs->memalloc(sizeof(NPVariant));
+ 
   NPVariant *vartmp2 = (NPVariant *) myNPNFuncs->memalloc(sizeof(NPVariant));
   NPVariant *vartmp3 = (NPVariant *) myNPNFuncs->memalloc(sizeof(NPVariant));
-  NPVariant test;
-  //NPN_GetValue(inst, NPNVWindowNPObject , domwin);
   NPError res;
     
   res = myNPNFuncs->getvalue(inst, NPNVWindowNPObject , &domwin);
   //NPObject* window = NULL; NPN_GetValue(aInstance, NPNVWindowNPObject, &window);
-  fprintf(stderr, "\nres: %d domwin._class.Invoke:%lx domwin._class.GetProperty:%lx", res, domwin->_class->invoke, domwin->_class->getProperty);fflush(stderr);
+  //fprintf(stderr, "\nres: %d domwin._class.Invoke:%lx domwin._class.GetProperty:%lx", res, domwin->_class->invoke, domwin->_class->getProperty);fflush(stderr);
   //documentation isn't entirely clear. Am I getting an NPObject or an NPVariant?
 
   NPIdentifier arrid = myNPNFuncs->getstringidentifier("Array");
   myNPNFuncs->retainobject(domwin);
   //NPN_Invoke(inst, domwin, NPN_GetStringIdentifier("Array"), NULL, 0, ret);
-  fprintf(stderr, "\nAttempting to create JS array object. domwin address:%lx. instance address:%lx. ret address:%lx", domwin, inst, ret);fflush(stderr);
+  //fprintf(stderr, "\nAttempting to create JS array object. domwin address:%lx. instance address:%lx. ret address:%lx", domwin, inst, ret);fflush(stderr);
   
   myNPNFuncs->invoke(inst, domwin, arrid, NULL, 0, ret);
-  fprintf(stderr, "\nJS array object created.");fflush(stderr);
+  //fprintf(stderr, "\nJS array object created.");fflush(stderr);
   SEXP el;
   PROTECT(el = R_NilValue);
   for (int i = 0; i< len; i++)
@@ -96,7 +92,7 @@ bool RVectorToNP(SEXP vec, NPP inst, NPVariant *ret)
 	  ConvertRToNP(STRING_ELT(vec, i), inst, vartmp2);
 	  break;
 	}
-      fprintf(stderr, "\nAttempting push call");fflush(stderr);
+      //  fprintf(stderr, "\nAttempting push call");fflush(stderr);
       //NPN_Invoke(inst, ret->value.objectValue, NPN_GetStringIdentifier("push"), vartmp, 1, vartmp2);
       myNPNFuncs->invoke(inst, ret->value.objectValue, myNPNFuncs->getstringidentifier("push"), vartmp2, 1, vartmp3);
     }
@@ -107,7 +103,7 @@ bool RVectorToNP(SEXP vec, NPP inst, NPVariant *ret)
   NPN_MemFree(vartmp2);
   */
   myNPNFuncs->releaseobject(domwin);
-   myNPNFuncs->memfree(vartmp);
+   myNPNFuncs->memfree(vartmp3);
   myNPNFuncs->memfree(vartmp2);
   return true;
   
@@ -221,4 +217,15 @@ SEXP makeNPVarRef(NPVariant *ref)
   return ans;
 
 
+}
+
+
+//Note: This function allocs mem. need to remember to free it.
+const char * NPStringToConstChar(NPString str)
+{
+     NPUTF8 *tmpchr = (NPUTF8 *) malloc((str.UTF8Length +1)*sizeof(char));
+      memcpy(tmpchr,str.UTF8Characters,  str.UTF8Length);
+      tmpchr[str.UTF8Length] = '\0';
+      const char *conchar = (const char *) tmpchr;
+      return conchar;
 }
