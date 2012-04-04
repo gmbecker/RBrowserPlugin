@@ -39,7 +39,7 @@
 # Basic plugin requires GTK and X11
 CXX=g++
 NPAPI_SDK=/home/gmbecker/gabe/checkedout/npapi-sdk-read-only
-R_HOME=/home/gmbecker/local/R-dbg/lib64/R
+R_HOME=/usr/lib64/R
 CPPFLAGS = -Wall -DXP_UNIX=1 -DMOZ_X11=1 -fPIC -g -I$(NPAPI_SDK)/headers -I$ /usr/share/R/include
 
 R_LD_FLAGS=-L$(R_HOME)/lib -lR

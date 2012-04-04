@@ -2,44 +2,52 @@
 
 bool ConvertRToNP(SEXP val, NPP inst, NPVariant *ret)
 {
-  fprintf(stderr, "\nIn ConvertRToNP. R value:");fflush(stderr);
-  Rf_PrintValue(val);
+  // fprintf(stderr, "\nIn ConvertRToNP. R value:");fflush(stderr);
+  //Rf_PrintValue(val);
   int len = LENGTH(val);
-  if(len > 1)
-    RVectorToNP(val, inst, ret);
-  else
+  
+  switch(TYPEOF(val))
     {
-      switch(TYPEOF(val))
-	{
-	case NILSXP:
-	  break;
-	case REALSXP:
-	  DOUBLE_TO_NPVARIANT(REAL(val)[0], *ret);
-	  break;
-	case INTSXP:
-	  INT32_TO_NPVARIANT(INTEGER(val)[0], *ret);
-	  break;
-	case LGLSXP:
-	  BOOLEAN_TO_NPVARIANT( (bool) LOGICAL(val)[0], *ret);
-	  break;
-	case STRSXP:
-	  STRINGZ_TO_NPVARIANT(CHAR(STRING_ELT(val, 0)), *ret);
-	  break;
-	case CLOSXP:
-	  {
-	    char buf[255];
-	    sprintf(buf, "_SEXP:Function_:%ld", val);
-	    STRINGZ_TO_NPVARIANT((const char *) buf, *ret);
-	  }
-	  break;
-	default:
-	  {
-	    char buf[255];
-	    sprintf(buf, "_SEXP:Object_:%ld", val);
-	    STRINGZ_TO_NPVARIANT((const char *) buf, *ret);
-	  }
-	  break;
-	}
+    case NILSXP:
+      break;
+    case REALSXP:
+      if(len > 1)
+	RVectorToNP(val, inst, ret);
+      else	  
+	DOUBLE_TO_NPVARIANT(REAL(val)[0], *ret);
+      break;
+    case INTSXP:
+      if(len > 1)
+	RVectorToNP(val, inst, ret);
+      else
+	INT32_TO_NPVARIANT(INTEGER(val)[0], *ret);
+      break;
+    case LGLSXP:
+      if(len > 1)
+	RVectorToNP(val, inst, ret);
+      else
+	BOOLEAN_TO_NPVARIANT( (bool) LOGICAL(val)[0], *ret);
+      break;
+    case STRSXP:
+      if(len > 1)
+	RVectorToNP(val, inst, ret);
+      else
+	STRINGZ_TO_NPVARIANT(CHAR(STRING_ELT(val, 0)), *ret);
+      break;
+    case CLOSXP:
+      {
+	char *buf = (char *) myNPNFuncs->memalloc((16+sizeof(long int) + 1)*sizeof(char));
+	sprintf(buf, "_SEXP:Function_:%ld", val);
+	STRINGZ_TO_NPVARIANT((const char *) buf, *ret);
+      }
+      break;
+    default:
+      {
+	char *buf = (char *) myNPNFuncs->memalloc((14+sizeof(long int) + 1)*sizeof(char));;
+	sprintf(buf, "_SEXP:Object_:%ld", val);
+	STRINGZ_TO_NPVARIANT((const char *) buf, *ret);
+      }
+      break;
     }
   return true;
 }
@@ -53,6 +61,8 @@ bool RVectorToNP(SEXP vec, NPP inst, NPVariant *ret)
  
   NPVariant *vartmp2 = (NPVariant *) myNPNFuncs->memalloc(sizeof(NPVariant));
   NPVariant *vartmp3 = (NPVariant *) myNPNFuncs->memalloc(sizeof(NPVariant));
+  //NPVariant vartmp2;
+
   NPError res;
     
   res = myNPNFuncs->getvalue(inst, NPNVWindowNPObject , &domwin);
@@ -96,15 +106,15 @@ bool RVectorToNP(SEXP vec, NPP inst, NPVariant *ret)
       //NPN_Invoke(inst, ret->value.objectValue, NPN_GetStringIdentifier("push"), vartmp, 1, vartmp2);
       myNPNFuncs->invoke(inst, ret->value.objectValue, myNPNFuncs->getstringidentifier("push"), vartmp2, 1, vartmp3);
     }
-							  //OBJECT_TO_NPVARIANT(rettmp, *ret);
-  /*							  
-  NPN_MemFree(domwin);
-  NPN_MemFree(vartmp);
-  NPN_MemFree(vartmp2);
-  */
+  fprintf(stderr, "\nConversion loop complete.");fflush(stderr);
+
   myNPNFuncs->releaseobject(domwin);
-   myNPNFuncs->memfree(vartmp3);
+  /*
+  myNPNFuncs->memfree(vartmp3);
   myNPNFuncs->memfree(vartmp2);
+  */  
+  myNPNFuncs->releasevariantvalue(vartmp3);
+  myNPNFuncs->releasevariantvalue(vartmp2);
   return true;
   
 }
@@ -134,7 +144,7 @@ SEXP ConvertNPToR(NPVariant var, NPP inst)
       {
 	ans = NEW_CHARACTER( 1 ) ;
 	NPString str = NPVARIANT_TO_STRING(var);
-	NPUTF8 *tmpchr = (NPUTF8 *) malloc((str.UTF8Length +1)*sizeof(char));
+	NPUTF8 *tmpchr = (NPUTF8 *) malloc((str.UTF8Length +1)*sizeof(NPUTF8));
 	memcpy(tmpchr,str.UTF8Characters,  str.UTF8Length);
 	tmpchr[str.UTF8Length] = '\0';
 	const char *strval = (const char *) tmpchr;
@@ -153,7 +163,7 @@ SEXP ConvertNPToR(NPVariant var, NPP inst)
 	  ans = NPArrayToR(var, len, 0, inst);
 	else
 	  {
-
+	    fprintf(stderr, "\nGeneric NPObject detected. No Conversion found.");
 
 	  }
       }
