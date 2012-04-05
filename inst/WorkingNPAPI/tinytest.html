@@ -4,19 +4,25 @@
  
  <div id="mydiv" ></div> 
  <div id="mydiv2" ></div> 
+ <div id="mydiv3" ></div> 
+ <div id="mydiv4" ></div> 
     <script type="text/javascript">
       var Reng = document.embeds[0]; 
       var res = Reng.eval("rnorm(2)");
       var div  = document.getElementById("mydiv");
-      div.innerHTML = "Reng.eval('rnorm(2)'): " + res;
+      div.innerHTML = "Reng.eval('rnorm(2)') : " + res;
 
       //hacky way around, reference return is broken
       
       var res2 = Reng.rnorm(2, 6)
       var div2  = document.getElementById("mydiv2");
-      div2.innerHTML = "Reng.rnorm(2, 6): " + res2; 
-      var thing = Reng.eval("rnorm2 = function(...) rnorm(...)");      
-      alert(thing);
+      div2.innerHTML = "Reng.rnorm(2, 6) : " + res2; 
+  
+      var div3  = document.getElementById("mydiv3");
+      div3.innerHTML = "Reng.pi : " + Reng.pi;
+      var div4  = document.getElementById("mydiv4");
+      div4.innerHTML = "Attempting callback test from within R: " + Reng.doTest();
+      Reng.eval(".Call('R_doRefClassTest')");
   </script>
   </body>
 </html>

@@ -51,13 +51,13 @@
 #define PLUGIN_DESCRIPTION PLUGIN_NAME " Working up to WebR"
 #define PLUGIN_VERSION     "1.0.0.0"
 
-static NPNetscapeFuncs* sBrowserFuncs = NULL;
 NPNetscapeFuncs *myNPNFuncs;
 
 typedef struct InstanceData {
   NPP npp;
   NPWindow window;
   NPObject *scriptable;
+  NPNetscapeFuncs *funcs;
 } InstanceData;
 
 static void
@@ -73,7 +73,7 @@ drawWindow(InstanceData* instanceData, GdkDrawable* gdkWindow)
   if (!npp)
     return;
 
-  const char* uaString = sBrowserFuncs->uagent(npp);
+  const char* uaString = myNPNFuncs->uagent(npp);
   if (!uaString)
     return;
 
@@ -111,7 +111,6 @@ NP_EXPORT(NPError)
 NP_Initialize(NPNetscapeFuncs* bFuncs, NPPluginFuncs* pFuncs)
 {
   fprintf(stderr, "in NP_Initialize");fflush(stderr);
-  sBrowserFuncs = bFuncs;
 
   const char *arg[] = {"R", "--no-save"};
   initR( &arg[0] , 2);
@@ -225,13 +224,13 @@ NPError
 NPP_New(NPMIMEType pluginType, NPP instance, uint16_t mode, int16_t argc, char* argn[], char* argv[], NPSavedData* saved) {
   // Make sure we can render this plugin
   NPBool browserSupportsWindowless = false;
-  sBrowserFuncs->getvalue(instance, NPNVSupportsWindowless, &browserSupportsWindowless);
+  myNPNFuncs->getvalue(instance, NPNVSupportsWindowless, &browserSupportsWindowless);
   if (!browserSupportsWindowless) {
     printf("Windowless mode not supported by the browser\n");
     return NPERR_GENERIC_ERROR;
   }
 
-  sBrowserFuncs->setvalue(instance, NPPVpluginWindowBool, (void*)false);
+  myNPNFuncs->setvalue(instance, NPPVpluginWindowBool, (void*)false);
 
   
   // set up our our instance data
@@ -241,8 +240,31 @@ NPP_New(NPMIMEType pluginType, NPP instance, uint16_t mode, int16_t argc, char* 
   memset(instanceData, 0, sizeof(InstanceData));
   instanceData->npp = instance;
   instanceData->scriptable = NULL;
+  instanceData->funcs = myNPNFuncs;
   instance->pdata = instanceData;
+ 
   
+  SEXP klass, ans, ptr;
+  SEXP klass2, ans2, ptr2;
+  PROTECT( klass = MAKE_CLASS( "PluginInstance" ) );
+  PROTECT( ans = NEW( klass ) );
+  PROTECT( ptr = R_MakeExternalPtr( instance,
+                                    Rf_install( "NPP" ),
+                                    R_NilValue));
+  
+  PROTECT( klass2 = MAKE_CLASS( "NPNFunctionsRef" ) );
+  PROTECT( ans2 = NEW( klass2 ) );
+  PROTECT( ptr2 = R_MakeExternalPtr( myNPNFuncs,
+                                     Rf_install("NPNFuncs"),
+                                     R_NilValue));
+  SET_SLOT( ans2, Rf_install("ref"), ptr2);
+  SET_SLOT( ans, Rf_install("funcs"), ans2);
+  //finalizer here if needed
+  
+  SET_SLOT(ans, Rf_install("ref"), ptr);
+  Rf_defineVar(Rf_install("PluginInstance"), ans, R_GlobalEnv);
+  UNPROTECT(3);
+      
 
    return NPERR_NO_ERROR;
 }
@@ -394,6 +416,7 @@ int initR( const char **args, int nargs)
   SETCAR(call, Rf_install("library"));
   SETCAR(CDR(call), Rf_install("RFirefox"));
   R_tryEval(call, R_GlobalEnv, &error);
+  
   UNPROTECT(1);
   return error;
 }

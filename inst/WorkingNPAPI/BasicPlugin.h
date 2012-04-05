@@ -111,23 +111,22 @@ public:
  
     static NPClass _npclass;
  
-  NPP instance; //need this for R<->NP conversions
+  NPP instance; //need this accessable for R<->NP conversions
 protected:
     NPP m_Instance;
 	
 private:
 
-	NPIdentifier m_getVersion_id;
-	//Probably don't need this because of m_Instance above!!
 };
 
 
-bool ConvertRToNP(SEXP val, NPP inst, NPVariant *ret);
-bool RVectorToNP(SEXP vec, NPP inst, NPVariant *ret);
-SEXP ConvertNPToR(NPVariant var, NPP inst) ;
-SEXP NPArrayToR(NPVariant arr, int len, int simplify, NPP inst);
+
+bool ConvertRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret, bool retRef);
+bool RVectorToNP(SEXP vec, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret);
+SEXP ConvertNPToR(NPVariant *var, NPP inst, NPNetscapeFuncs *funcs, bool retRef) ;
+SEXP NPArrayToR(NPVariant *arr, int len, int simplify, NPP inst, NPNetscapeFuncs *funcs);
 SEXP makeNPVarRef(NPVariant *ref);
 void CopyNPNFunctions(NPNetscapeFuncs *dstFuncs, NPNetscapeFuncs *srcFuncs);
-
-
+SEXP MakeNPRefForR(NPVariant *obj);
+void MakeRRefForNP(SEXP obj, NPNetscapeFuncs *funcs, NPVariant *ret);
 #endif // BasicPlugin_h_

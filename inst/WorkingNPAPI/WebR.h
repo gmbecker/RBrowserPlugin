@@ -81,13 +81,14 @@ protected:
 };
 
 
-bool ConvertRToNP(SEXP val, NPP inst, NPVariant *ret);
-bool RVectorToNP(SEXP vec, NPP inst, NPVariant *ret);
-SEXP ConvertNPToR(NPVariant var, NPP inst) ;
-SEXP NPArrayToR(NPVariant arr, int len, int simplify, NPP inst);
+bool ConvertRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret, bool retRef);
+bool RVectorToNP(SEXP vec, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret);
+SEXP ConvertNPToR(NPVariant var, NPP inst, NPNetscapeFuncs *funcs, bool retRef) ;
+SEXP NPArrayToR(NPVariant arr, int len, int simplify, NPP inst, NPNetscapeFuncs *funcs);
 SEXP makeNPVarRef(NPVariant *ref);
 void CopyNPNFunctions(NPNetscapeFuncs *dstFuncs, NPNetscapeFuncs *srcFuncs);
 const char * NPStringToConstChar(NPString str);
+
 #endif
 
 

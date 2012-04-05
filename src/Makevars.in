@@ -1,5 +1,5 @@
 XUL_SDK=@XUL_SDK@
-
+NPAPI_SDK=@NPAPI_SDK@
 # Do we need nspr explicitly
 GCC_FLAGS=-fshort-wchar
 # To get nsID->ToString(), we define XPCOM_GLUE_USE_NSPR and link against nspr4.  But it doesn't do the job. 
@@ -8,7 +8,7 @@ GCC_FLAGS=-fshort-wchar
 #-lnspr4
 EXTRAFLAGS=-fPIC   -fno-exceptions -Wall -Wpointer-arith -Wcast-align  -Wno-long-long -pedantic -fno-strict-aliasing -fshort-wchar -pthread -pipe  -DNDEBUG -DTRIMMED -Os -freorder-blocks -fno-reorder-functions  -pthread -D_REENTRANT     -DMOZILLA_CLIENT
 
-PKG_CPPFLAGS= -DXPCOM_GLUE  $(GCC_FLAGS)  -I$(XUL_SDK)/include/xpcom -I$(XUL_SDK)/include -I$(XUL_SDK)/include/xpconnect -I$(XUL_SDK)/include/js -I$(XUL_SDK)/include/content  -I$(XUL_SDK)/include/widget -I$(XUL_SDK)/include/dom -I$(XUL_SDK)/include/layout -I$(XUL_SDK)/sdk/include -I$(XUL_SDK)/include -Wl,--warn-unresolved-symbols $(EXTRAFLAGS) 
+PKG_CPPFLAGS= -DXPCOM_GLUE  $(GCC_FLAGS)  -I$(XUL_SDK)/include/xpcom -I$(XUL_SDK)/include -I$(XUL_SDK)/include/xpconnect -I$(XUL_SDK)/include/js -I$(XUL_SDK)/include/content  -I$(XUL_SDK)/include/widget -I$(XUL_SDK)/include/dom -I$(XUL_SDK)/include/layout -I$(XUL_SDK)/sdk/include -I$(XUL_SDK)/include -Wl,--warn-unresolved-symbols -I ../inst/WorkingNPAPI/ -I$(NPAPI_SDK)/headers $(EXTRAFLAGS) 
 
 
 PKG_LIBS=-L$(XUL_SDK)/lib -lxpcomglue -lxpcom -lplds4 -lplc4 -lnspr4 
