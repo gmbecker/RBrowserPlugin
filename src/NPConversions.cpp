@@ -124,12 +124,16 @@ bool RVectorToNP(SEXP vec, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret)
   
 }
 
-SEXP ConvertNPToR(NPVariant *var, NPP inst, NPNetscapeFuncs *funcs, bool retRef) 
+SEXP ConvertNPToR(NPVariant *var, NPP inst, NPNetscapeFuncs *funcs, bool retRef, bool freeIfPoss) 
 {
   SEXP ans;
+  int canfree = 1;
   PROTECT(ans = R_NilValue);
   if(retRef)
-    ans = MakeNPRefForR(var);
+    {
+      ans = MakeNPRefForR(var);
+      canfree = 0;
+    }
   else
     {
       switch(var->type)
@@ -174,6 +178,7 @@ SEXP ConvertNPToR(NPVariant *var, NPP inst, NPNetscapeFuncs *funcs, bool retRef)
 	      {
 		fprintf(stderr, "\nGeneric NPObject detected. No Conversion found.");
 		ans = MakeNPRefForR(var);
+		canfree = 0;
 	      }
 	  }
 	  break;
