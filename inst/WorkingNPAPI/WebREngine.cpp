@@ -156,7 +156,10 @@ bool WebREngine::Invoke(NPIdentifier name, const NPVariant *args, uint32_t argCo
   fprintf(stderr, "\nIn WebREngine::Invoke");fflush(stderr);
   SEXP Rargs[argCount];
   for(int i=0; i<argCount; i++)
-    PROTECT(Rargs[i] = ConvertNPToR((NPVariant *) &(args[i]), this->instance, myNPNFuncs, false));
+    {
+      PROTECT(Rargs[i] = R_NilValue); 
+      ConvertNPToR((NPVariant *) &(args[i]), this->instance, myNPNFuncs, false, &Rargs[i]);
+    }
   SEXP ans;
   SEXP call; 
  int error = 0;

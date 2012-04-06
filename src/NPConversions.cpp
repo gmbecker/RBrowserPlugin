@@ -2,8 +2,15 @@
 
 bool ConvertRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret, bool retRef)
 {
-  
-  
+
+  //XXXNot sure if this Class check will work...
+  SEXP klass;
+  PROTECT(klass = MAKE_CLASS("NPVarRef"));
+  if (GET_CLASS(val) == klass)
+    { 
+      //XXX We shouldn't have to copy here, but do we really want to pass in double pointers?
+      *ret = *(NPVariant *) R_ExternalPtrAddr(GET_SLOT( val , Rf_install( "ref" ) ) );
+	}
   if(retRef)
     {
       MakeRRefForNP(val, funcs, ret);
@@ -124,14 +131,14 @@ bool RVectorToNP(SEXP vec, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret)
   
 }
 
-SEXP ConvertNPToR(NPVariant *var, NPP inst, NPNetscapeFuncs *funcs, bool retRef, bool freeIfPoss) 
+bool ConvertNPToR(NPVariant *var, NPP inst, NPNetscapeFuncs *funcs, bool retRef,  SEXP *_ret) 
+//Returns a bool indicating whether the variant passed in is safe to free (ie if we did NOT create new references to it within R)
 {
-  SEXP ans;
   int canfree = 1;
-  PROTECT(ans = R_NilValue);
+  
   if(retRef)
     {
-      ans = MakeNPRefForR(var);
+      *_ret = MakeNPRefForR(var);
       canfree = 0;
     }
   else
@@ -142,26 +149,62 @@ SEXP ConvertNPToR(NPVariant *var, NPP inst, NPNetscapeFuncs *funcs, bool retRef,
 	case NPVariantType_Null:
 	  break;
 	case NPVariantType_Bool:
-	  ans = NEW_LOGICAL(1);
-	  LOGICAL(ans)[0] = var->value.boolValue;
+	  *_ret = NEW_LOGICAL(1);
+	  LOGICAL(*_ret)[0] = var->value.boolValue;
 	  break;
 	case NPVariantType_Int32:
-	  ans = NEW_INTEGER(1);
-	  INTEGER(ans)[0] = var->value.intValue;
+	  *_ret = NEW_INTEGER(1);
+	  INTEGER(*_ret)[0] = var->value.intValue;
 	  break;
 	case NPVariantType_Double:
-	  ans = NEW_NUMERIC(1);
-	  REAL(ans)[0] = var->value.doubleValue;
+	  *_ret = NEW_NUMERIC(1);
+	  REAL(*_ret)[0] = var->value.doubleValue;
 	  break;
 	case NPVariantType_String:
 	  {
-	    ans = NEW_CHARACTER( 1 ) ;
+	    
 	    NPString str = NPVARIANT_TO_STRING(*var);
 	    NPUTF8 *tmpchr = (NPUTF8 *) malloc((str.UTF8Length +1)*sizeof(NPUTF8));
 	    memcpy(tmpchr,str.UTF8Characters,  str.UTF8Length);
 	    tmpchr[str.UTF8Length] = '\0';
 	    const char *strval = (const char *) tmpchr;
-	    SET_STRING_ELT(ans, 0, mkChar(strval));
+	    const char *tmp2;
+	    fprintf(stderr, "\n Checking for encoded SEXP object.\n");fflush(stderr);
+	    //check for "_SEXP:Function_:"
+	    const char *tmp = strstr(strval, "SEXP:Function_:");
+	    if (tmp != NULL)
+	      {
+		tmp2 = strval + 16;
+		*_ret = (SEXP) atol(tmp2);
+		fprintf(stderr, "R Function found.");fflush(stderr);
+	      }
+	    else
+	      {
+		tmp = strstr(strval, "_SEXP:Object_:");
+		if (tmp)
+		  {
+		    fprintf(stderr, "R Object found."); fflush(stderr);
+		    tmp2 = strval + 14;
+		    *_ret = (SEXP) atol(tmp2);
+		  }
+		else
+		  {
+		    fprintf(stderr, "No encoded SEXP found."); fflush(stderr);
+		    *_ret = ScalarString(mkChar(strval));
+		  }
+	      }
+	    
+	    /*
+
+
+	    *_ret = NEW_CHARACTER( 1 ) ;
+	    NPString str = NPVARIANT_TO_STRING(*var);
+	    NPUTF8 *tmpchr = (NPUTF8 *) malloc((str.UTF8Length +1)*sizeof(NPUTF8));
+	    memcpy(tmpchr,str.UTF8Characters,  str.UTF8Length);
+	    tmpchr[str.UTF8Length] = '\0';
+	    const char *strval = (const char *) tmpchr;
+	    SET_STRING_ELT(*_ret, 0, mkChar(strval));
+	    */
 	  }
 	  break;
 	case NPVariantType_Object:
@@ -173,11 +216,11 @@ SEXP ConvertNPToR(NPVariant *var, NPP inst, NPNetscapeFuncs *funcs, bool retRef,
 	    funcs->getproperty(inst, inObject, funcs->getstringidentifier("length"), &npvLength);
 	    int len = npvLength.value.intValue;
 	    if (len > 1)
-	      ans = NPArrayToR(var, len, 0, inst, funcs);
+	      canfree = NPArrayToR(var, len, 0, inst, funcs, _ret);
 	    else
 	      {
 		fprintf(stderr, "\nGeneric NPObject detected. No Conversion found.");
-		ans = MakeNPRefForR(var);
+		*_ret = MakeNPRefForR(var);
 		canfree = 0;
 	      }
 	  }
@@ -185,28 +228,34 @@ SEXP ConvertNPToR(NPVariant *var, NPP inst, NPNetscapeFuncs *funcs, bool retRef,
 	}
     }
   fprintf(stderr, "\n leaving ConvertNPToR. R object:");fflush(stderr);
-  Rf_PrintValue(ans);
-  return ans;
+  Rf_PrintValue(*_ret);
+  return canfree;
 }
 
 static int depth = 0;
-SEXP NPArrayToR(NPVariant *arr, int len, int simplify, NPP inst, NPNetscapeFuncs *funcs)
+bool NPArrayToR(NPVariant *arr, int len, int simplify, NPP inst, NPNetscapeFuncs *funcs, SEXP *_ret)
+//Returns bool indicating whether it is safe to free variant.
+//SEXP living at *_ret must already be PROTECTed
 {
-  SEXP ans, simplifyCall, p;
+  SEXP tmp, simplifyCall, p;
   NPVariant curValue;
-  PROTECT( ans = NEW_LIST( len ) );
+  *_ret = NEW_LIST( len ) ;
   int wasError=0;
   depth ++;
+  PROTECT(tmp = R_NilValue);
+  int tmpcanfree, canfree;
+  canfree = 1;
   for (int i = 0; i < len; i++)
     {
-      
-      //NPN_GetProperty(inst, arr.value.objectValue, NPN_GetIntIdentifier(i), &curValue);
       funcs->getproperty(inst, arr->value.objectValue, funcs->getintidentifier(i), &curValue);
-      SET_VECTOR_ELT(ans, i, ConvertNPToR(&curValue, inst, funcs, false));
-
+      tmpcanfree = ConvertNPToR(&curValue, inst, funcs, false, &tmp);
+      SET_VECTOR_ELT(*_ret, i, tmp);
+      if (!tmpcanfree)
+	canfree =  0;
     }
   depth--;
 
+  //XXX this if is a relic of the listCall from RFirefox, it's not clear we need it here??
   if( depth > 0 || simplify )
     {
       
@@ -214,17 +263,17 @@ SEXP NPArrayToR(NPVariant *arr, int len, int simplify, NPP inst, NPNetscapeFuncs
       PROTECT( p = simplifyCall );
       SETCAR( p , Rf_install("unlist" ) );
       p = CDR( p );
-      SETCAR( p , ans );
+      SETCAR( p , *_ret );
       p = CDR( p );
       //recursive = FALSE for the unlist call
       SETCAR( p , ScalarLogical( 0 ) );
   
-      ans = R_tryEval(simplifyCall , R_GlobalEnv , &wasError);
+      *_ret = R_tryEval(simplifyCall , R_GlobalEnv , &wasError);
       UNPROTECT(2);
     }
   
   UNPROTECT(1);
-  return( ans );
+  return( canfree );
 }
 
 SEXP MakeNPRefForR(NPVariant *ref)

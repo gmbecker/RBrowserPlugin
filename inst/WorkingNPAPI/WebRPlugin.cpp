@@ -242,7 +242,8 @@ NPP_New(NPMIMEType pluginType, NPP instance, uint16_t mode, int16_t argc, char* 
   instanceData->scriptable = NULL;
   instanceData->funcs = myNPNFuncs;
   instance->pdata = instanceData;
- 
+
+  
   
   SEXP klass, ans, ptr;
   SEXP klass2, ans2, ptr2;
@@ -264,7 +265,9 @@ NPP_New(NPMIMEType pluginType, NPP instance, uint16_t mode, int16_t argc, char* 
   SET_SLOT(ans, Rf_install("ref"), ptr);
   Rf_defineVar(Rf_install("PluginInstance"), ans, R_GlobalEnv);
   UNPROTECT(3);
-      
+  
+  //This is WAY easier to just do in JS!!!
+  //RunScriptTags(instance, myNPNFuncs);
 
    return NPERR_NO_ERROR;
 }
@@ -420,3 +423,4 @@ int initR( const char **args, int nargs)
   UNPROTECT(1);
   return error;
 }
+

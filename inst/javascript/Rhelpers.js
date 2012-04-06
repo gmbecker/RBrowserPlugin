@@ -70,3 +70,38 @@ function addREventHandler(name, targ, event, arg)
 			      callRFunction(name, arg);
 			  }, false, true);
 }
+
+function runScriptsNPAPI()
+{
+    var embs = window.document.getElementsByTagName("embed");
+    var stags = window.document.getElementsByTagName("script");
+    var Reng;
+    for (var j=0; j < embs.length; j++)
+	{
+	    if (embs[j].type == "application/test-r")
+		{
+		    Reng = embs[j];
+		    break;
+		}
+	}
+    if(typeof(Reng) == "undefined")
+	return;
+    var mytag;
+    var code; 
+    var out;
+    //alert("stags length:"+ stags.length);
+    for(var i=0; i < stags.length; i++)
+	{
+	    mytag = stags[i];
+	    if (mytag.type == "text/R")
+		{
+		    //if(mytag.text != " ")
+			out = Reng.eval(mytag.text);
+			if(mytag.src)
+			    out = Reng.source( mytag.src)
+		}
+	}
+
+}
+
+window.addEventListener("load", runScriptsNPAPI, true, true);
