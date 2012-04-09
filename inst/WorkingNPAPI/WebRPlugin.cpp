@@ -220,6 +220,7 @@ NP_Shutdown()
   return NPERR_NO_ERROR;
 }
 
+static int scriptsrun = 0;
 NPError
 NPP_New(NPMIMEType pluginType, NPP instance, uint16_t mode, int16_t argc, char* argn[], char* argv[], NPSavedData* saved) {
   // Make sure we can render this plugin
@@ -266,8 +267,7 @@ NPP_New(NPMIMEType pluginType, NPP instance, uint16_t mode, int16_t argc, char* 
   Rf_defineVar(Rf_install("PluginInstance"), ans, R_GlobalEnv);
   UNPROTECT(3);
   
-  //This is WAY easier to just do in JS!!!
-  //RunScriptTags(instance, myNPNFuncs);
+
 
    return NPERR_NO_ERROR;
 }

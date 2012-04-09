@@ -73,6 +73,8 @@ function addREventHandler(name, targ, event, arg)
 
 function runScriptsNPAPI()
 {
+    //    alert("in runScriptsNPAPI");
+    
     var embs = window.document.getElementsByTagName("embed");
     var stags = window.document.getElementsByTagName("script");
     var Reng;
@@ -104,4 +106,21 @@ function runScriptsNPAPI()
 
 }
 
-window.addEventListener("load", runScriptsNPAPI, true, true);
+function doAttach()
+{
+    var embs = window.document.getElementsByTagName("embed");
+    var Reng;
+    for (var j=0; j < embs.length; j++)
+	{
+	    if (embs[j].type == "application/test-r")
+		{
+		    Reng = embs[j];
+		    break;
+		}
+	}
+    //XXX this seems to prevent the plugin crash, might not be necessary once I take out all the Gtk+ drawing code.
+    setTimeout(runScriptsNPAPI, 1000);
+
+}
+
+window.addEventListener("load", doAttach, true, true);
