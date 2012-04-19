@@ -1,6 +1,6 @@
-#include "BasicPlugin.h"
+#include "WebR.h"
 
-bool ConvertRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret, bool retRef)
+bool ConvertRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret, bool convertRes)
 {
 
   //XXXNot sure if this Class check will work...
@@ -11,9 +11,9 @@ bool ConvertRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret, bo
       //XXX We shouldn't have to copy here, but do we really want to pass in double pointers?
       *ret = *(NPVariant *) R_ExternalPtrAddr(GET_SLOT( val , Rf_install( "ref" ) ) );
 	}
-  if(retRef)
+  if(!convertRes)
     {
-      MakeRRefForNP(val, funcs, ret);
+      MakeRRefForNP(val, inst, funcs, ret);
       return true;
     }
   int err = 0;
@@ -131,12 +131,12 @@ bool RVectorToNP(SEXP vec, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret)
   
 }
 
-bool ConvertNPToR(NPVariant *var, NPP inst, NPNetscapeFuncs *funcs, bool retRef,  SEXP *_ret) 
+bool ConvertNPToR(NPVariant *var, NPP inst, NPNetscapeFuncs *funcs, bool convRet,  SEXP *_ret) 
 //Returns a bool indicating whether the variant passed in is safe to free (ie if we did NOT create new references to it within R)
 {
   int canfree = 1;
   
-  if(retRef)
+  if(!convRet)
     {
       *_ret = MakeNPRefForR(var);
       canfree = 0;
@@ -168,44 +168,10 @@ bool ConvertNPToR(NPVariant *var, NPP inst, NPNetscapeFuncs *funcs, bool retRef,
 	    memcpy(tmpchr,str.UTF8Characters,  str.UTF8Length);
 	    tmpchr[str.UTF8Length] = '\0';
 	    const char *strval = (const char *) tmpchr;
-	    const char *tmp2;
-	    fprintf(stderr, "\n Checking for encoded SEXP object.\n");fflush(stderr);
-	    //check for "_SEXP:Function_:"
-	    const char *tmp = strstr(strval, "SEXP:Function_:");
-	    if (tmp != NULL)
-	      {
-		tmp2 = strval + 16;
-		*_ret = (SEXP) atol(tmp2);
-		fprintf(stderr, "R Function found.");fflush(stderr);
-	      }
-	    else
-	      {
-		tmp = strstr(strval, "_SEXP:Object_:");
-		if (tmp)
-		  {
-		    fprintf(stderr, "R Object found."); fflush(stderr);
-		    tmp2 = strval + 14;
-		    *_ret = (SEXP) atol(tmp2);
-		  }
-		else
-		  {
-		    fprintf(stderr, "No encoded SEXP found."); fflush(stderr);
-		    *_ret = ScalarString(mkChar(strval));
-		  }
-	      }
 	    
-	    /*
+	    *_ret = ScalarString(mkChar(strval));
 
-
-	    *_ret = NEW_CHARACTER( 1 ) ;
-	    NPString str = NPVARIANT_TO_STRING(*var);
-	    NPUTF8 *tmpchr = (NPUTF8 *) malloc((str.UTF8Length +1)*sizeof(NPUTF8));
-	    memcpy(tmpchr,str.UTF8Characters,  str.UTF8Length);
-	    tmpchr[str.UTF8Length] = '\0';
-	    const char *strval = (const char *) tmpchr;
-	    SET_STRING_ELT(*_ret, 0, mkChar(strval));
-	    */
-	  }
+	  }	
 	  break;
 	case NPVariantType_Object:
 	  {
@@ -291,20 +257,36 @@ SEXP MakeNPRefForR(NPVariant *ref)
   return ans;
 }
 
-void MakeRRefForNP(SEXP obj, NPNetscapeFuncs *funcs, NPVariant *ret)
+void MakeRRefForNP(SEXP obj, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret)
 {
-  char *buf;
   if (TYPEOF(obj) == CLOSXP)
     {
+      /*
       buf = (char *) funcs->memalloc((16+sizeof(long int) + 1)*sizeof(char));
       sprintf(buf, "_SEXP:Function_:%ld", obj);
+      */
+      RFunction *retobj;
+      retobj = (RFunction *) funcs->createobject(inst, &RFunction::_npclass);
+      funcs->retainobject(retobj);
+      retobj->object = obj;
+      retobj->funcs = funcs;
+      R_PreserveObject(retobj->object);
+      OBJECT_TO_NPVARIANT(retobj, *ret);
     }
   else
     {
+      /*
       buf = (char *) funcs->memalloc((16+sizeof(long int) + 1)*sizeof(char));
       sprintf(buf, "_SEXP:Object_:%ld", obj);
+      */
+      RObject *retobj;
+      retobj = (RObject *) funcs->createobject(inst, &RObject::_npclass);
+      funcs->retainobject(retobj);
+      retobj->object = obj;
+      retobj->funcs = funcs;
+      R_PreserveObject(retobj->object);
+      OBJECT_TO_NPVARIANT(retobj, *ret);
     }
-  STRINGZ_TO_NPVARIANT((const char *) buf, *ret);
   return;
 }
 

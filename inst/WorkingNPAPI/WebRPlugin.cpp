@@ -36,7 +36,7 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-#include "BasicPlugin.h"
+#include "WebR.h"
 
 #include <stdlib.h>
 #include <string.h>

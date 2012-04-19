@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <sys/stat.h>
 
-#include "BasicPlugin.h"
+#include "WebR.h"
 //#include "plugin.h"
 
 
@@ -158,11 +158,12 @@ bool WebREngine::Invoke(NPIdentifier name, const NPVariant *args, uint32_t argCo
   for(int i=0; i<argCount; i++)
     {
       PROTECT(Rargs[i] = R_NilValue); 
-      ConvertNPToR((NPVariant *) &(args[i]), this->instance, myNPNFuncs, false, &Rargs[i]);
+      //when calling R functions directly we DO want arguments to be converted.
+      ConvertNPToR((NPVariant *) &(args[i]), this->instance, myNPNFuncs, true, &Rargs[i]);
     }
   SEXP ans;
   SEXP call; 
- int error = 0;
+  int error = 0;
   int addProt = 0;
  if(name == myNPNFuncs->getstringidentifier("eval"))
     {
