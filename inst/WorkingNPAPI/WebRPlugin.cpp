@@ -60,57 +60,16 @@ typedef struct InstanceData {
   NPObject *scriptable;
   NPNetscapeFuncs *funcs;
 } InstanceData;
-
-/*
-static void
-drawWindow(InstanceData* instanceData, GdkDrawable* gdkWindow)
-{
-  NPWindow window = instanceData->window;
-  int x = window.x;
-  int y = window.y;
-  int width = window.width;
-  int height = window.height;
-
-  NPP npp = instanceData->npp;
-  if (!npp)
-    return;
-
-  const char* uaString = myNPNFuncs->uagent(npp);
-  if (!uaString)
-    return;
-
-  GdkGC* gdkContext = gdk_gc_new(gdkWindow);
-
-  // draw a grey background for the plugin frame
-  GdkColor grey;
-  grey.red = grey.blue = grey.green = 32767;
-  gdk_gc_set_rgb_fg_color(gdkContext, &grey);
-  gdk_draw_rectangle(gdkWindow, gdkContext, TRUE, x, y, width, height);
-
-  // draw a 3-pixel-thick black frame around the plugin
-  GdkColor black;
-  black.red = black.green = black.blue = 0;
-  gdk_gc_set_rgb_fg_color(gdkContext, &black);
-  gdk_gc_set_line_attributes(gdkContext, 3, GDK_LINE_SOLID, GDK_CAP_NOT_LAST, GDK_JOIN_MITER);
-  gdk_draw_rectangle(gdkWindow, gdkContext, FALSE, x + 1, y + 1,
-                     width - 3, height - 3);
-
-  // paint the UA string
-  PangoContext* pangoContext = gdk_pango_context_get();
-  PangoLayout* pangoTextLayout = pango_layout_new(pangoContext);
-  pango_layout_set_width(pangoTextLayout, (width - 10) * PANGO_SCALE);
-  pango_layout_set_text(pangoTextLayout, uaString, -1);
-  gdk_draw_layout(gdkWindow, gdkContext, x + 5, y + 5, pangoTextLayout);
-  g_object_unref(pangoTextLayout);
-
-  g_object_unref(gdkContext);
-}
-*/
 static int isInitialized=0;
 int initR( const char **args, int nargs);
 
-NP_EXPORT(NPError)
-NP_Initialize(NPNetscapeFuncs* bFuncs, NPPluginFuncs* pFuncs)
+
+
+NPError OSCALL NP_Initialize(NPNetscapeFuncs* bFuncs
+#ifdef XP_UNIX
+                             , NPPluginFuncs* pFuncs
+#endif
+                             )
 {
   fprintf(stderr, "in NP_Initialize");fflush(stderr);
 
@@ -118,9 +77,21 @@ NP_Initialize(NPNetscapeFuncs* bFuncs, NPPluginFuncs* pFuncs)
   initR( &arg[0] , 2);
   // Check the size of the provided structure based on the offset of the
   // last member we need.
+
+#ifdef XP_UNIX
   if (pFuncs->size < (offsetof(NPPluginFuncs, setvalue) + sizeof(void*)))
     return NPERR_INVALID_FUNCTABLE_ERROR;
+  
+  SetNPPFuncs(pFuncs);
+#endif
+  myNPNFuncs = (NPNetscapeFuncs *)malloc(sizeof(NPNetscapeFuncs));
+  CopyNPNFunctions(myNPNFuncs, bFuncs);
 
+  return NPERR_NO_ERROR;
+}
+
+void SetNPPFuncs(NPPluginFuncs *pFuncs)
+{
   pFuncs->newp = NPP_New;
   pFuncs->destroy = NPP_Destroy;
   pFuncs->setwindow = NPP_SetWindow;
@@ -134,11 +105,6 @@ NP_Initialize(NPNetscapeFuncs* bFuncs, NPPluginFuncs* pFuncs)
   pFuncs->urlnotify = NPP_URLNotify;
   pFuncs->getvalue = NPP_GetValue;
   pFuncs->setvalue = NPP_SetValue;
-
-  myNPNFuncs = (NPNetscapeFuncs *)malloc(sizeof(NPNetscapeFuncs));
-  CopyNPNFunctions(myNPNFuncs, bFuncs);
-
-  return NPERR_NO_ERROR;
 }
 
 //http://code.firebreath.org/browse/FireBreath/src/NpapiCore/NpapiTypes.cpp?r2=fff31b14375229e4980e98a228250ab20db1dfe7&r1=983c31dfa9f348902c523c2304d777f3552ebc0b&r=09bf0acf08470e56ec9170fcc83935fe4a332443
@@ -185,6 +151,19 @@ void CopyNPNFunctions(NPNetscapeFuncs *dstFuncs, NPNetscapeFuncs *srcFuncs)
   dstFuncs->releasevariantvalue = srcFuncs->releasevariantvalue;
   dstFuncs->setexception = srcFuncs->setexception;
   dstFuncs->construct = srcFuncs->construct;
+  /*
+  if (srcFuncs->version >= NPVERS_MACOSX_HAS_COCOA_EVENTS) { // 23 
+    dstFuncs->scheduletimer = srcFuncs->scheduletimer;  
+    dstFuncs->unscheduletimer = srcFuncs->unscheduletimer;
+  }
+
+  if(srcFuncs->version >= NPVERS_HAS_URL_AND_AUTH_INFO) { // 21
+    dstFuncs->getvalueforurl = srcFuncs->getvalueforurl;
+    dstFuncs->setvalueforurl = srcFuncs->setvalueforurl;
+    dstFuncs->getauthenticationinfo = srcFuncs->getauthenticationinfo;
+  }
+  */
+ 
 }
 
 

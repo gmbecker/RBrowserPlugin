@@ -1,0 +1,32 @@
+# Compiled Object files
+*.slo
+*.lo
+*.o
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+
+#emacs temp files
+*~
+
+#logs
+*.log
+
+#cores
+*.core
+
+#xpi
+*.xpi
+
+#pdfs
+*.pdf
+
+#pngs
+*.png

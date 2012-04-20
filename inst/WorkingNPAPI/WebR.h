@@ -47,7 +47,18 @@
 #include <Rembedded.h>
 #include <stdio.h>
 
-NPError NP_Initialize(NPNetscapeFuncs* bFuncs, NPPluginFuncs* pFuncs);
+void SetNPPFuncs(NPPluginFuncs *pFuncs);
+
+NPError NP_Initialize(NPNetscapeFuncs* bFuncs
+#ifdef XP_UNIX
+                      ,NPPluginFuncs* pFuncs
+#endif
+);
+
+
+NPError OSCALL NP_GetEntryPoints(NPPluginFuncs* pFuncs);
+
+
 NPError NP_Shutdown();
 
 NPError NPP_New(NPMIMEType pluginType, NPP instance, uint16_t mode, int16_t argc, char* argn[], char* argv[], NPSavedData* saved);
@@ -178,6 +189,7 @@ class RFunction : public RObject
 
 
 
+
 bool ConvertRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret, bool convertRes);
 bool RVectorToNP(SEXP vec, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret);
 bool ConvertNPToR(NPVariant *var, NPP inst, NPNetscapeFuncs *funcs, bool retRef, SEXP *_ret) ;
@@ -188,4 +200,5 @@ SEXP MakeNPRefForR(NPVariant *obj);
 void MakeRRefForNP(SEXP obj, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret);
 bool RObject_GetProp( RObject *obj, NPIdentifier name, NPNetscapeFuncs *funcs, NPVariant *result, bool check);
 bool IsMissing(SEXP obj, bool nullAlso);
+
 #endif // WebR.h
