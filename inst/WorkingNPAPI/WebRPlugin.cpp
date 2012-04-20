@@ -41,10 +41,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-
+/*
 #include <gdk/gdk.h>
 #include <gdk/gdkx.h>
 #include <gtk/gtk.h>
+*/
 #include <unistd.h>
 
 #define PLUGIN_NAME        "Test R Plugin"
@@ -60,6 +61,7 @@ typedef struct InstanceData {
   NPNetscapeFuncs *funcs;
 } InstanceData;
 
+/*
 static void
 drawWindow(InstanceData* instanceData, GdkDrawable* gdkWindow)
 {
@@ -103,7 +105,7 @@ drawWindow(InstanceData* instanceData, GdkDrawable* gdkWindow)
 
   g_object_unref(gdkContext);
 }
-
+*/
 static int isInitialized=0;
 int initR( const char **args, int nargs);
 
@@ -319,6 +321,7 @@ NPP_Print(NPP instance, NPPrint* platformPrint) {
 
 int16_t
 NPP_HandleEvent(NPP instance, void* event) {
+  /*
   InstanceData *instanceData = (InstanceData*)(instance->pdata);
   XEvent *nativeEvent = (XEvent*)event;
 
@@ -332,7 +335,7 @@ NPP_HandleEvent(NPP instance, void* event) {
   GdkDrawable* gdkWindow = GDK_DRAWABLE(gdk_window_foreign_new(nativeWinId));  
   drawWindow(instanceData, gdkWindow);
   g_object_unref(gdkWindow);
-
+  */
   return 1;
 }
 
