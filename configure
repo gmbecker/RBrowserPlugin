@@ -23,6 +23,8 @@ ac_help="$ac_help
 --enable-mac	    Configure RFirefox for Mac OS X"
 ac_help="$ac_help
    --with-npapi-sdk directory in which npapi sdk is located"
+ac_help="$ac_help
+   --enable-rfirefox build the RFirefox Firefox extension"
 
 # Initialize some variables set by options.
 # The variables have the same names as the options, with
@@ -583,19 +585,30 @@ if test "${with_npapi_sdk+set}" = set; then
 fi
 
 
-
-
-
-
-
-
-
-
-if ! test -d "$XUL_SDK" ; then
-  echo "Can't find the Xulrunner SDK. Unable to prepare the package for compilation."
-  echo "For now, specify the Xulrunner SDK directory using --with-xul-sdk=<path> in configure-args"
-  { echo "configure: error: "Eventually this will be detected automatically."" 1>&2; exit 1; } 
+# Check whether --enable-rfirefox or --disable-rfirefox was given.
+if test "${enable_rfirefox+set}" = set; then
+  enableval="$enable_rfirefox"
+  RFIREFOX_DEF="-DBUILD_RFIREFOX"
+else
+  RFIREFOX_DEF=""
 fi
+
+
+
+
+
+
+
+
+
+
+
+
+#if ! test -d "$XUL_SDK" ; then
+#  echo "Can't find the Xulrunner SDK. Unable to prepare the package for compilation."
+#  echo "For now, specify the Xulrunner SDK directory using --with-xul-sdk=<path> in configure-args"
+#  AC_MSG_ERROR( "Eventually this will be detected automatically.") 
+#fi
 
 
 if test -z "${R_HOME}"; then
@@ -753,6 +766,7 @@ s%@IS_MAC@%$IS_MAC%g
 s%@FF@%$FF%g
 s%@ARCH@%$ARCH%g
 s%@NPAPI_SDK@%$NPAPI_SDK%g
+s%@RFIREFOX_DEF@%$RFIREFOX_DEF%g
 
 CEOF
 EOF

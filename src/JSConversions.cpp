@@ -1,3 +1,4 @@
+#ifdef BUILD_RFIREFOX
 #ifndef USE_RINTERNALS
 #define NO_RINTERNALS
 #endif
@@ -177,3 +178,4 @@ SEXP R_RToJSRef(SEXP RContext, SEXP Robj)
 #undef USE_RINTERNALS
 #endif
 
+#endif //BUILD_RFIREFOX

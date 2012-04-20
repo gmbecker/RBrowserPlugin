@@ -1,3 +1,4 @@
+RFIREFOX_DEF=@RFIREFOX_DEF@
 XUL_SDK=@XUL_SDK@
 NPAPI_SDK=@NPAPI_SDK@
 # Do we need nspr explicitly
@@ -6,20 +7,35 @@ GCC_FLAGS=-fshort-wchar
 # The symbol is still undefined. But the python extension uses it!
 # -DXPCOM_GLUE_USE_NSPR=1 
 #-lnspr4
-EXTRAFLAGS=-fPIC   -fno-exceptions -Wall -Wpointer-arith -Wcast-align  -Wno-long-long -pedantic -fno-strict-aliasing -fshort-wchar -pthread -pipe  -DNDEBUG -DTRIMMED -Os -freorder-blocks -fno-reorder-functions  -pthread -D_REENTRANT     -DMOZILLA_CLIENT
+EXTRAFLAGS=$(RFIREFOX_DEF) -fPIC
+PKG_CPPFLAGS=-I ../inst/WorkingNPAPI/ -I ../inst/npapi-sdk-headers/
+PKG_LIBS=
+ifeq ($(RFIREFOX_DEF),-DBUILD_RFIREFOX)
+EXTRAFLAGS+=  -fno-exceptions -Wall -Wpointer-arith -Wcast-align  -Wno-long-long -pedantic -fno-strict-aliasing -fshort-wchar -pthread -pipe  -DNDEBUG -DTRIMMED -Os -freorder-blocks -fno-reorder-functions  -pthread -D_REENTRANT     -DMOZILLA_CLIENT
 
-PKG_CPPFLAGS= -DXPCOM_GLUE  $(GCC_FLAGS)  -I$(XUL_SDK)/include/xpcom -I$(XUL_SDK)/include -I$(XUL_SDK)/include/xpconnect -I$(XUL_SDK)/include/js -I$(XUL_SDK)/include/content  -I$(XUL_SDK)/include/widget -I$(XUL_SDK)/include/dom -I$(XUL_SDK)/include/layout -I$(XUL_SDK)/sdk/include -I$(XUL_SDK)/include -Wl,--warn-unresolved-symbols -I ../inst/WorkingNPAPI/ -I$(NPAPI_SDK)/headers $(EXTRAFLAGS) 
+
+PKG_CPPFLAGS+= -DXPCOM_GLUE  $(GCC_FLAGS)  -I$(XUL_SDK)/include/xpcom -I$(XUL_SDK)/include -I$(XUL_SDK)/include/xpconnect -I$(XUL_SDK)/include/js -I$(XUL_SDK)/include/content  -I$(XUL_SDK)/include/widget -I$(XUL_SDK)/include/dom -I$(XUL_SDK)/include/layout -I$(XUL_SDK)/sdk/include -I$(XUL_SDK)/include -Wl,--warn-unresolved-symbols $(EXTRAFLAGS) 
 
 
 PKG_LIBS=-L$(XUL_SDK)/lib -lxpcomglue -lxpcom -lplds4 -lplc4 -lnspr4 
+endif 
 
-.PHONY: all cpcode
+.PHONY: all cpcode 
 
-all: $(SHLIB) extension
+all: $(SHLIB) extension npapi
 extension: $(SHLIB) cpcode
+ifeq ($(RFIREFOX_DEF),-DBUILD_RFIREFOX)
 	  (cd ../inst/components ; make)
+endif
 $(SHLIB): cpcode
+
+npapi: 
+	  (cd ../inst/WorkingNPAPI ; make)
+
 
 #we use this code in both the package and the extension, but only want to maintain one copy, so the copy in RFirefox/src is considered the master copy
 cpcode:
+ifeq ($(RFIREFOX_DEF),-DBUILD_RFIREFO)
 	cp JSConversions.* ../inst/components
+endif
+

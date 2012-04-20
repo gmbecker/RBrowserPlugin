@@ -59,6 +59,7 @@ bool RObject::Invoke(NPIdentifier name, const NPVariant *args, uint32_t argCount
     } else if (name == this->funcs->getstringidentifier("toString")) 
     {
       fprintf(stderr, "\nIn tostring method of an RObject\n");fflush(stderr);
+      //From NPN_ReleaseVariantValue docs: NPN_ReleaseVariantValue() will call NPN_ReleaseObject() on NPVariants of type NPVARIANTTYPE_OBJECT, and NPN_FreeMem() on NPVariants of type NPVARIANTTYPE_STRING. 
       NPUTF8 *strdat = (NPUTF8*) this->funcs->memalloc(19+1);
       //strdat = (NPUTF8*)"[Internal R Object]";
       memcpy(strdat, "[Internal R Object]", 19+1);
@@ -66,7 +67,7 @@ bool RObject::Invoke(NPIdentifier name, const NPVariant *args, uint32_t argCount
       result->type = NPVariantType_String;
       result->value.stringValue = str;
       
-       //XXX From NPN_ReleaseVariantValue docs: NPN_ReleaseVariantValue() will call NPN_ReleaseObject() on NPVariants of type NPVARIANTTYPE_OBJECT, and NPN_FreeMem() on NPVariants of type NPVARIANTTYPE_STRING. 
+      
       return true;
     }
     
@@ -92,8 +93,24 @@ bool RObject::HasProperty(NPIdentifier name)
     ret = 0;
   else
     {
+      SEXP call, ans, ptr;
+      int error=0;
+      PROTECT(ptr = call = allocVector(LANGSXP, 3));
+      SETCAR(ptr, Rf_install("CheckForProperty"));
+      ptr = CDR(ptr);
+      SETCAR(ptr, this-> object);
+      ptr = CDR(ptr);
+      if(this->funcs->identifierisstring(name))
+	SETCAR(ptr, ScalarString(mkChar(this->funcs->utf8fromidentifier(name))));
+      else
+	SETCAR(ptr, ScalarInteger(this->funcs->intfromidentifier(name)));
+      PROTECT(ans = R_tryEval(call, R_GlobalEnv, &error));
+      UNPROTECT(2);
       //Need to check if the R property exists or not.... currently we just return true.
-      ret = true;
+      if(!error)
+	ret = LOGICAL(ans)[0];
+      else
+	ret = false;
     }
   return ret;
 }
@@ -102,8 +119,23 @@ bool RObject::GetProperty(NPIdentifier name, NPVariant *result)
 {
   //Emulate object[[name]], object$name, object@name in that order
   fprintf(stderr, "\nIn RObject::GetProperty");fflush(stderr);
+  SEXP call, ptr, ans;
+  int error;
+  PROTECT(ptr = call = allocVector(LANGSXP, 3));
+  SETCAR(ptr, Rf_install("[["));
+  ptr = CDR(ptr);
+  SETCAR(ptr, this->object);
+  ptr = CDR(ptr);
+  if(this->funcs->identifierisstring(name))
+    SETCAR(ptr, ScalarString(mkChar(this->funcs->utf8fromidentifier(name))));
+  else
+    SETCAR(ptr, ScalarInteger(this->funcs->intfromidentifier(name)));
   
-  return RObject_GetProp(this, name, this->funcs, result, false);
+  PROTECT(ans = R_tryEval(call, R_GlobalEnv, &error));
+  bool ret = ConvertRToNP(ans, this->instance, this->funcs, result, false);
+  UNPROTECT(2);
+  //ConvertRToNP(ans, Robj->instance, funcs, result, false);
+  return ret;
 }
 
 bool RObject::SetProperty(NPIdentifier name, const NPVariant *value)

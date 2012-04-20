@@ -1,4 +1,4 @@
-
+#ifdef BUILD_RFIREFOX
 
 #ifndef USE_RINTERNALS
 #define NO_RINTERNALS
@@ -318,3 +318,5 @@ SEXP R_EvaluateScript(SEXP Rcon, SEXP Rparent, SEXP Rscript, SEXP Rnumchar, SEXP
 #ifdef NO_RINTERNALS
 #undef USE_RINTERNALS
 #endif
+
+#endif //BUILD_RFIREFOX

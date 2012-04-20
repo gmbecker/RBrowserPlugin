@@ -1,3 +1,4 @@
+#ifdef BUILD_RFIREFOX
 #include <Rdefines.h>
 #include <stdio.h>
 #include <jsapi.h>
@@ -238,6 +239,6 @@ R_Call_JS_Method(SEXP Rcon, SEXP Robjptr, SEXP Rname, SEXP Rargs, SEXP RobjIsVal
  return ScalarLogical(success);
 }
   
-
+#endif //BUILD_RFIREFOX
   
   

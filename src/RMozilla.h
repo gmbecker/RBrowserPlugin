@@ -1,3 +1,4 @@
+#ifdef BUILD_RFIREFOX
 #ifndef __RMOZILLA_H
 #define __RMOZILLA_H
 #include <Rinternals.h>
@@ -23,3 +24,5 @@
 extern "C"
 void R_nsISupportsFinalizer(SEXP);
 #endif
+
+#endif //BUILD_RFIREFOX
