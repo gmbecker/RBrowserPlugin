@@ -1,6 +1,3 @@
-setClass('JSObjectRef', contains = "RCStructReference")
-setClass('jsvalRef', contains = "RCStructReference")
-setClass('JSContextRef', contains = "RCStructReference")
 
 STRING_TO_JSVAL = function(con, jstring, addRoot = FALSE)
   {
@@ -21,7 +18,7 @@ JS_ValueToObject = function(con, val, ret)
 JS_ValueToString = function(con, val)
   {
     .Call("R_JS_ValueToJSString", con , val)
-  }
+  } 
 
 JS_ConvertValue = function(con, val, type, ret)
 {

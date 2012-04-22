@@ -5,7 +5,7 @@ bool ConvertRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret, bo
 
   //XXXNot sure if this Class check will work...
   SEXP klass;
-  PROTECT(klass = MAKE_CLASS("NPVarRef"));
+  PROTECT(klass = MAKE_CLASS("NPVariantRef"));
   if (GET_CLASS(val) == klass)
     { 
       //XXX We shouldn't have to copy here, but do we really want to pass in double pointers?
@@ -185,9 +185,21 @@ bool ConvertNPToR(NPVariant *var, NPP inst, NPNetscapeFuncs *funcs, bool convRet
 	      canfree = NPArrayToR(var, len, 0, inst, funcs, _ret);
 	    else
 	      {
-		fprintf(stderr, "\nGeneric NPObject detected. No Conversion found.");
-		*_ret = MakeNPRefForR(var);
-		canfree = 0;
+		//check if it is an R object.
+		NPVariant isRObject;
+		funcs->getproperty(inst, inObject, funcs->getstringidentifier("isRObject"), &isRObject);
+		if(NPVARIANT_IS_BOOLEAN(isRObject) && isRObject.value.boolValue)
+		  {
+		    fprintf(stderr, "\nRObject detected. Extracting original SEXP\n");fflush(stderr);
+		    *_ret = ((RObject *) inObject)->object;
+		    canfree = 1;
+		  } else
+		  {							   
+		    fprintf(stderr, "\nGeneric NPObject detected. No Conversion found.");
+		    *_ret = MakeNPRefForR(var);
+		  
+		    canfree = 0;
+		  }
 	      }
 	  }
 	  break;

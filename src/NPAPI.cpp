@@ -10,7 +10,7 @@ bool C_doTest(NPP inst, NPNetscapeFuncs *funcs);
 extern "C" {
   SEXP R_doTest(SEXP plug);
   //success = funcs->invoke(inst, domwin, arrid, NULL, 0, vartmp2);
-  SEXP R_NPAPI_Invoke(SEXP plug, SEXP Robj, SEXP Rname, SEXP Rargs, SEXP RretRef);
+  SEXP R_NPAPI_Invoke(SEXP plug, SEXP Robj, SEXP Rname, SEXP Rargs, SEXP RconvArgs, SEXP RconvRet);
   SEXP R_doRefClassTest();
 }
 
@@ -24,7 +24,7 @@ SEXP R_doRefClasWsTest()
   return ans;
 }
 
-SEXP R_NPAPI_Invoke(SEXP plug, SEXP Robj, SEXP Rname, SEXP Rargs, SEXP RconvArgs, SEXP RconvRet )
+SEXP R_NPAPI_Invoke(SEXP plug, SEXP Robj, SEXP Rname, SEXP Rargs, SEXP RconvArgs, SEXP RconvRet, SEXP RkeepRes )
 {
  
   NPP inst = (NPP) R_ExternalPtrAddr(GET_SLOT( plug , Rf_install( "ref" ) ) );
@@ -46,7 +46,7 @@ SEXP R_NPAPI_Invoke(SEXP plug, SEXP Robj, SEXP Rname, SEXP Rargs, SEXP RconvArgs
   
   for(int i = 0; i < nargs; i++)
     {
-      ConvertRToNP(VECTOR_ELT(Rargs, i), inst, funcs,  &(args[i]), LOGICAL(RconvArgs)[i]);
+      ConvertRToNP(VECTOR_ELT(Rargs, i), inst, funcs, &(args[i]), LOGICAL(RconvArgs)[i]);
     }
 
   NPVariant *ret = (NPVariant *) funcs->memalloc(sizeof(NPVariant)); 
@@ -57,8 +57,9 @@ SEXP R_NPAPI_Invoke(SEXP plug, SEXP Robj, SEXP Rname, SEXP Rargs, SEXP RconvArgs
 
   for(int j=0; j<nargs; j++)
     {
-      if (NPVARIANT_IS_OBJECT(args[j]))
-	funcs->releaseobject(args[j].value.objectValue);
+      //      if (NPVARIANT_IS_OBJECT(args[j]))
+      //	funcs->releaseobject(args[j].value.objectValue);
+      funcs->releasevariantvalue(&args[j]);
     }
   funcs->memfree(args);
   
@@ -71,18 +72,20 @@ SEXP R_NPAPI_Invoke(SEXP plug, SEXP Robj, SEXP Rname, SEXP Rargs, SEXP RconvArgs
   SEXP ans;
   PROTECT(ans = R_NilValue);
   bool canfree = ConvertNPToR(ret, inst, funcs, convRet, &ans);
-  
-  if(canfree)
+  bool keepRes = LOGICAL(RkeepRes)[0];
+  if(canfree || !keepRes)
     funcs->releasevariantvalue(ret);
   
   UNPROTECT(1);
-  
-  return ans ;
+  if(keepRes)
+    return ans ;
+  else
+    return R_NilValue;
 }
 
 
 
-SEXP R_NPAPI_GetProperty(SEXP plug, SEXP Robj, SEXP Rname, SEXP RretRef)
+SEXP R_NPAPI_GetProperty(SEXP plug, SEXP Robj, SEXP Rname, SEXP RconvRet)
 {
  
   NPP inst = (NPP) R_ExternalPtrAddr(GET_SLOT( plug , Rf_install( "ref" ) ) );
@@ -96,7 +99,7 @@ SEXP R_NPAPI_GetProperty(SEXP plug, SEXP Robj, SEXP Rname, SEXP RretRef)
       Rf_error("Robj is not an NPVariant containing an NPObject.");
       return R_NilValue;
     }
-  int retRef = LOGICAL(RretRef)[0];
+  int convRet = LOGICAL(RconvRet)[0];
 
 
   NPVariant *ret = (NPVariant *) funcs->memalloc(sizeof(NPVariant)); 
@@ -113,9 +116,9 @@ SEXP R_NPAPI_GetProperty(SEXP plug, SEXP Robj, SEXP Rname, SEXP RretRef)
     
   SEXP ans;
   PROTECT(ans = R_NilValue);
-  bool canfree = ConvertNPToR(ret, inst, funcs, retRef, &ans);
-  
-  //XXX What if it is a function? we still need the reference!!
+  //ConvertNPToR returns a bool which indicates whether it is safe to release the converted object.
+  bool canfree = ConvertNPToR(ret, inst, funcs, convRet, &ans);
+
   if(canfree)
     funcs->releasevariantvalue(ret);
   
@@ -127,7 +130,7 @@ SEXP R_NPAPI_GetProperty(SEXP plug, SEXP Robj, SEXP Rname, SEXP RretRef)
 
 
 
-SEXP R_NPAPI_GetProperty(SEXP plug, SEXP Robj, SEXP Rname, SEXP Rval, SEXP RretRef)
+SEXP R_NPAPI_SetProperty(SEXP plug, SEXP Robj, SEXP Rname, SEXP Rval, SEXP RconvValue)
 {
  
   NPP inst = (NPP) R_ExternalPtrAddr(GET_SLOT( plug , Rf_install( "ref" ) ) );
@@ -141,11 +144,11 @@ SEXP R_NPAPI_GetProperty(SEXP plug, SEXP Robj, SEXP Rname, SEXP Rval, SEXP RretR
       Rf_error("Robj is not an NPVariant containing an NPObject.");
       return R_NilValue;
     }
-  int retRef = LOGICAL(RretRef)[0];
+  int convVal = LOGICAL(RconvValue)[0];
 
   
   NPVariant *val = (NPVariant *) funcs->memalloc(sizeof(NPVariant)); 
-  ConvertRToNP(Rval, inst, funcs, val, false);
+  ConvertRToNP(Rval, inst, funcs, val, convVal);
   const char *ccname = CHAR(STRING_ELT(Rname, 0));
 
   bool success = funcs->setproperty(inst, obj->value.objectValue, funcs->getstringidentifier(ccname), val);
@@ -156,7 +159,6 @@ SEXP R_NPAPI_GetProperty(SEXP plug, SEXP Robj, SEXP Rname, SEXP Rval, SEXP RretR
       return R_NilValue;
     }
     
-  
   funcs->releasevariantvalue(val);
   
   return ScalarLogical(success) ;
@@ -197,4 +199,26 @@ bool C_doTest(NPP inst, NPNetscapeFuncs *funcs)
   return success;
 }
 
+
+SEXP R_NP_GetGlobal(SEXP Rplug)
+{
+  NPP inst = (NPP) R_ExternalPtrAddr(GET_SLOT( Rplug , Rf_install( "ref" ) ) );
+  NPNetscapeFuncs *funcs = (NPNetscapeFuncs *) R_ExternalPtrAddr(GET_SLOT( GET_SLOT(Rplug, Rf_install("funcs")), Rf_install("ref")));
+
+  NPObject *domwin = NULL;
+  NPVariant *toret = (NPVariant *) funcs->memalloc(sizeof(NPVariant));
+  //NPVariant vartmp2;
+  
+  NPError res;
+  bool success;
+  res = funcs->getvalue(inst, NPNVWindowNPObject , &domwin);
+  funcs->retainobject(domwin);
+  OBJECT_TO_NPVARIANT(domwin, *toret);
+  
+  SEXP ans;
+  PROTECT(ans = R_NilValue);
+  ConvertNPToR(toret, inst, funcs, false, &ans);
+  UNPROTECT(1);
+  return ans;
+}
 

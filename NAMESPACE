@@ -1,12 +1,12 @@
 useDynLib(RFirefox)
 
-exportClasses("JavaScriptRef")
-exportClasses("nsIDocument", "nsINode")
+#exportClasses("JavaScriptRef")
+#exportClasses("nsIDocument", "nsINode")
 exportClasses("NPObjectRef", "NPVariantRef", "NPNFunctionsRef", "PluginInstance")
 exportPattern(".*")
 
 exportMethods("coerce")
-exportClasses("nsPIDOMWindow")
+#exportClasses("nsPIDOMWindow")
 
 
 

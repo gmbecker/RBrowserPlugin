@@ -1,3 +1,5 @@
+if(FALSE)
+  {
 setClass("RC++NativeReference", representation(ref =  "externalptr"))
 
 setClass("nsPIDOMWindow", contains = "RC++NativeReference")
@@ -32,4 +34,35 @@ setClass("nsIScriptContext", contains = "RC++NativeReference")
 setClass("MozGtkBrowser", contains = "RC++NativeReference")
 setClass("JSContextRef", contains = "RC++NativeReference")
 
+}
 
+
+setClass("NPObjectRef", contains = "RCStructReference")
+setClass("NPVariantRef", contains = "RCStructReference")
+setClass("NPDOMWindowRef", contains = "NPVariantRef")
+setClass("NPNFunctionsRef", contains = "RCStructReference")
+setClass("PluginInstance", representation=representation(funcs = "NPNFunctionsRef"), contains="RCStructReference")
+
+setClass('JSObjectRef', contains = "RCStructReference")
+setClass('jsvalRef', contains = "RCStructReference")
+setClass('JSContextRef', contains = "RCStructReference")
+
+
+setClassUnion("JSRefUnion", c("jsvalRef", "NPVariantRef"))
+setClass("JSValueRef", contains = "RCStructReference", representation= representation(value = "JSRefUnion", backend="character"))
+
+setAs("NPVariantRef", "JSValueRef",
+      function(object)
+      {
+        new("JSValueRef", value=object, backend="NPAPI")
+      })
+
+setAs("jsvalRef", "JSValueRef",
+      function(object)
+      {
+        new("JSValueRef", value=object, backend="RFirefox")
+      })
+
+
+setIs("JSValueRef", "NPVariantRef")
+setIs( "JSValueRef", "jsvalRef")

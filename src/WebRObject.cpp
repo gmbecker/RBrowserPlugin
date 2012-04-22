@@ -91,6 +91,8 @@ bool RObject::HasProperty(NPIdentifier name)
     ret = 0;
   else if(name == this->funcs->getstringidentifier("valueOf"))
     ret = 0;
+  else if(name == this->funcs->getstringidentifier("isRObject"))
+    ret = 1;
   else
     {
       SEXP call, ans, ptr;
@@ -117,6 +119,10 @@ bool RObject::HasProperty(NPIdentifier name)
 
 bool RObject::GetProperty(NPIdentifier name, NPVariant *result)
 {
+  if(name == this->funcs->getstringidentifier("valueOf"))
+    {
+      BOOLEAN_TO_NPVARIANT(true, *result); 
+    }
   //Emulate object[[name]], object$name, object@name in that order
   fprintf(stderr, "\nIn RObject::GetProperty");fflush(stderr);
   SEXP call, ptr, ans;
