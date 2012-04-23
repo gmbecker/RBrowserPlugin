@@ -4,9 +4,10 @@ bool ConvertRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret, bo
 {
 
   //XXXNot sure if this Class check will work...
-  SEXP klass;
-  PROTECT(klass = MAKE_CLASS("NPVariantRef"));
-  if (GET_CLASS(val) == klass)
+  
+  // SEXP klass;
+  //PROTECT(klass = MAKE_CLASS("NPVariantRef"));
+  if (CheckSEXPForJSRef(val))
     { 
       //XXX We shouldn't have to copy here, but do we really want to pass in double pointers?
       *ret = *(NPVariant *) R_ExternalPtrAddr(GET_SLOT( val , Rf_install( "ref" ) ) );
@@ -23,49 +24,67 @@ bool ConvertRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret, bo
   fprintf(stderr, "\nIn ConvertRToNP type: %d", TYPEOF(val));fflush(stderr);
   int len = LENGTH(val);
 
-  
-  switch(TYPEOF(val))
+  if(len > 0)
     {
-    case NILSXP:
-      break;
-    case REALSXP:
-      if(len > 1)
-	RVectorToNP(val, inst, funcs, ret);
-      else	  
-	DOUBLE_TO_NPVARIANT(REAL(val)[0], *ret);
-      break;
-    case INTSXP:
-      if(len > 1)
-	RVectorToNP(val, inst, funcs, ret);
-      else
-	INT32_TO_NPVARIANT(INTEGER(val)[0], *ret);
-      break;
-    case LGLSXP:
-      if(len > 1)
-	RVectorToNP(val, inst, funcs, ret);
-      else
-	BOOLEAN_TO_NPVARIANT( (bool) LOGICAL(val)[0], *ret);
-      break;
-    case STRSXP:
-      if(len > 1)
-	RVectorToNP(val, inst, funcs, ret);
-      else
-	STRINGZ_TO_NPVARIANT(CHAR(STRING_ELT(val, 0)), *ret);
-      break;
-    case CLOSXP:
-      {
-	char *buf = (char *) funcs->memalloc((16+sizeof(long int) + 1)*sizeof(char));
-	sprintf(buf, "_SEXP:Function_:%ld", val);
-	STRINGZ_TO_NPVARIANT((const char *) buf, *ret);
-      }
-      break;
-    default:
-      {
-	char *buf = (char *) funcs->memalloc((14+sizeof(long int) + 1)*sizeof(char));;
-	sprintf(buf, "_SEXP:Object_:%ld", val);
-	STRINGZ_TO_NPVARIANT((const char *) buf, *ret);
-      }
-      break;
+      switch(TYPEOF(val))
+	{
+	case NILSXP:
+	  break;
+	case REALSXP:
+	  if(len > 1)
+	    RVectorToNP(val, inst, funcs, ret);
+	  else	  
+	    DOUBLE_TO_NPVARIANT(REAL(val)[0], *ret);
+	  break;
+	case INTSXP:
+	  if(len > 1)
+	    RVectorToNP(val, inst, funcs, ret);
+	  else
+	    INT32_TO_NPVARIANT(INTEGER(val)[0], *ret);
+	  break;
+	case LGLSXP:
+	  if(len > 1)
+	    RVectorToNP(val, inst, funcs, ret);
+	  else
+	    BOOLEAN_TO_NPVARIANT( (bool) LOGICAL(val)[0], *ret);
+	  break;
+	case STRSXP:
+	  if(len > 1)
+	    RVectorToNP(val, inst, funcs, ret);
+	  else
+	    {
+	      //We need to use funcs->memalloc so that we can 
+	      //safely call funcs->releasevariantvalue later...
+	      const char *fromR = CHAR(STRING_ELT(val, 0));
+	      //+1 for the null termination char
+	      int len = strlen(fromR) + 1;
+	      char *dat = (char *) funcs->memalloc(len*sizeof(char));
+	      memcpy(dat, fromR, len);
+	      STRINGZ_TO_NPVARIANT(dat, *ret);
+	    }
+	  break;
+	case CLOSXP:
+	  {
+	    /*
+	    char *buf = (char *) funcs->memalloc((16+sizeof(long int) + 1)*sizeof(char));
+	    sprintf(buf, "_SEXP:Function_:%ld", val);
+	    STRINGZ_TO_NPVARIANT((const char *) buf, *ret);
+	    */
+	    //void MakeRRefForNP(SEXP obj, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret)
+	    MakeRRefForNP(val, inst, funcs,ret);
+	  }
+	  break;
+	default:
+	  {
+	    MakeRRefForNP(val, inst, funcs,ret);
+	    /*
+	    char *buf = (char *) funcs->memalloc((14+sizeof(long int) + 1)*sizeof(char));;
+	    sprintf(buf, "_SEXP:Object_:%ld", val);
+	    STRINGZ_TO_NPVARIANT((const char *) buf, *ret);
+	    */
+	  }
+	  break;
+	}
     }
   return true;
 }
@@ -187,8 +206,8 @@ bool ConvertNPToR(NPVariant *var, NPP inst, NPNetscapeFuncs *funcs, bool convRet
 	      {
 		//check if it is an R object.
 		NPVariant isRObject;
-		funcs->getproperty(inst, inObject, funcs->getstringidentifier("isRObject"), &isRObject);
-		if(NPVARIANT_IS_BOOLEAN(isRObject) && isRObject.value.boolValue)
+		bool tmp = funcs->getproperty(inst, inObject, funcs->getstringidentifier("isRObject"), &isRObject);
+		if(tmp && NPVARIANT_IS_BOOLEAN(isRObject) && isRObject.value.boolValue)
 		  {
 		    fprintf(stderr, "\nRObject detected. Extracting original SEXP\n");fflush(stderr);
 		    *_ret = ((RObject *) inObject)->object;
@@ -257,7 +276,7 @@ bool NPArrayToR(NPVariant *arr, int len, int simplify, NPP inst, NPNetscapeFuncs
 SEXP MakeNPRefForR(NPVariant *ref)
 {
   SEXP klass, ans, Rptr;
-  PROTECT( klass = MAKE_CLASS( "NPVarRef" ) );
+  PROTECT( klass = MAKE_CLASS( "NPVariantRef" ) );
   PROTECT( ans = NEW( klass ) );
   PROTECT( Rptr = R_MakeExternalPtr( ref ,
 				    Rf_install( "NPVariantRef" ),
@@ -310,4 +329,25 @@ const char * NPStringToConstChar(NPString str)
       tmpchr[str.UTF8Length] = '\0';
       const char *conchar = (const char *) tmpchr;
       return conchar;
+}
+
+bool CheckSEXPForJSRef(SEXP obj)
+{
+
+  SEXP ans, call, ptr;
+  int err;
+  PROTECT(ptr = call= allocVector(LANGSXP, 3));
+  SETCAR(ptr, Rf_install("is"));
+  ptr = CDR(ptr);
+  SETCAR(ptr, obj);
+  ptr = CDR(ptr);
+  SETCAR(ptr, ScalarString(mkChar("JSValueRef")));
+  
+  PROTECT(ans = R_tryEval(call, R_GlobalEnv, &err));
+  bool ret = LOGICAL(ans)[0];
+  if(ret)
+    {fprintf(stderr, "\nR object contains JS reference.\n");fflush(stderr);}
+  UNPROTECT(2);
+  return ret;
+
 }

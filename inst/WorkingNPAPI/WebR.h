@@ -200,5 +200,5 @@ SEXP MakeNPRefForR(NPVariant *obj);
 void MakeRRefForNP(SEXP obj, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret);
 bool RObject_GetProp( RObject *obj, NPIdentifier name, NPNetscapeFuncs *funcs, NPVariant *result, bool check);
 bool IsMissing(SEXP obj, bool nullAlso);
-
+bool CheckSEXPForJSRef(SEXP obj);
 #endif // WebR.h

@@ -10,8 +10,12 @@ bool C_doTest(NPP inst, NPNetscapeFuncs *funcs);
 extern "C" {
   SEXP R_doTest(SEXP plug);
   //success = funcs->invoke(inst, domwin, arrid, NULL, 0, vartmp2);
-  SEXP R_NPAPI_Invoke(SEXP plug, SEXP Robj, SEXP Rname, SEXP Rargs, SEXP RconvArgs, SEXP RconvRet);
+  SEXP R_NPAPI_Invoke(SEXP plug, SEXP Robj, SEXP Rname, SEXP Rargs, SEXP RconvArgs, SEXP RconvRet, SEXP RkeepRes );
+
   SEXP R_doRefClassTest();
+  SEXP R_NP_GetGlobal(SEXP Rplug);
+  SEXP R_NPAPI_GetProperty(SEXP plug, SEXP Robj, SEXP Rname, SEXP RconvRet);
+  SEXP R_NPAPI_SetProperty(SEXP plug, SEXP Robj, SEXP Rname, SEXP Rval, SEXP RconvValue);
 }
 
 SEXP R_doRefClasWsTest()
@@ -57,9 +61,9 @@ SEXP R_NPAPI_Invoke(SEXP plug, SEXP Robj, SEXP Rname, SEXP Rargs, SEXP RconvArgs
 
   for(int j=0; j<nargs; j++)
     {
-      //      if (NPVARIANT_IS_OBJECT(args[j]))
-      //	funcs->releaseobject(args[j].value.objectValue);
-      funcs->releasevariantvalue(&args[j]);
+            if (NPVARIANT_IS_OBJECT(args[j]))
+	      funcs->releaseobject(args[j].value.objectValue);
+	    //funcs->releasevariantvalue(&args[j]);
     }
   funcs->memfree(args);
   
@@ -147,20 +151,23 @@ SEXP R_NPAPI_SetProperty(SEXP plug, SEXP Robj, SEXP Rname, SEXP Rval, SEXP Rconv
   int convVal = LOGICAL(RconvValue)[0];
 
   
-  NPVariant *val = (NPVariant *) funcs->memalloc(sizeof(NPVariant)); 
-  ConvertRToNP(Rval, inst, funcs, val, convVal);
+  //NPVariant *val = (NPVariant *) funcs->memalloc(sizeof(NPVariant)); 
+  NPVariant val;
+  ConvertRToNP(Rval, inst, funcs, &val, convVal);
   const char *ccname = CHAR(STRING_ELT(Rname, 0));
 
-  bool success = funcs->setproperty(inst, obj->value.objectValue, funcs->getstringidentifier(ccname), val);
+  bool success = funcs->setproperty(inst, obj->value.objectValue, funcs->getstringidentifier(ccname), &val);
  
   if(!success)
     {
+      //funcs->memfree(val);
       Rf_error("SetProperty failed.");
       return R_NilValue;
     }
-    
-  funcs->releasevariantvalue(val);
-  
+  else {
+    funcs->releasevariantvalue(&val);
+    //funcs->memfree(val);
+  }
   return ScalarLogical(success) ;
 }
 
