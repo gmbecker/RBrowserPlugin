@@ -191,12 +191,28 @@ NPError NP_Shutdown(void)
 /* Called to create a new instance of the plugin. */
 NPError NPP_New(NPMIMEType pluginType, NPP instance, uint16_t mode, int16_t argc, char* argn[], char* argv[], NPSavedData* saved)
 {
-  InstanceData *newInstance = (InstanceData*)malloc(sizeof(InstanceData));
-  bzero(newInstance, sizeof(InstanceData));
 
-  newInstance->npp = instance;
-  instance->pdata = newInstance;
+ // Make sure we can render this plugin
+  NPBool browserSupportsWindowless = false;
+  myNPNFuncs->getvalue(instance, NPNVSupportsWindowless, &browserSupportsWindowless);
+  if (!browserSupportsWindowless) {
+    printf("Windowless mode not supported by the browser\n");
+    return NPERR_GENERIC_ERROR;
+  }
 
+  myNPNFuncs->setvalue(instance, NPPVpluginWindowBool, (void*)false);
+
+  
+  // set up our our instance data
+  InstanceData* instanceData = (InstanceData*)malloc(sizeof(InstanceData));
+  if (!instanceData)
+    return NPERR_OUT_OF_MEMORY_ERROR;
+  memset(instanceData, 0, sizeof(InstanceData));
+  instanceData->npp = instance;
+  instanceData->scriptable = NULL;
+  instanceData->funcs = myNPNFuncs;
+  instance->pdata = instanceData;
+ 
  #ifdef XP_MACOSX
   /* Select the Core Graphics drawing model. */
   NPBool supportsCoreGraphics = false;
