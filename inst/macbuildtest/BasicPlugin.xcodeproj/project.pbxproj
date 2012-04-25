@@ -14,7 +14,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		03A2C0C10E70759100328455 /* BasicPlugin.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BasicPlugin.h; sourceTree = "<group>"; };
+		03A2C0C10E70759100328455 /* WebR.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WebR.h; sourceTree = "<group>"; };
 		089C167EFE841241C02AAC07 /* English */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = English; path = English.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		08EA7FFBFE8413EDC02AAC07 /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = /System/Library/Frameworks/Carbon.framework; sourceTree = "<absolute>"; };
 		08FB77B2FE8417CDC02AAC07 /* BasicPlugin.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = BasicPlugin.cpp; sourceTree = "<group>"; };
@@ -70,7 +70,7 @@
 			isa = PBXGroup;
 			children = (
 				32BAE0B30371A71500C91783 /* BasicPlugin_Prefix.pch */,
-				03A2C0C10E70759100328455 /* BasicPlugin.h */,
+				03A2C0C10E70759100328455 /* WebR.h */,
 				08FB77B2FE8417CDC02AAC07 /* BasicPlugin.cpp */,
 			);
 			name = Source;

@@ -19,76 +19,189 @@
  * drawing model.
  */
 
-#include "BasicPlugin.h"
+#include "WebR.h"
 
 /* Structure containing pointers to functions implemented by the browser. */
-static NPNetscapeFuncs* browser;
+NPNetscapeFuncs *myNPNFuncs;
+
+#define PLUGIN_NAME        "Test R Plugin"
+#define PLUGIN_DESCRIPTION PLUGIN_NAME " Working up to WebR"
+#define PLUGIN_VERSION     "1.0.0.0"
+
+typedef struct InstanceData {
+  NPP npp;
+  NPWindow window;
+  NPObject *scriptable;
+  NPNetscapeFuncs *funcs;
+} InstanceData;
+static int isInitialized=0;
+
+
+int initR( const char **args, int nargs)
+{
+  char **rargs;
+  if(isInitialized)
+    return 0;
+  
+  rargs = (char **) malloc(nargs * sizeof(char *));
+  for(int i = 0 ; i < nargs; i++)
+    rargs[i] = strdup(args[i]);
+  fprintf(stderr, "Attempting to start embedded R.\n");fflush(stderr);
+  Rf_initEmbeddedR(nargs, rargs);
+  fprintf(stderr, "R initialization done.\n"); fflush(stderr);
+  int error=0;
+  SEXP call;
+  PROTECT(call = allocVector(LANGSXP, 2));
+  SETCAR(call, Rf_install("library"));
+  SETCAR(CDR(call), Rf_install("RFirefox"));
+  R_tryEval(call, R_GlobalEnv, &error);
+  
+  UNPROTECT(1);
+  return error;
+}
+
+
+
+
+NPError OSCALL NP_Initialize(NPNetscapeFuncs* bFuncs
+#ifdef XP_UNIX
+                             , NPPluginFuncs* pFuncs
+#endif
+                             )
+{
+  fprintf(stderr, "in NP_Initialize");fflush(stderr);
+  //fprintf(logfile, "in NP_Initialize");fflush(logfile);
+  const char *arg[] = {"R", "--no-save"};
+  initR( &arg[0] , 2);
+  // Check the size of the provided structure based on the offset of the
+  // last member we need.
+
+#ifdef XP_UNIX
+  if (pFuncs->size < (offsetof(NPPluginFuncs, setvalue) + sizeof(void*)))
+    return NPERR_INVALID_FUNCTABLE_ERROR;
+  
+  SetNPPFuncs(pFuncs);
+#endif
+  myNPNFuncs = (NPNetscapeFuncs *)malloc(sizeof(NPNetscapeFuncs));
+  CopyNPNFunctions(myNPNFuncs, bFuncs);
+
+  return NPERR_NO_ERROR;
+}
+
+void SetNPPFuncs(NPPluginFuncs *pFuncs)
+{
+  pFuncs->newp = NPP_New;
+  pFuncs->destroy = NPP_Destroy;
+  pFuncs->setwindow = NPP_SetWindow;
+  pFuncs->newstream = NPP_NewStream;
+  pFuncs->destroystream = NPP_DestroyStream;
+  pFuncs->asfile = NPP_StreamAsFile;
+  pFuncs->writeready = NPP_WriteReady;
+  pFuncs->write = NPP_Write;
+  pFuncs->print = NPP_Print;
+  pFuncs->event = NPP_HandleEvent;
+  pFuncs->urlnotify = NPP_URLNotify;
+  pFuncs->getvalue = NPP_GetValue;
+  pFuncs->setvalue = NPP_SetValue;
+}
+
+NPError NP_GetEntryPoints(NPPluginFuncs* pluginFuncs)
+{
+  //fprintf(logfile, "in NP_GetEntryPoints");fflush(logfile);
+  SetNPPFuncs(pluginFuncs);
+  return NPERR_NO_ERROR;
+}
+
+//http://code.firebreath.org/browse/FireBreath/src/NpapiCore/NpapiTypes.cpp?r2=fff31b14375229e4980e98a228250ab20db1dfe7&r1=983c31dfa9f348902c523c2304d777f3552ebc0b&r=09bf0acf08470e56ec9170fcc83935fe4a332443
+void CopyNPNFunctions(NPNetscapeFuncs *dstFuncs, NPNetscapeFuncs *srcFuncs)
+{
+  dstFuncs->size = srcFuncs->size;
+  dstFuncs->version = srcFuncs->version;
+  dstFuncs->geturl = srcFuncs->geturl;
+  dstFuncs->posturl = srcFuncs->posturl;
+  dstFuncs->requestread = srcFuncs->requestread;
+  dstFuncs->newstream = srcFuncs->newstream;
+  dstFuncs->write = srcFuncs->write;
+  dstFuncs->destroystream = srcFuncs->destroystream;
+  dstFuncs->status = srcFuncs->status;
+  dstFuncs->uagent = srcFuncs->uagent;
+  dstFuncs->memalloc = srcFuncs->memalloc;
+  dstFuncs->memfree = srcFuncs->memfree;
+  dstFuncs->memflush = srcFuncs->memflush;
+  dstFuncs->reloadplugins = srcFuncs->reloadplugins;
+  dstFuncs->geturlnotify = srcFuncs->geturlnotify;
+  dstFuncs->posturlnotify = srcFuncs->posturlnotify;
+  dstFuncs->getvalue = srcFuncs->getvalue;
+  dstFuncs->setvalue = srcFuncs->setvalue;
+  dstFuncs->invalidaterect = srcFuncs->invalidaterect;
+  dstFuncs->invalidateregion = srcFuncs->invalidateregion;
+  dstFuncs->forceredraw = srcFuncs->forceredraw;
+  dstFuncs->getstringidentifier = srcFuncs->getstringidentifier;
+  dstFuncs->getstringidentifiers = srcFuncs->getstringidentifiers;
+  dstFuncs->getintidentifier = srcFuncs->getintidentifier;
+  dstFuncs->identifierisstring = srcFuncs->identifierisstring;
+  dstFuncs->utf8fromidentifier = srcFuncs->utf8fromidentifier;
+  dstFuncs->intfromidentifier = srcFuncs->intfromidentifier;
+  dstFuncs->createobject = srcFuncs->createobject;
+  dstFuncs->retainobject = srcFuncs->retainobject;
+  dstFuncs->releaseobject = srcFuncs->releaseobject;
+  dstFuncs->invoke = srcFuncs->invoke;
+  dstFuncs->invokeDefault = srcFuncs->invokeDefault;
+  dstFuncs->evaluate = srcFuncs->evaluate;
+  dstFuncs->getproperty = srcFuncs->getproperty;
+  dstFuncs->setproperty = srcFuncs->setproperty;
+  dstFuncs->removeproperty = srcFuncs->removeproperty;
+  dstFuncs->hasproperty = srcFuncs->hasproperty;
+  dstFuncs->hasmethod = srcFuncs->hasmethod;
+  dstFuncs->releasevariantvalue = srcFuncs->releasevariantvalue;
+  dstFuncs->setexception = srcFuncs->setexception;
+  dstFuncs->construct = srcFuncs->construct;
+  
+  if (srcFuncs->version >= NPVERS_MACOSX_HAS_COCOA_EVENTS) { // 23 
+    dstFuncs->scheduletimer = srcFuncs->scheduletimer;  
+    dstFuncs->unscheduletimer = srcFuncs->unscheduletimer;
+  }
+
+  if(srcFuncs->version >= NPVERS_HAS_URL_AND_AUTH_INFO) { // 21
+    dstFuncs->getvalueforurl = srcFuncs->getvalueforurl;
+    dstFuncs->setvalueforurl = srcFuncs->setvalueforurl;
+    dstFuncs->getauthenticationinfo = srcFuncs->getauthenticationinfo;
+  }
+  
+ 
+}
+
+
+
 
 /* Local store of the browser UA string that we we paint into the plugin's window. */
 static CFStringRef browserUAString = NULL;
 
-/* Data for each instance of this plugin. */
-typedef struct PluginInstance {
-  NPP npp;
-  NPWindow window;
-} PluginInstance;
 
 void drawPlugin(NPP instance, NPCocoaEvent* event);
 
-/* Symbol called once by the browser to initialize the plugin. */
-NPError NP_Initialize(NPNetscapeFuncs* browserFuncs)
-{  
-  /* Save the browser function table. */
-  browser = browserFuncs;
-
-  return NPERR_NO_ERROR;
-}
-
-/* Function called by the browser to get the plugin's function table. */
-NPError NP_GetEntryPoints(NPPluginFuncs* pluginFuncs)
-{
-  /* Check the size of the provided structure based on the offset of the
-     last member we need. */
-  if (pluginFuncs->size < (offsetof(NPPluginFuncs, setvalue) + sizeof(void*)))
-    return NPERR_INVALID_FUNCTABLE_ERROR;
-
-  pluginFuncs->newp = NPP_New;
-  pluginFuncs->destroy = NPP_Destroy;
-  pluginFuncs->setwindow = NPP_SetWindow;
-  pluginFuncs->newstream = NPP_NewStream;
-  pluginFuncs->destroystream = NPP_DestroyStream;
-  pluginFuncs->asfile = NPP_StreamAsFile;
-  pluginFuncs->writeready = NPP_WriteReady;
-  pluginFuncs->write = (NPP_WriteProcPtr)NPP_Write;
-  pluginFuncs->print = NPP_Print;
-  pluginFuncs->event = NPP_HandleEvent;
-  pluginFuncs->urlnotify = NPP_URLNotify;
-  pluginFuncs->getvalue = NPP_GetValue;
-  pluginFuncs->setvalue = NPP_SetValue;
-
-  return NPERR_NO_ERROR;
-}
-
 /* Function called once by the browser to shut down the plugin. */
-void NP_Shutdown(void)
+NPError NP_Shutdown(void)
 {
   CFRelease(browserUAString);
   browserUAString = NULL;
+	return NPERR_NO_ERROR;
 }
 
 /* Called to create a new instance of the plugin. */
 NPError NPP_New(NPMIMEType pluginType, NPP instance, uint16_t mode, int16_t argc, char* argn[], char* argv[], NPSavedData* saved)
 {
-  PluginInstance *newInstance = (PluginInstance*)malloc(sizeof(PluginInstance));
-  bzero(newInstance, sizeof(PluginInstance));
+  InstanceData *newInstance = (InstanceData*)malloc(sizeof(InstanceData));
+  bzero(newInstance, sizeof(InstanceData));
 
   newInstance->npp = instance;
   instance->pdata = newInstance;
 
+ #ifdef XP_MACOSX
   /* Select the Core Graphics drawing model. */
   NPBool supportsCoreGraphics = false;
-  if (browser->getvalue(instance, NPNVsupportsCoreGraphicsBool, &supportsCoreGraphics) == NPERR_NO_ERROR && supportsCoreGraphics) {
-    browser->setvalue(instance, NPPVpluginDrawingModel, (void*)NPDrawingModelCoreGraphics);
+  if (myNPNFuncs->getvalue(instance, NPNVsupportsCoreGraphicsBool, &supportsCoreGraphics) == NPERR_NO_ERROR && supportsCoreGraphics) {
+    myNPNFuncs->setvalue(instance, NPPVpluginDrawingModel, (void*)NPDrawingModelCoreGraphics);
   } else {
     printf("CoreGraphics drawing model not supported, can't create a plugin instance.\n");
     return NPERR_INCOMPATIBLE_VERSION_ERROR;
@@ -96,15 +209,16 @@ NPError NPP_New(NPMIMEType pluginType, NPP instance, uint16_t mode, int16_t argc
 
   /* Select the Cocoa event model. */
   NPBool supportsCocoaEvents = false;
-  if (browser->getvalue(instance, NPNVsupportsCocoaBool, &supportsCocoaEvents) == NPERR_NO_ERROR && supportsCocoaEvents) {
-    browser->setvalue(instance, NPPVpluginEventModel, (void*)NPEventModelCocoa);
+  if (myNPNFuncs->getvalue(instance, NPNVsupportsCocoaBool, &supportsCocoaEvents) == NPERR_NO_ERROR && supportsCocoaEvents) {
+    myNPNFuncs->setvalue(instance, NPPVpluginEventModel, (void*)NPEventModelCocoa);
   } else {
     printf("Cocoa event model not supported, can't create a plugin instance.\n");
     return NPERR_INCOMPATIBLE_VERSION_ERROR;
   }
+#endif //XP_MACOSX
 
   if (!browserUAString) {
-    const char* ua = browser->uagent(instance);
+    const char* ua = myNPNFuncs->uagent(instance);
     if (ua) {
       browserUAString = CFStringCreateWithCString(kCFAllocatorDefault, ua, kCFStringEncodingASCII);
     }
@@ -124,7 +238,7 @@ NPError NPP_Destroy(NPP instance, NPSavedData** save)
 /* Called to update a plugin instances's NPWindow. */
 NPError NPP_SetWindow(NPP instance, NPWindow* window)
 {
-  PluginInstance* currentInstance = (PluginInstance*)(instance->pdata);
+  InstanceData* currentInstance = (InstanceData*)(instance->pdata);
 
   currentInstance->window = *window;
   
@@ -193,7 +307,7 @@ void drawPlugin(NPP instance, NPCocoaEvent* event)
     return;
   }
 
-  PluginInstance* currentInstance = (PluginInstance*)(instance->pdata);
+  InstanceData* currentInstance = (InstanceData*)(instance->pdata);
   CGContextRef cgContext = event->data.draw.context;
   if (!cgContext) {
     return;

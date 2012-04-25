@@ -54,7 +54,9 @@
 #include <R/Rembedded.h>
 #endif
 
+
 void SetNPPFuncs(NPPluginFuncs *pFuncs);
+int initR( const char **args, int nargs);
 
 extern "C" {
 NPError NP_Initialize(NPNetscapeFuncs* bFuncs
