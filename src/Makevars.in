@@ -30,7 +30,7 @@ endif
 $(SHLIB): cpcode
 
 npapi: 
-	  (cd ../inst/WorkingNPAPI ; make)
+#	  (cd ../inst/WorkingNPAPI ; make)
 
 
 #we use this code in both the package and the extension, but only want to maintain one copy, so the copy in RFirefox/src is considered the master copy

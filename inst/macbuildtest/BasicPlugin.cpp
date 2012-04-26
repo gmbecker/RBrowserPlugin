@@ -240,6 +240,32 @@ NPError NPP_New(NPMIMEType pluginType, NPP instance, uint16_t mode, int16_t argc
     }
   }
 
+
+  SEXP klass, ans, ptr;
+  SEXP klass2, ans2, ptr2;
+	
+  PROTECT( klass = MAKE_CLASS( "PluginInstance" ) );
+  PROTECT( ans = NEW( klass ) );
+  PROTECT( ptr = R_MakeExternalPtr( instance,
+                                    Rf_install( "NPP" ),
+                                    R_NilValue));
+//	UNPROTECT(3);
+
+  PROTECT( klass2 = MAKE_CLASS( "NPNFunctionsRef" ) );
+  PROTECT( ans2 = NEW( klass2 ) );
+  PROTECT( ptr2 = R_MakeExternalPtr( myNPNFuncs,
+                                     Rf_install("NPNFuncs"),
+                                     R_NilValue));
+  SET_SLOT( ans2, Rf_install("ref"), ptr2);
+  SET_SLOT( ans, Rf_install("funcs"), ans2);
+  //finalizer here if needed
+  
+  SET_SLOT(ans, Rf_install("ref"), ptr);
+  Rf_defineVar(Rf_install("PluginInstance"), ans, R_GlobalEnv);
+  UNPROTECT(6);
+  
+
+
   return NPERR_NO_ERROR;
 }
 
@@ -307,10 +333,62 @@ void NPP_URLNotify(NPP instance, const char* url, NPReason reason, void* notifyD
 
 }
 
-NPError NPP_GetValue(NPP instance, NPPVariable variable, void *value)
-{
-  return NPERR_GENERIC_ERROR;
+
+NPError
+NPP_GetValue(NPP instance, NPPVariable variable, void *value) {
+  fprintf(stderr, "In NPP_GetValue\n");fflush(stderr);
+  if(instance == NULL)
+    return NPERR_INVALID_INSTANCE_ERROR;
+
+  NPError rv = NPERR_NO_ERROR;
+
+  switch (variable) 
+    {
+    case NPPVpluginWindowBool:
+      *((bool *)value) = true;
+      break;
+      
+    case NPPVpluginNameString:
+      *((char **)value) = "WebR Plugin";
+      break;
+      
+    case NPPVpluginDescriptionString:
+      *((char **)value) = "WebR plugin";
+      break;
+      
+    case NPPVpluginScriptableNPObject:
+      {
+	fprintf(stderr, "case NPPVpluginScriptableNPObject");fflush(stderr);
+
+  //so I can get into gdb
+  //sleep(5);
+  fprintf(stderr, "\ninstance: %lx\n", instance);fflush(stderr);
+  //fprintf(stderr, "\nmyNPNFuncs: %lx\n", myNPNFuncs);fflush(stderr);
+  //fprintf(stderr, "\nmyNPNFuncs->createobject: %lx\n", myNPNFuncs->createobject);fflush(stderr);
+	if(!((InstanceData*)instance->pdata)->scriptable)
+	  {
+      fprintf(stderr, "Attempting to create scriptable object");fflush(stderr);
+      ((InstanceData*)instance->pdata)->scriptable = myNPNFuncs->createobject(instance, &WebREngine::_npclass);
+      fprintf(stderr, "Scriptable object created %lx", ((InstanceData*)instance->pdata)->scriptable);fflush(stderr);
+      myNPNFuncs->retainobject((NPObject *)((InstanceData*)instance->pdata)->scriptable);
+      //myNPNFuncs->retainobject(scriptable);
+      
+      }
+	
+	*(NPObject **)value = (NPObject *)((InstanceData*)instance->pdata)->scriptable;
+
+      }
+      break;
+      
+    default:
+      rv = NPERR_GENERIC_ERROR;
+      break;
+    }
+  fprintf(stderr, "value set to: %lx", *((NPObject **)value));fflush(stderr);
+  return rv;
 }
+
+
 
 NPError NPP_SetValue(NPP instance, NPNVariable variable, void *value)
 {
