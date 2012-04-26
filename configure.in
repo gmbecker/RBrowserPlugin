@@ -38,5 +38,5 @@ echo "could not determine R_HOME"
 exit 1
 fi
 
-AC_OUTPUT(src/Makevars inst/components/GNUmakefile inst/runfirefox.sh inst/NPAPI/Makefile inst/WorkingNPAPI/Makefile)
+AC_OUTPUT(src/Makevars inst/components/GNUmakefile inst/runfirefox.sh inst/NPAPI/Makefile inst/WorkingNPAPI/Makefile inst/macbuildtest/Makefile)
 

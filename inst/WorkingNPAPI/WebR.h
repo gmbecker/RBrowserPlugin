@@ -47,6 +47,11 @@
 #include <Rembedded.h>
 #include <stdio.h>
 
+//Mac doesn't seem to have NP_EXPORT defined
+#ifdef XP_MACOSX
+#define NP_EXPORT(s) s
+#endif
+
 void SetNPPFuncs(NPPluginFuncs *pFuncs);
 
 NPError NP_Initialize(NPNetscapeFuncs* bFuncs

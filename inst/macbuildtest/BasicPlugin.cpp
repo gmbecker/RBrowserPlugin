@@ -319,6 +319,7 @@ void NPP_Print(NPP instance, NPPrint* platformPrint)
 
 int16_t NPP_HandleEvent(NPP instance, void* event)
 {
+  /*
   NPCocoaEvent* cocoaEvent = (NPCocoaEvent*)event;
   if (cocoaEvent && (cocoaEvent->type == NPCocoaEventDrawRect)) {
     drawPlugin(instance, (NPCocoaEvent*)event);
@@ -326,6 +327,8 @@ int16_t NPP_HandleEvent(NPP instance, void* event)
   }
 
   return 0;
+  */
+  return 1;
 }
 
 void NPP_URLNotify(NPP instance, const char* url, NPReason reason, void* notifyData)
@@ -397,6 +400,7 @@ NPError NPP_SetValue(NPP instance, NPNVariable variable, void *value)
 
 void drawPlugin(NPP instance, NPCocoaEvent* event)
 {
+  
   if (!browserUAString) {
     return;
   }
@@ -491,4 +495,5 @@ void drawPlugin(NPP instance, NPCocoaEvent* event)
 
   /* Restore the cgcontext gstate. */
   CGContextRestoreGState(cgContext);
+
 }
