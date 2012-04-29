@@ -40,7 +40,7 @@
 # Basic plugin requires GTK and X11
 CXX=g++
 NPAPI_SDK=
-R_HOME=/Library/Frameworks/R.framework/Resources
+R_HOME=/usr/lib64/R
 CPPFLAGS = -Wall -DXP_UNIX=1 -DMOZ_X11=1 -fPIC -g -I ../npapi-sdk-headers -I$ /usr/share/R/include
 
 R_LD_FLAGS=-L$(R_HOME)/lib -lR

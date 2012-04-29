@@ -1,32 +1,58 @@
+/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /* ***** BEGIN LICENSE BLOCK *****
+ * Version: MPL 1.1/GPL 2.0/LGPL 2.1
  *
- * THIS FILE IS PART OF THE MOZILLA NPAPI SDK BASIC PLUGIN SAMPLE
- * SOURCE CODE. USE, DISTRIBUTION AND REPRODUCTION OF THIS SOURCE
- * IS GOVERNED BY A BSD-STYLE SOURCE LICENSE INCLUDED WITH THIS 
- * SOURCE IN 'COPYING'. PLEASE READ THESE TERMS BEFORE DISTRIBUTING.
+ * The contents of this file are subject to the Mozilla Public License Version
+ * 1.1 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ * http://www.mozilla.org/MPL/
  *
- * THE MOZILLA NPAPI SDK BASIC PLUGIN SAMPLE SOURCE CODE IS
- * (C) COPYRIGHT 2008 by the Mozilla Corporation
- * http://www.mozilla.com/
+ * Software distributed under the License is Rdistributed on an "AS IS" basis,
+ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+ * for the specific language governing rights and limitations under the
+ * License.
  *
- * Contributors:
- *  Josh Aas <josh@mozilla.com>
+ * The Original Code is mozilla.org code.
+ *
+ * The Initial Developer of the Original Code is
+ * Netscape Communications Corporation.
+ * Portions created by the Initial Developer are Copyright (C) 1998
+ * the Initial Developer. All Rights Reserved.
+ *
+ * Contributor(s):
+ *   Josh Aas <josh@mozilla.com>
+ *
+ * Alternatively, the contents of this file may be used under the terms of
+ * either the GNU General Public License Version 2 or later (the "GPL"), or
+ * the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+ * in which case the provisions of the GPL or the LGPL are applicable instead
+ * of those above. If you wish to allow use of your version of this file only
+ * under the terms of either the GPL or the LGPL, and not to allow others to
+ * use your version of this file under the terms of the MPL, indicate your
+ * decision by deleting the provisions above and replace them with the notice
+ * and other provisions required by the GPL or the LGPL. If you do not delete
+ * the provisions above, a recipient may use your version of this file under
+ * the terms of any one of the MPL, the GPL or the LGPL.
  *
  * ***** END LICENSE BLOCK ***** */
 
-/*
- * This sample plugin uses the Cocoa event model and the Core Graphics
- * drawing model.
- */
-
 #include "WebR.h"
 
-/* Structure containing pointers to functions implemented by the browser. */
-NPNetscapeFuncs *myNPNFuncs;
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+/*
+#include <gdk/gdk.h>
+#include <gdk/gdkx.h>
+#include <gtk/gtk.h>
+*/
+#include <unistd.h>
 
 #define PLUGIN_NAME        "Test R Plugin"
 #define PLUGIN_DESCRIPTION PLUGIN_NAME " Working up to WebR"
 #define PLUGIN_VERSION     "1.0.0.0"
+
+NPNetscapeFuncs *myNPNFuncs;
 
 typedef struct InstanceData {
   NPP npp;
@@ -35,31 +61,7 @@ typedef struct InstanceData {
   NPNetscapeFuncs *funcs;
 } InstanceData;
 static int isInitialized=0;
-
-
-int initR( const char **args, int nargs)
-{
-  char **rargs;
-  if(isInitialized)
-    return 0;
-  
-  rargs = (char **) malloc(nargs * sizeof(char *));
-  for(int i = 0 ; i < nargs; i++)
-    rargs[i] = strdup(args[i]);
-  fprintf(stderr, "Attempting to start embedded R.\n");fflush(stderr);
-  Rf_initEmbeddedR(nargs, rargs);
-  fprintf(stderr, "R initialization done.\n"); fflush(stderr);
-  int error=0;
-  SEXP call;
-  PROTECT(call = allocVector(LANGSXP, 2));
-  SETCAR(call, Rf_install("library"));
-  SETCAR(CDR(call), Rf_install("RFirefox"));
-  R_tryEval(call, R_GlobalEnv, &error);
-  
-  UNPROTECT(1);
-  return error;
-}
-
+int initR( const char **args, int nargs);
 
 
 
@@ -70,7 +72,7 @@ NPError OSCALL NP_Initialize(NPNetscapeFuncs* bFuncs
                              )
 {
   fprintf(stderr, "in NP_Initialize");fflush(stderr);
-  //fprintf(logfile, "in NP_Initialize");fflush(logfile);
+
   const char *arg[] = {"R", "--no-save"};
   initR( &arg[0] , 2);
   // Check the size of the provided structure based on the offset of the
@@ -103,13 +105,6 @@ void SetNPPFuncs(NPPluginFuncs *pFuncs)
   pFuncs->urlnotify = NPP_URLNotify;
   pFuncs->getvalue = NPP_GetValue;
   pFuncs->setvalue = NPP_SetValue;
-}
-
-NPError NP_GetEntryPoints(NPPluginFuncs* pluginFuncs)
-{
-  //fprintf(logfile, "in NP_GetEntryPoints");fflush(logfile);
-  SetNPPFuncs(pluginFuncs);
-  return NPERR_NO_ERROR;
 }
 
 //http://code.firebreath.org/browse/FireBreath/src/NpapiCore/NpapiTypes.cpp?r2=fff31b14375229e4980e98a228250ab20db1dfe7&r1=983c31dfa9f348902c523c2304d777f3552ebc0b&r=09bf0acf08470e56ec9170fcc83935fe4a332443
@@ -156,7 +151,7 @@ void CopyNPNFunctions(NPNetscapeFuncs *dstFuncs, NPNetscapeFuncs *srcFuncs)
   dstFuncs->releasevariantvalue = srcFuncs->releasevariantvalue;
   dstFuncs->setexception = srcFuncs->setexception;
   dstFuncs->construct = srcFuncs->construct;
-  
+  /*
   if (srcFuncs->version >= NPVERS_MACOSX_HAS_COCOA_EVENTS) { // 23 
     dstFuncs->scheduletimer = srcFuncs->scheduletimer;  
     dstFuncs->unscheduletimer = srcFuncs->unscheduletimer;
@@ -167,32 +162,49 @@ void CopyNPNFunctions(NPNetscapeFuncs *dstFuncs, NPNetscapeFuncs *srcFuncs)
     dstFuncs->setvalueforurl = srcFuncs->setvalueforurl;
     dstFuncs->getauthenticationinfo = srcFuncs->getauthenticationinfo;
   }
-  
+  */
  
 }
 
 
-
-
-/* Local store of the browser UA string that we we paint into the plugin's window. */
-static CFStringRef browserUAString = NULL;
-
-
-void drawPlugin(NPP instance, NPCocoaEvent* event);
-
-/* Function called once by the browser to shut down the plugin. */
-NPError NP_Shutdown(void)
+NP_EXPORT(char*)
+NP_GetPluginVersion()
 {
-  CFRelease(browserUAString);
-  browserUAString = NULL;
-	return NPERR_NO_ERROR;
+  return PLUGIN_VERSION;
 }
 
-/* Called to create a new instance of the plugin. */
-NPError NPP_New(NPMIMEType pluginType, NPP instance, uint16_t mode, int16_t argc, char* argn[], char* argv[], NPSavedData* saved)
+NP_EXPORT(const char*)
+NP_GetMIMEDescription()
 {
+  return "application/test-r:R:Test R Plugin";
+}
 
- // Make sure we can render this plugin
+NP_EXPORT(NPError)
+NP_GetValue(void* future, NPPVariable aVariable, void* aValue) {
+  switch (aVariable) {
+    case NPPVpluginNameString:
+      *((char**)aValue) = PLUGIN_NAME;
+      break;
+    case NPPVpluginDescriptionString:
+      *((char**)aValue) = PLUGIN_DESCRIPTION;
+      break;
+    default:
+      return NPERR_INVALID_PARAM;
+      break;
+  }
+  return NPERR_NO_ERROR;
+}
+
+NP_EXPORT(NPError)
+NP_Shutdown()
+{
+  return NPERR_NO_ERROR;
+}
+
+static int scriptsrun = 0;
+NPError
+NPP_New(NPMIMEType pluginType, NPP instance, uint16_t mode, int16_t argc, char* argn[], char* argv[], NPSavedData* saved) {
+  // Make sure we can render this plugin
   NPBool browserSupportsWindowless = false;
   myNPNFuncs->getvalue(instance, NPNVSupportsWindowless, &browserSupportsWindowless);
   if (!browserSupportsWindowless) {
@@ -212,45 +224,17 @@ NPError NPP_New(NPMIMEType pluginType, NPP instance, uint16_t mode, int16_t argc
   instanceData->scriptable = NULL;
   instanceData->funcs = myNPNFuncs;
   instance->pdata = instanceData;
- 
- #ifdef XP_MACOSX
-  /* Select the Core Graphics drawing model. */
-  NPBool supportsCoreGraphics = false;
-  if (myNPNFuncs->getvalue(instance, NPNVsupportsCoreGraphicsBool, &supportsCoreGraphics) == NPERR_NO_ERROR && supportsCoreGraphics) {
-    myNPNFuncs->setvalue(instance, NPPVpluginDrawingModel, (void*)NPDrawingModelCoreGraphics);
-  } else {
-    printf("CoreGraphics drawing model not supported, can't create a plugin instance.\n");
-    return NPERR_INCOMPATIBLE_VERSION_ERROR;
-  }
 
-  /* Select the Cocoa event model. */
-  NPBool supportsCocoaEvents = false;
-  if (myNPNFuncs->getvalue(instance, NPNVsupportsCocoaBool, &supportsCocoaEvents) == NPERR_NO_ERROR && supportsCocoaEvents) {
-    myNPNFuncs->setvalue(instance, NPPVpluginEventModel, (void*)NPEventModelCocoa);
-  } else {
-    printf("Cocoa event model not supported, can't create a plugin instance.\n");
-    return NPERR_INCOMPATIBLE_VERSION_ERROR;
-  }
-#endif //XP_MACOSX
-
-  if (!browserUAString) {
-    const char* ua = myNPNFuncs->uagent(instance);
-    if (ua) {
-      browserUAString = CFStringCreateWithCString(kCFAllocatorDefault, ua, kCFStringEncodingASCII);
-    }
-  }
-
-
+  
+  
   SEXP klass, ans, ptr;
   SEXP klass2, ans2, ptr2;
-	
   PROTECT( klass = MAKE_CLASS( "PluginInstance" ) );
   PROTECT( ans = NEW( klass ) );
   PROTECT( ptr = R_MakeExternalPtr( instance,
                                     Rf_install( "NPP" ),
                                     R_NilValue));
-//	UNPROTECT(3);
-
+  
   PROTECT( klass2 = MAKE_CLASS( "NPNFunctionsRef" ) );
   PROTECT( ans2 = NEW( klass2 ) );
   PROTECT( ptr2 = R_MakeExternalPtr( myNPNFuncs,
@@ -262,80 +246,82 @@ NPError NPP_New(NPMIMEType pluginType, NPP instance, uint16_t mode, int16_t argc
   
   SET_SLOT(ans, Rf_install("ref"), ptr);
   Rf_defineVar(Rf_install("PluginInstance"), ans, R_GlobalEnv);
-  UNPROTECT(6);
+  UNPROTECT(3);
   
 
 
+   return NPERR_NO_ERROR;
+}
+
+NPError
+NPP_Destroy(NPP instance, NPSavedData** save) {
+  InstanceData* instanceData = (InstanceData*)(instance->pdata);
+  free(instanceData);
+  //NPN_MemFree(instance->pdata);
   return NPERR_NO_ERROR;
 }
 
-/* Called to destroy an instance of the plugin. */
-NPError NPP_Destroy(NPP instance, NPSavedData** save)
-{
-  free(instance->pdata);
-
+NPError
+NPP_SetWindow(NPP instance, NPWindow* window) {
+  InstanceData* instanceData = (InstanceData*)(instance->pdata);
+  instanceData->window = *window;
   return NPERR_NO_ERROR;
 }
 
-/* Called to update a plugin instances's NPWindow. */
-NPError NPP_SetWindow(NPP instance, NPWindow* window)
-{
-  InstanceData* currentInstance = (InstanceData*)(instance->pdata);
-
-  currentInstance->window = *window;
-  
-  return NPERR_NO_ERROR;
+NPError
+NPP_NewStream(NPP instance, NPMIMEType type, NPStream* stream, NPBool seekable, uint16_t* stype) {
+  return NPERR_GENERIC_ERROR;
 }
 
-NPError NPP_NewStream(NPP instance, NPMIMEType type, NPStream* stream, NPBool seekable, uint16_t* stype)
-{
-  *stype = NP_ASFILEONLY;
-  return NPERR_NO_ERROR;
+NPError
+NPP_DestroyStream(NPP instance, NPStream* stream, NPReason reason) {
+  return NPERR_GENERIC_ERROR;
 }
 
-NPError NPP_DestroyStream(NPP instance, NPStream* stream, NPReason reason)
-{
-  return NPERR_NO_ERROR;
-}
-
-int32_t NPP_WriteReady(NPP instance, NPStream* stream)
-{
+int32_t
+NPP_WriteReady(NPP instance, NPStream* stream) {
   return 0;
 }
 
-int32_t NPP_Write(NPP instance, NPStream* stream, int32_t offset, int32_t len, void* buffer)
-{
+int32_t
+NPP_Write(NPP instance, NPStream* stream, int32_t offset, int32_t len, void* buffer) {
   return 0;
 }
 
-void NPP_StreamAsFile(NPP instance, NPStream* stream, const char* fname)
-{
+void
+NPP_StreamAsFile(NPP instance, NPStream* stream, const char* fname) {
+
 }
 
-void NPP_Print(NPP instance, NPPrint* platformPrint)
-{
-  
+void
+NPP_Print(NPP instance, NPPrint* platformPrint) {
+
 }
 
-int16_t NPP_HandleEvent(NPP instance, void* event)
-{
+int16_t
+NPP_HandleEvent(NPP instance, void* event) {
   /*
-  NPCocoaEvent* cocoaEvent = (NPCocoaEvent*)event;
-  if (cocoaEvent && (cocoaEvent->type == NPCocoaEventDrawRect)) {
-    drawPlugin(instance, (NPCocoaEvent*)event);
-    return 1;
-  }
+  InstanceData *instanceData = (InstanceData*)(instance->pdata);
+  XEvent *nativeEvent = (XEvent*)event;
 
-  return 0;
+  if (nativeEvent->type != GraphicsExpose)
+    return 0;
+
+  XGraphicsExposeEvent *expose = &nativeEvent->xgraphicsexpose;
+  instanceData->window.window = (void*)(expose->drawable);
+
+  GdkNativeWindow nativeWinId = (XID)(instanceData->window.window);
+  GdkDrawable* gdkWindow = GDK_DRAWABLE(gdk_window_foreign_new(nativeWinId));  
+  drawWindow(instanceData, gdkWindow);
+  g_object_unref(gdkWindow);
   */
   return 1;
 }
 
-void NPP_URLNotify(NPP instance, const char* url, NPReason reason, void* notifyData)
-{
+void
+NPP_URLNotify(NPP instance, const char* URL, NPReason reason, void* notifyData) {
 
 }
-
 
 NPError
 NPP_GetValue(NPP instance, NPPVariable variable, void *value) {
@@ -391,109 +377,32 @@ NPP_GetValue(NPP instance, NPPVariable variable, void *value) {
   return rv;
 }
 
-
-
-NPError NPP_SetValue(NPP instance, NPNVariable variable, void *value)
-{
+NPError
+NPP_SetValue(NPP instance, NPNVariable variable, void *value) {
   return NPERR_GENERIC_ERROR;
 }
 
-void drawPlugin(NPP instance, NPCocoaEvent* event)
+
+int initR( const char **args, int nargs)
 {
+  char **rargs;
+  if(isInitialized)
+    return 0;
   
-  if (!browserUAString) {
-    return;
-  }
-
-  InstanceData* currentInstance = (InstanceData*)(instance->pdata);
-  CGContextRef cgContext = event->data.draw.context;
-  if (!cgContext) {
-    return;
-  }
-
-  float windowWidth = currentInstance->window.width;
-  float windowHeight = currentInstance->window.height;
-
-  /* Save the cgcontext gstate. */
-  CGContextSaveGState(cgContext);
-
-  /* We get a flipped context. */
-  CGContextTranslateCTM(cgContext, 0.0, windowHeight);
-  CGContextScaleCTM(cgContext, 1.0, -1.0);
-
-  /* Draw a gray background for the plugin. */
-  CGContextAddRect(cgContext, CGRectMake(0, 0, windowWidth, windowHeight));
-  CGContextSetGrayFillColor(cgContext, 0.5, 1.0);
-  CGContextDrawPath(cgContext, kCGPathFill);
-
-  /* Draw a black frame around the plugin. */
-  CGContextAddRect(cgContext, CGRectMake(0, 0, windowWidth, windowHeight));
-  CGContextSetGrayStrokeColor(cgContext, 0.0, 1.0);
-  CGContextSetLineWidth(cgContext, 6.0);
-  CGContextStrokePath(cgContext);
-
-  /* Draw the UA string using ATSUI. */
-  CGContextSetGrayFillColor(cgContext, 0.0, 1.0);
-  ATSUStyle atsuStyle;
-  ATSUCreateStyle(&atsuStyle);
-  CFIndex stringLength = CFStringGetLength(browserUAString);
-  UniChar* unicharBuffer = (UniChar*)malloc((stringLength + 1) * sizeof(UniChar));
-  CFStringGetCharacters(browserUAString, CFRangeMake(0, stringLength), unicharBuffer);
-  UniCharCount runLengths = kATSUToTextEnd;
-  ATSUTextLayout atsuLayout;
-  ATSUCreateTextLayoutWithTextPtr(unicharBuffer,
-                                  kATSUFromTextBeginning,
-                                  kATSUToTextEnd,
-                                  stringLength,
-                                  1,
-                                  &runLengths,
-                                  &atsuStyle,
-                                  &atsuLayout);
-  ATSUAttributeTag contextTag = kATSUCGContextTag;
-  ByteCount byteSize = sizeof(CGContextRef);
-  ATSUAttributeValuePtr contextATSUPtr = &cgContext;
-  ATSUSetLayoutControls(atsuLayout, 1, &contextTag, &byteSize, &contextATSUPtr);
-  ATSUTextMeasurement lineAscent, lineDescent;
-  ATSUGetLineControl(atsuLayout,
-                    kATSUFromTextBeginning,
-                    kATSULineAscentTag,
-                    sizeof(ATSUTextMeasurement),
-                    &lineAscent,
-                    &byteSize);
-  ATSUGetLineControl(atsuLayout,
-                    kATSUFromTextBeginning,
-                    kATSULineDescentTag,
-                    sizeof(ATSUTextMeasurement),
-                    &lineDescent,
-                    &byteSize);
-  float lineHeight = FixedToFloat(lineAscent) + FixedToFloat(lineDescent);  
-  ItemCount softBreakCount;
-  ATSUBatchBreakLines(atsuLayout,
-                      kATSUFromTextBeginning,
-                      stringLength,
-                      FloatToFixed(windowWidth - 10.0),
-                      &softBreakCount);
-  ATSUGetSoftLineBreaks(atsuLayout,
-                        kATSUFromTextBeginning,
-                        kATSUToTextEnd,
-                        0, NULL, &softBreakCount);
-  UniCharArrayOffset* softBreaks = (UniCharArrayOffset*)malloc(softBreakCount * sizeof(UniCharArrayOffset));
-  ATSUGetSoftLineBreaks(atsuLayout,
-                        kATSUFromTextBeginning,
-                        kATSUToTextEnd,
-                        softBreakCount, softBreaks, &softBreakCount);
-  UniCharArrayOffset currentDrawOffset = kATSUFromTextBeginning;
-  int i = 0;
-  while (i < softBreakCount) {
-    ATSUDrawText(atsuLayout, currentDrawOffset, softBreaks[i], FloatToFixed(5.0), FloatToFixed(windowHeight - 5.0 - (lineHeight * (i + 1.0))));
-    currentDrawOffset = softBreaks[i];
-    i++;
-  }
-  ATSUDrawText(atsuLayout, currentDrawOffset, kATSUToTextEnd, FloatToFixed(5.0), FloatToFixed(windowHeight - 5.0 - (lineHeight * (i + 1.0))));
-  free(unicharBuffer);
-  free(softBreaks);
-
-  /* Restore the cgcontext gstate. */
-  CGContextRestoreGState(cgContext);
-
+  rargs = (char **) malloc(nargs * sizeof(char *));
+  for(int i = 0 ; i < nargs; i++)
+    rargs[i] = strdup(args[i]);
+  fprintf(stderr, "Attempting to start embedded R.\n");fflush(stderr);
+  Rf_initEmbeddedR(nargs, rargs);
+  fprintf(stderr, "R initialization done.\n"); fflush(stderr);
+  int error=0;
+  SEXP call;
+  PROTECT(call = allocVector(LANGSXP, 2));
+  SETCAR(call, Rf_install("library"));
+  SETCAR(CDR(call), Rf_install("RFirefox"));
+  R_tryEval(call, R_GlobalEnv, &error);
+  
+  UNPROTECT(1);
+  return error;
 }
+

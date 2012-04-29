@@ -174,17 +174,48 @@ void CopyNPNFunctions(NPNetscapeFuncs *dstFuncs, NPNetscapeFuncs *srcFuncs)
 
 
 
+char*
+NP_GetPluginVersion()
+{
+  return PLUGIN_VERSION;
+}
+
+
+const char*
+NP_GetMIMEDescription()
+{
+  return "application/test-r:R:Test R Plugin";
+}
+
+
+NPError
+NP_GetValue(void* future, NPPVariable aVariable, void* aValue) {
+  switch (aVariable) {
+    case NPPVpluginNameString:
+      *((char**)aValue) = PLUGIN_NAME;
+      break;
+    case NPPVpluginDescriptionString:
+      *((char**)aValue) = PLUGIN_DESCRIPTION;
+      break;
+    default:
+      return NPERR_INVALID_PARAM;
+      break;
+  }
+  return NPERR_NO_ERROR;
+}
+
+
 /* Local store of the browser UA string that we we paint into the plugin's window. */
-static CFStringRef browserUAString = NULL;
+//static CFStringRef browserUAString = NULL;
 
 
-void drawPlugin(NPP instance, NPCocoaEvent* event);
+//void drawPlugin(NPP instance, NPCocoaEvent* event);
 
 /* Function called once by the browser to shut down the plugin. */
 NPError NP_Shutdown(void)
 {
-  CFRelease(browserUAString);
-  browserUAString = NULL;
+  //CFRelease(browserUAString);
+  //browserUAString = NULL;
 	return NPERR_NO_ERROR;
 }
 
@@ -232,14 +263,14 @@ NPError NPP_New(NPMIMEType pluginType, NPP instance, uint16_t mode, int16_t argc
     return NPERR_INCOMPATIBLE_VERSION_ERROR;
   }
 #endif //XP_MACOSX
-
+  /*
   if (!browserUAString) {
     const char* ua = myNPNFuncs->uagent(instance);
     if (ua) {
       browserUAString = CFStringCreateWithCString(kCFAllocatorDefault, ua, kCFStringEncodingASCII);
     }
   }
-
+  */
 
   SEXP klass, ans, ptr;
   SEXP klass2, ans2, ptr2;
@@ -397,7 +428,7 @@ NPError NPP_SetValue(NPP instance, NPNVariable variable, void *value)
 {
   return NPERR_GENERIC_ERROR;
 }
-
+#if 0
 void drawPlugin(NPP instance, NPCocoaEvent* event)
 {
   
@@ -497,3 +528,4 @@ void drawPlugin(NPP instance, NPCocoaEvent* event)
   CGContextRestoreGState(cgContext);
 
 }
+#endif //0
