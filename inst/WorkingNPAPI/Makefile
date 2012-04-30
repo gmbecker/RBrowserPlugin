@@ -1,4 +1,3 @@
-# Generated automatically from Makefile.in by configure.
 #
 # ***** BEGIN LICENSE BLOCK *****
 # Version: MPL 1.1/GPL 2.0/LGPL 2.1
@@ -40,7 +39,7 @@
 # Basic plugin requires GTK and X11
 CXX=g++
 NPAPI_SDK=
-R_HOME=/usr/lib64/R
+R_HOME=/Library/Frameworks/R.framework/Resources
 CPPFLAGS = -Wall -DXP_UNIX=1 -DMOZ_X11=1 -fPIC -g -I ../npapi-sdk-headers -I$ /usr/share/R/include
 
 R_LD_FLAGS=-L$(R_HOME)/lib -lR

@@ -18,6 +18,14 @@ AC_ARG_ENABLE(rfirefox, [   --enable-rfirefox build the RFirefox Firefox extensi
 		       RFIREFOX_DEF="-DBUILD_RFIREFOX", RFIREFOX_DEF="")
 
 
+if test `uname` = "Darwin"; then
+   echo "***** Mac OSX detected *****"
+   IS_MAC=1
+else
+   IS_MAC=0
+fi
+
+
 AC_SUBST(XUL_SDK)
 AC_SUBST(R_HOME)
 AC_SUBST(IS_MAC)
@@ -32,7 +40,6 @@ AC_SUBST(RFIREFOX_DEF)
 #  echo "For now, specify the Xulrunner SDK directory using --with-xul-sdk=<path> in configure-args"
 #  AC_MSG_ERROR( "Eventually this will be detected automatically.") 
 #fi
-
 
 if test -z "${R_HOME}"; then
 echo "could not determine R_HOME"
