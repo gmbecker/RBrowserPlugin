@@ -24,7 +24,7 @@ endif
 
 all: $(SHLIB) extension npapi
 extension: $(SHLIB) cpcode
-	   (cd ../inst/macbuildtest ; make)
+	   (cd ../inst/NPAPI ; make)
 ifeq ($(RFIREFOX_DEF),-DBUILD_RFIREFOX)
 	  (cd ../inst/components ; make)
 endif

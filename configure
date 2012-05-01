@@ -1713,7 +1713,7 @@ echo "could not determine R_HOME"
 exit 1
 fi
 
-ac_config_files="$ac_config_files src/Makevars inst/components/GNUmakefile inst/runfirefox.sh inst/NPAPI/Makefile inst/WorkingNPAPI/Makefile inst/macbuildtest/Makefile"
+ac_config_files="$ac_config_files src/Makevars inst/components/GNUmakefile inst/runfirefox.sh inst/NPAPI/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -2286,8 +2286,6 @@ do
     "inst/components/GNUmakefile") CONFIG_FILES="$CONFIG_FILES inst/components/GNUmakefile" ;;
     "inst/runfirefox.sh") CONFIG_FILES="$CONFIG_FILES inst/runfirefox.sh" ;;
     "inst/NPAPI/Makefile") CONFIG_FILES="$CONFIG_FILES inst/NPAPI/Makefile" ;;
-    "inst/WorkingNPAPI/Makefile") CONFIG_FILES="$CONFIG_FILES inst/WorkingNPAPI/Makefile" ;;
-    "inst/macbuildtest/Makefile") CONFIG_FILES="$CONFIG_FILES inst/macbuildtest/Makefile" ;;
 
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
 echo "$as_me: error: invalid argument: $ac_config_target" >&2;}
