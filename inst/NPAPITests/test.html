@@ -1,0 +1,17 @@
+N<html>
+  <head>
+    <script>
+      function doIt()
+      {
+        R= document.getElementById("emb");
+        var val = R.eval("rnorm(1)");
+        alert(val);
+      
+      }
+      </script>
+    </head>
+  <body>
+    <embed id="emb" type="application/test-r"/>
+    <input type="button" value="Attempt Scripting" onclick="doIt();"/>
+  </body>
+</html>
