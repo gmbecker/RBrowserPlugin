@@ -1,0 +1,31 @@
+<html>
+  <head>
+  <script type="text/javascript">
+    function doIt()
+    {
+      const cid = "@R/Revaluator;1";
+      netscape.security.PrivilegeManager.enablePrivilege("UniversalXPConnect");
+      var Rev = Components.classes[cid].createInstance();
+      Rev = Rev.QueryInterface(Components.interfaces.REvaluator);  
+      var args = ["R"];
+      Rev.init(args, 1);
+      var ret = Rev.eval("testFun");
+      alert(ret);
+      var val = Rev.call(ret, 4);
+      var div = document.getElementById("mydiv");
+      div.innerHTML = "testFun returned: " + val;
+    }
+  </script>
+  <script type="text/R">
+    testFun = function(x)
+    {
+      x + 5
+    }
+
+  </script>
+  </head>
+  <body>
+    <div id = "mydiv" ></div>
+    <input type="button" onclick="doIt();">Click Me</input>
+  </body>
+</html>

@@ -1,0 +1,63 @@
+
+      .glmsummarytext {font-size:16px;}
+      .container {margin:16px;}
+      html {
+        color: black;
+        background-color:white;
+        font-size: 12pt;
+        margin:3px;
+      }
+
+      table {
+        border: solid thin;
+        margin:3px;
+      }
+
+      th {
+        background-color: #DDD;
+        border: solid thin;
+        padding: 3px;
+      }
+
+      td {
+        border: solid thin;
+        padding: 3px;
+        text-align: center;
+      }
+
+      table img {
+        border: none;
+      }
+
+      a {
+        outline: none;
+      }
+
+      a.no_decoration {
+        color: black;
+        text-decoration: none;
+      }
+
+      .smaller_font {
+        font-size: smaller;
+      } 
+
+      mtd {
+        padding-top: 0;
+        padding-bottom: 0;
+      }
+
+      mtable.thin_column_padding &gt; mtr &gt; mtd {
+        padding-left: 0.1em;
+        padding-right: 0.1em;
+      }
+
+      mtable.no_column_padding &gt; mtr &gt; mtd {
+        padding-left: 0;
+        padding-right: 0;
+      }
+
+      mtable.center_column_content &gt; mtr &gt; mtd {
+        vertical-align: middle;
+      }
+    
