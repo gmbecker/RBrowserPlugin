@@ -59,25 +59,28 @@ raphaelDev = function(id = "raph_content", dim = c(600, 400),
       #retval = jsVal()
       cnum = length(get("points", storage))
       script = paste("var paper; paper.circle(", x , "," , y , ",", r, ");", sep="")
-      #JS_EvaluateScript(jscon, JS_GetGlobalObject(jscon, returnInputs=FALSE),
-       #                 script, nchar(script), "circle", 1, retval)
-      retval = call_JS_Method(jscon, get("paper", env = storage),
-        "circle", list( x , y , r ))
-      #JS_AddRoot(jscon, retval) Already AddRooted
-      #XXX finalizer
+
+      #retval = call_JS_Method(jscon, get("paper", env = storage),  "circle", list( x , y , r ))
+                                        #retval = callJavaScript(object = get("paper", env = storage), name = "circle", x, y, r, keepResult = TRUE)
+      
+      retval = storage$paper$circle(x,y,r)
+      
       assign("points", c(get("points", storage), retval), envir = storage)
       TRUE
     }
     funs@rect = function(x1, y1, x2, y2, context, dev)
       {
-        retval = call_JS_Method(jscon, get("paper", env = storage), "rect", list( x2 , y2 , x2 - x1 , y2 - y1 ))
+        #retval = call_JS_Method(jscon, get("paper", env = storage), "rect", list( x2 , y2 , x2 - x1 , y2 - y1 ))
+        #retval = callJavaScript(object = get("paper", env = storage), name = "rect", x2, y2, x2 - x1, y2 - y1, keepResult = TRUE)
+        retval = storage$paper$rect(x2, y2, x2-x1, y2 - y1)
         assign("rects", c(get("rects", storage), retval), envir = storage)
         TRUE
       }
     funs@line = function(x1, y1, x2, y2, context, dev)
       {
         path = paste("M", x1, y1, "l", x2-x1, y2 - y1)
-        retval = call_JS_Method(jscon , get("paper", env = storage ) , "path", path)
+        #retval = call_JS_Method(jscon , get("paper", env = storage ) , "path", path)
+        retval = storage$paper$path(path)
         assign("lines", c(get("lines", storage), retval), envir = storage)
         TRUE
       }
@@ -85,10 +88,11 @@ raphaelDev = function(id = "raph_content", dim = c(600, 400),
     funs@text = function(x, y, txt, rot, hadj, context, dev)
       {
         
-        retval = call_JS_Method( jscon , get( "paper" , env = storage ) , "text" , list( x , y , txt ) )
-        
+        #retval = call_JS_Method( jscon , get( "paper" , env = storage ) , "text" , list( x , y , txt ) )
+        retval = storage$paper$text(x, y, txt)
         size = as.integer(max(10, context$ps) * context$cex)
-        call_JS_Method(jscon, retval, "attr", list("font-size", size), addRoot = FALSE)
+        #call_JS_Method(jscon, retval, "attr", list("font-size", size), addRoot = FALSE)
+        retval$attr("font-size", size)
         assign("texts", c(get("texts", storage), retval), storage)
         TRUE
       }
@@ -103,10 +107,12 @@ raphaelDev = function(id = "raph_content", dim = c(600, 400),
     dev$startcol = as("black", "RGBInt")
 
     script = paste("Raphael('", id, "',", dim[1], " , ", dim[2], ");", sep="")
-    tmp = jsVal()
-    JS_EvaluateScript(jscon, JS_GetGlobalObject(jscon, returnInputs=FALSE),
-                      script, nchar(script), "Raphael init", 1, tmp)
-    JS_AddRoot(jscon, tmp)
+    #tmp = jsVal()
+    #JS_EvaluateScript(jscon, JS_GetGlobalObject(jscon, returnInputs=FALSE),
+    #                  script, nchar(script), "Raphael init", 1, tmp)
+    #JS_AddRoot(jscon, tmp)
+    tmp = evalJavaScript(script = script, keepResult = TRUE)
+    
     assign("paper", tmp, env = storage)
     return(TRUE)
   }
@@ -127,17 +133,26 @@ raphaelDev = function(id = "raph_content", dim = c(600, 400),
         path = paste( paste( "M" , x[1], y[1]),
           paste( "l" , diffsx , diffsy , collapse = " "),
           collapse = " ")
-        if(FALSE)
-          {
-        retval = call_JS_Method(jscon, get("paper", env=storage),
-          "path", path)
-   #     print(retval)
+        #retval = call_JS_Method(jscon, get("paper", env=storage),          "path", path)
+        retval = storage$paper$path(path)
         assign("polylines", c(get("polylines", storage), retval), envir = storage)
-      }
+
         return(TRUE)
       }
   #}
     # No implementations for
+    funs@newPage = function(context, devdesc)
+      {
+if(FALSE)
+  {
+        storage$paper$clear()
+        storage$lines = list()
+        storage$points = list()
+        storage$polylines = list()
+        storage$text = list()
+        storage$rects = list()
+      }
+      }
     funs@mode = NULL
     funs@metricInfo = NULL
     funs@activate = NULL

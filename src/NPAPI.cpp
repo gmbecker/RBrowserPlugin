@@ -44,7 +44,7 @@ SEXP R_NPAPI_Invoke(SEXP plug, SEXP Robj, SEXP Rname, SEXP Rargs, SEXP RconvArgs
     }
   int convRet = LOGICAL(RconvRet)[0];
   
-  
+ 
   int nargs = LENGTH(Rargs);
   NPVariant *args = (NPVariant *) funcs->memalloc(nargs*sizeof(NPVariant));
   
@@ -56,7 +56,14 @@ SEXP R_NPAPI_Invoke(SEXP plug, SEXP Robj, SEXP Rname, SEXP Rargs, SEXP RconvArgs
   NPVariant *ret = (NPVariant *) funcs->memalloc(sizeof(NPVariant)); 
   
   const char *ccname = CHAR(STRING_ELT(Rname, 0));
-
+  bool hasMethod = funcs->hasmethod(inst, obj->value.objectValue,  funcs->getstringidentifier(ccname));
+  if(!hasMethod)
+    {
+      char msg[200];
+      sprintf(msg, "Object has no %s method.", ccname);
+      Rf_error(msg);
+      return R_NilValue;
+    }    
   bool success = funcs->invoke(inst, obj->value.objectValue, funcs->getstringidentifier(ccname), args, nargs, ret);
 
   for(int j=0; j<nargs; j++)
@@ -69,7 +76,9 @@ SEXP R_NPAPI_Invoke(SEXP plug, SEXP Robj, SEXP Rname, SEXP Rargs, SEXP RconvArgs
   
   if(!success)
     {
-      Rf_error("Invoke failed.");
+      char msg2[200];
+      sprintf(msg2, "Invoke failed for %s method.", ccname);
+      Rf_error(msg2);
       return R_NilValue;
     }
     

@@ -292,10 +292,6 @@ void MakeRRefForNP(SEXP obj, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret)
 {
   if (TYPEOF(obj) == CLOSXP)
     {
-      /*
-      buf = (char *) funcs->memalloc((16+sizeof(long int) + 1)*sizeof(char));
-      sprintf(buf, "_SEXP:Function_:%ld", obj);
-      */
       RFunction *retobj;
       retobj = (RFunction *) funcs->createobject(inst, &RFunction::_npclass);
       funcs->retainobject(retobj);
@@ -306,10 +302,7 @@ void MakeRRefForNP(SEXP obj, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret)
     }
   else
     {
-      /*
-      buf = (char *) funcs->memalloc((16+sizeof(long int) + 1)*sizeof(char));
-      sprintf(buf, "_SEXP:Object_:%ld", obj);
-      */
+
       RObject *retobj;
       retobj = (RObject *) funcs->createobject(inst, &RObject::_npclass);
       funcs->retainobject(retobj);

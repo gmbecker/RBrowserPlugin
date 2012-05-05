@@ -38,7 +38,7 @@ setClass("JSContextRef", contains = "RC++NativeReference")
 
 
 setClass("NPObjectRef", contains = "RCStructReference")
-setClass("NPVariantRef", contains = "RCStructReference")
+setClass("NPVariantRef", contains = "RCReference")
 setClass("NPDOMWindowRef", contains = "NPVariantRef")
 setClass("NPNFunctionsRef", contains = "RCStructReference")
 setClass("PluginInstance", representation=representation(funcs = "NPNFunctionsRef"), contains="RCStructReference")
@@ -63,6 +63,6 @@ setAs("jsvalRef", "JSValueRef",
         new("JSValueRef", value=object, backend="RFirefox")
       })
 
-
+#XXX this doesn't appear to be working...
 setIs("JSValueRef", "NPVariantRef")
 setIs( "JSValueRef", "jsvalRef")

@@ -8,7 +8,7 @@ GCC_FLAGS=-fshort-wchar
 # -DXPCOM_GLUE_USE_NSPR=1 
 #-lnspr4
 EXTRAFLAGS=$(RFIREFOX_DEF) -fPIC
-PKG_CPPFLAGS=-I ../inst/WorkingNPAPI/ -I ../inst/npapi-sdk-headers/
+PKG_CPPFLAGS=-I ../inst/NPAPI/ -I ../inst/npapi-sdk-headers/
 PKG_LIBS=
 ifeq ($(RFIREFOX_DEF),-DBUILD_RFIREFOX)
 EXTRAFLAGS+=  -fno-exceptions -Wall -Wpointer-arith -Wcast-align  -Wno-long-long -pedantic -fno-strict-aliasing -fshort-wchar -pthread -pipe  -DNDEBUG -DTRIMMED -Os -freorder-blocks -fno-reorder-functions  -pthread -D_REENTRANT     -DMOZILLA_CLIENT

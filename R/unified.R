@@ -1,14 +1,16 @@
 
-callJavaScript = function(object = getGlobalObject(), name, multipleArgs = FALSE, keepResult = TRUE, convertRet = FALSE, convertArgs, ...)
+callJavaScript = function( name, ..., object = getGlobalObject(), multipleArgs = FALSE, keepResult = TRUE, convertRet = FALSE, convertArgs)
   {
     args = list(...)
+
     if(missing(convertArgs))
       convertArgs = rep(TRUE, times=length(args))
 
     #check whether we are in Firefox or NPAPI-browser
-    if(exists(ScriptCon))
+    if(exists("ScriptCon"))
       #Need to update the RFirefox API if this is going to stay in
-      call_JS_Method(ScriptCon, object, name, args, multipleArgs, addRoot = keepResult)
+      #call_JS_Method(ScriptCon, object, name, args, multipleArgs, addRoot = keepResult)
+      TRUE
     else
       {
         #NPAPI call code goes here!
@@ -16,11 +18,11 @@ callJavaScript = function(object = getGlobalObject(), name, multipleArgs = FALSE
       }
   }
 
-evalJavaScript = function(scope = getGlobalObject(), script, keepResult = TRUE, returnRef=FALSE)
+evalJavaScript = function(script, scope = getGlobalObject(), keepResult = TRUE, convertRet=FALSE)
   {
     if(length(script)>1)
       script = paste(script, collapse = "\n")
-    if(exists(ScriptCon))
+    if(exists("ScriptCon"))
       {
         toret = jsVal()
         JS_EvaluateScript(ScriptCon, scope, script, nchar(script), "evalingJS", 1, toret)
@@ -33,25 +35,26 @@ evalJavaScript = function(scope = getGlobalObject(), script, keepResult = TRUE, 
           }
       } else {
         #NPAPI eval code goes here
-        NULL
+        #function(object = getGlobalObject(), name, multipleArgs = FALSE, keepResult = TRUE, convertRet = FALSE, convertArgs, ...)
+        callJavaScript(object = scope, name = "eval", script, convertRet = convertRet, keepResult = keepResult)
       }
   }
 
 'jsProperty<-' = function(object, name, value, convertValue = TRUE)
   {
-    if(exists(ScriptCon))
+    if(exists("ScriptCon"))
       set_JS_Property(ScriptCon, object, name, value)
     else
       {
         #NPAPI property set code goes here
-        NP_SetProperty(obj = object, name = name, value = value, convertValue = convertValue)
+        NP_SetProperty(obj = object, name = name, value = value, convertRet = convertValue)
       }
     object
   }
 
 jsProperty = function(object, name, convertRet = FALSE)
   {
-    if(exists(ScriptCon))
+    if(exists("ScriptCon"))
       get_JS_Property(ScriptCon, object, name)
     else
       {
@@ -62,19 +65,22 @@ jsProperty = function(object, name, convertRet = FALSE)
 
 getGlobalObject = function()
   {
-    if(exists(ScriptCon))
+    if(exists("ScriptCon"))
       JS_GlobalObject(ScriptCon) #Need to figure out if this needs addRoot = TRUE or not!!!
     else
       {
         #NPAPI code goes here
-        NP_GetGlobalRef()
+        res = NP_GetGlobal()
+        print("In getGlobalObject. Result:")
+        print(res)
+        res
       }
   }
 
-getPageElement = function(id, returnRef = FALSE)
+getPageElement = function(id, convertRet = FALSE)
   #Note: returnRef defaults to FALSE but the default behavior for DOM elements is references anyway...
   {
-    evalJavaScript(paste("document.getElementById(", id, ");"), returnRef = returnRef)
+    evalJavaScript(paste("document.getElementById(", id, ");"), convertRet = convertRet)
   }
 
 
@@ -122,24 +128,28 @@ setMethod("names", "JSValueRef", function(x)
           })
 
 #Name of arguments???
-setMethod("[[", "JSValueRef", function(x, i, ...)
+#setMethod("[[", "JSValueRef", function(x, i, ...)
+setMethod("[[", c("NPVariantRef", "character", "missing"), function(x, i, ...)
           {
-            jsProperty(x, i, j, ...)
+            jsProperty(x, i, ...)
           })
 
 #setGeneric("$", function(x, name, ...) standardGeneric("$"))
-setMethod("$", "JSValueRef",
+#setMethod("$", "JSValueRef",
+setMethod("$", "NPVariantRef",
           function(x, name)
           {
-            fun = function( keepResult = TRUE, returnRef = FALSE, ...)
+
+            fun = function( ...,  keepResult = TRUE, returnRef = FALSE, convertArgs)
               {
+              
                 args = list(...)
                 if(length(args) > 1)
                   multipleArgs = TRUE
                 else
                   multipleArgs = FALSE
                 
-                callJavaScript(x, name,args, multipleArgs = multipleArgs, keepResult = keepResult, returnRef = returnRef)
+                callJavaScript(object = x,name =  name, ... , multipleArgs = multipleArgs, keepResult = keepResult, returnRef = returnRef, convertArgs = convertArgs)
               }
             fun
           }
