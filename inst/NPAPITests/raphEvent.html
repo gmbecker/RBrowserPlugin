@@ -1,0 +1,24 @@
+<html>
+  <head>
+    <script type="text/javascript" src = "../javascript/Rhelpers.js"></script>
+<script type="text/javascript" src="../javascript/raphael.js"> </script>
+    <script type="text/R">
+      dev = raphaelDev("raphcont")
+      plot.new()
+      plot.window(xlim=c(-5,5), ylim=c(-5, 5))
+      points(x=0, y=0, cex=10)
+      print(names(dev))
+      myenv = dev$storage
+     # myenv$points[[1]]$hover(function(...) print("mouse in!"), function(...) print("mouse out!"))
+      
+      #callJavaScript(object = myenv$points[[1]], name = "hover", function(...) print("mouse in!"), function(...) print("mouse out!")) 
+      node = myenv$points[[1]][["node"]]
+      node$addEventListener("mouseover", function(...) print("mouse in!!!"), TRUE)
+
+    </script>
+  </head>
+  <body>
+    <embed id="REngine" type="application/test-r" width="0" height="0"></embed>
+   <div id="raphcont"/>
+  </body>
+</html>

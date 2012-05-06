@@ -61,16 +61,7 @@ int doVarLookup(NPIdentifier name, bool func)
 { 
   int ret;
   int err = 0;
-  /*
-  NPUTF8 *varName = (NPUTF8 *) myNPNFuncs->utf8fromidentifier(name);  
-  fprintf(stderr, "\nLooking for R : %s as %d", (const char *)varName, func);fflush(stderr);
-  if(!varName || !varName[0]) {
-    return 0;
-  }
-  SEXP ans;
-  ans = Rf_findVar( Rf_install((const char *)varName), R_GlobalEnv);
-  myNPNFuncs->memfree(varName);
-  */
+
   SEXP ans = doGetVar(name);
 
    if(ans == R_UnboundValue)
@@ -78,7 +69,7 @@ int doVarLookup(NPIdentifier name, bool func)
 	  fprintf(stderr, "\nNo R object found.");fflush(stderr);
 	  ret = 0;
 	} else {
-	
+     
 	//XXX If it is a promise we need the actual value. Will this come back to bite us by violating lazy loading?
 	if(TYPEOF(ans) == PROMSXP)
 	  //	  ans = PRVALUE(ans);
@@ -94,6 +85,7 @@ int doVarLookup(NPIdentifier name, bool func)
 	    fprintf(stderr, "\nNon-function object found.");fflush(stderr);
 	    ret = (!func);
 	  }
+     
       }
       return ret;
  }
@@ -131,22 +123,11 @@ bool WebREngine::HasMethod(NPIdentifier name)
   else if (name == myNPNFuncs->getstringidentifier("C_doTest"))
     ret = 1;
   else
-    {
+   {
       //direct access API
-      /*  
-      NPUTF8 *varName = (NPUTF8 *) myNPNFuncs->utf8fromidentifier(name);  
-      fprintf(stderr, "\nLooking for R Function: %s", (const char *)varName);fflush(stderr);
-      bool exists;
-      if(!varName || !varName[0]) {
-	return 0;
-      }
-      SEXP ans;
-      ans = Rf_findVar( Rf_install((const char *)varName), R_GlobalEnv);
-      */
-      ret = doVarLookup(name, true);
-   
-      //UNPROTECT(1);
-    }
+        
+     ret = doVarLookup(name, true);
+   }
   return (bool) ret;
 }
 
@@ -182,6 +163,7 @@ bool WebREngine::Invoke(NPIdentifier name, const NPVariant *args, uint32_t argCo
     C_doTest(this->instance, myNPNFuncs);
   else
     {
+      
       SEXP ptr;
       //NPString strname = myNPNFuncs->utf8fromidentifier(name);
       //const char *ccharname =  NPStringToConstChar(strname);
@@ -200,6 +182,7 @@ bool WebREngine::Invoke(NPIdentifier name, const NPVariant *args, uint32_t argCo
       PROTECT(ans = R_tryEval( call, R_GlobalEnv, &error));
       
       addProt = 2;
+      
 
     }
    /*

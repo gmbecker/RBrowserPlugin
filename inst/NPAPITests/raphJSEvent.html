@@ -1,0 +1,26 @@
+<html>
+  <head>
+    <script type="text/javascript" src = "../javascript/Rhelpers.js"></script>
+    <script type="text/javascript" src="../javascript/raphael.js"> </script>
+    <script type="text/R">
+      itworked = function(...)
+      {
+        print("within event handler!")
+      }
+    </script>
+  </head>
+  <body>
+    <embed id="REngine" type="application/test-r" width="0" height="0"></embed>
+ 
+  <div id="raphcont"/>
+  <script type="text/javascript">
+    var paper = new Raphael("raphcont", 500, 500);
+    var myc = paper.circle(70, 70, 10);
+    var Reng = document.getElementById("REngine");
+    var rprint = Reng.print;
+    Reng.print("print test non-eventhandler");
+    myc.hover(Reng.itworked, function() {Reng.itworked()});
+  </script>
+  </body>
+</html>
+
