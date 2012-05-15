@@ -77,15 +77,15 @@ int doVarLookup(NPIdentifier name, bool func)
 	// Methods only correspond to functions! normal variables are properties
 	if(TYPEOF(ans) == CLOSXP)
 	  {
-	    ret = func;
+	    //ret = func;
 	    fprintf(stderr, "\nR function found.");fflush(stderr);
 	  }
 	else
 	  {
 	    fprintf(stderr, "\nNon-function object found.");fflush(stderr);
-	    ret = (!func);
+	    //ret = (!func);
 	  }
-     
+	ret = 1;
       }
       return ret;
  }
@@ -125,8 +125,8 @@ bool WebREngine::HasMethod(NPIdentifier name)
   else
    {
       //direct access API
-        
-     ret = doVarLookup(name, true);
+     //We are doing everything with properties instead.   
+     //ret = doVarLookup(name, true);
    }
   return (bool) ret;
 }
@@ -134,16 +134,16 @@ bool WebREngine::HasMethod(NPIdentifier name)
 
 bool WebREngine::Invoke(NPIdentifier name, const NPVariant *args, uint32_t argCount, NPVariant *result)
 {
-  fprintf(stderr, "\nIn WebREngine::Invoke");fflush(stderr);
+  fprintf(stderr, "\nIn WebREngine::Invoke - %s", myNPNFuncs->utf8fromidentifier(name));fflush(stderr);
   SEXP Rargs[argCount];
   for(int i=0; i<argCount; i++)
     {
       PROTECT(Rargs[i] = R_NilValue); 
-      //when calling R functions directly we DO want arguments to be converted.
+            //when calling R functions directly we DO want arguments to be converted.
       ConvertNPToR((NPVariant *) &(args[i]), this->instance, myNPNFuncs, true, &Rargs[i]);
     }
   SEXP ans;
-  SEXP call; 
+  SEXP call, ptr; 
   int error = 0;
   int addProt = 0;
  if(name == myNPNFuncs->getstringidentifier("eval"))
@@ -157,7 +157,14 @@ bool WebREngine::Invoke(NPIdentifier name, const NPVariant *args, uint32_t argCo
     }
   else if (name == myNPNFuncs->getstringidentifier("listCall"))
     {
-      error = 1;
+      PROTECT(ptr = call = allocVector(LANGSXP, 3));
+      SETCAR(call, Rf_install("do.call"));
+      ptr = CDR(call);
+      SETCAR(ptr, Rargs[0]); //The function
+      ptr = CDR(ptr);
+      SETCAR(ptr, Rargs[1]); //the args list
+      PROTECT(ans = R_tryEval(call, R_GlobalEnv, &error));
+      addProt = 2;	
     }
   else if (name == myNPNFuncs->getstringidentifier("C_doTest"))
     C_doTest(this->instance, myNPNFuncs);
@@ -210,7 +217,12 @@ bool WebREngine::InvokeDefault(const NPVariant *args, uint32_t argCount, NPVaria
 bool WebREngine::HasProperty(NPIdentifier name)
 {
   fprintf(stderr, "\nIn WebREngine::HasProperty");fflush(stderr);
-  return doVarLookup(name, false);
+  bool ret;
+  if(name == myNPNFuncs->getstringidentifier("eval"))
+    ret = 0;
+  else
+    ret = doVarLookup(name, false);
+  return ret;
 }
 
 bool WebREngine::GetProperty(NPIdentifier name, NPVariant *result)

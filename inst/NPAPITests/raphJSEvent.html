@@ -14,12 +14,21 @@
  
   <div id="raphcont"/>
   <script type="text/javascript">
+    function doit()
+    {
     var paper = new Raphael("raphcont", 500, 500);
     var myc = paper.circle(70, 70, 10);
     var Reng = document.getElementById("REngine");
     var rprint = Reng.print;
-    Reng.print("print test non-eventhandler");
-    myc.hover(Reng.itworked, function() {Reng.itworked()});
+     Reng.print("print test non-eventhandler");
+    var worked = Reng.itworked;
+    //hover doesn't work in chrome because RFunction objects are not of type "function" in chrome
+//    myc.hover(worked, worked);
+    myc.node.onmouseover = worked;
+
+    
+}
+    document.addEventListener("rcoderun", doit, true);
   </script>
   </body>
 </html>

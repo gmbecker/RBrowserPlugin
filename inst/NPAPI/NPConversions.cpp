@@ -8,9 +8,10 @@ bool ConvertRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret, bo
   // SEXP klass;
   //PROTECT(klass = MAKE_CLASS("NPVariantRef"));
   if (CheckSEXPForJSRef(val))
-    { 
+    {
       //XXX We shouldn't have to copy here, but do we really want to pass in double pointers?
       *ret = *(NPVariant *) R_ExternalPtrAddr(GET_SLOT( val , Rf_install( "ref" ) ) );
+      return true;
 	}
   if(!convertRes)
     {
@@ -65,13 +66,14 @@ bool ConvertRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret, bo
 	  break;
 	case CLOSXP:
 	  {
-	    /*
-	    char *buf = (char *) funcs->memalloc((16+sizeof(long int) + 1)*sizeof(char));
-	    sprintf(buf, "_SEXP:Function_:%ld", val);
-	    STRINGZ_TO_NPVARIANT((const char *) buf, *ret);
-	    */
-	    //void MakeRRefForNP(SEXP obj, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret)
-	    MakeRRefForNP(val, inst, funcs,ret);
+	    fprintf(stderr, "\nConverting R function to JavaScript function.");fflush(stderr);
+	    NPObject *domwin = NULL;
+	    NPError res;
+	    res = funcs->getvalue(inst, NPNVWindowNPObject , &domwin);
+	    NPVariant *vartmp = (NPVariant *) funcs->memalloc(sizeof(NPVariant));;
+	    
+	    MakeRRefForNP(val, inst, funcs,vartmp);
+	    funcs->invoke(inst, domwin, funcs->getstringidentifier("makeFun"), vartmp, 1, ret);
 	  }
 	  break;
 	default:
@@ -197,11 +199,13 @@ bool ConvertNPToR(NPVariant *var, NPP inst, NPNetscapeFuncs *funcs, bool convRet
 	    NPObject *inObject = var->value.objectValue;
 	    NPVariant npvLength;
 	    
-	    //NPN_GetProperty(inst, inObject, NPN_GetStringIdentifier("length"), &npvLength);
-	    funcs->getproperty(inst, inObject, funcs->getstringidentifier("length"), &npvLength);
-	    int len = npvLength.value.intValue;
-	    if (len > 1)
-	      canfree = NPArrayToR(var, len, 0, inst, funcs, _ret);
+	    //XXX Taking a shortcut here, assuming only arrays have a pop method. A better while performant way to check this would be good...
+	    if (funcs->hasmethod(inst, inObject, funcs->getstringidentifier("pop")))
+	      {
+		funcs->getproperty(inst, inObject, funcs->getstringidentifier("length"), &npvLength);
+		int len = npvLength.value.intValue;
+		canfree = NPArrayToR(var, len, 0, inst, funcs, _ret);
+	      }
 	    else
 	      {
 		//check if it is an R object.
@@ -224,8 +228,6 @@ bool ConvertNPToR(NPVariant *var, NPP inst, NPNetscapeFuncs *funcs, bool convRet
 	  break;
 	}
     }
-  fprintf(stderr, "\n leaving ConvertNPToR. R object:");fflush(stderr);
-  Rf_PrintValue(*_ret);
   return canfree;
 }
 
@@ -290,12 +292,19 @@ SEXP MakeNPRefForR(NPVariant *ref)
 
 void MakeRRefForNP(SEXP obj, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret)
 {
-  if (TYPEOF(obj) == CLOSXP)
+  SEXP ans = obj;
+  int err;
+  if(TYPEOF(ans) == PROMSXP)
+    {
+      fprintf(stderr, "\nPromise detected when creating R Reference"); fflush(stderr);//	  ans = PRVALUE(ans);
+      ans = R_tryEval(ans, R_GlobalEnv, &err);
+    }
+  if (TYPEOF(ans) == CLOSXP)
     {
       RFunction *retobj;
       retobj = (RFunction *) funcs->createobject(inst, &RFunction::_npclass);
       funcs->retainobject(retobj);
-      retobj->object = obj;
+      retobj->object = ans;
       retobj->funcs = funcs;
       R_PreserveObject(retobj->object);
       OBJECT_TO_NPVARIANT(retobj, *ret);
@@ -306,7 +315,7 @@ void MakeRRefForNP(SEXP obj, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret)
       RObject *retobj;
       retobj = (RObject *) funcs->createobject(inst, &RObject::_npclass);
       funcs->retainobject(retobj);
-      retobj->object = obj;
+      retobj->object = ans;
       retobj->funcs = funcs;
       R_PreserveObject(retobj->object);
       OBJECT_TO_NPVARIANT(retobj, *ret);

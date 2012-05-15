@@ -1,6 +1,6 @@
 <html>
 <body>
-  <embed type="application/test-r" width="0" height="0"></embed>
+  <embed type="application/test-r" width="0" height="0" ></embed>
  
  <div id="mydiv" ></div> 
  <div id="mydiv2" ></div> 
@@ -8,11 +8,12 @@
     <script type="text/javascript">
       var Reng = document.embeds[0]; 
        
-      var res = Reng.rnorm(2, 6)
+      var res = Reng.rnorm;
+      var res2 = Reng.pi;
       var div  = document.getElementById("mydiv");
-      div.innerHTML = "Reng.rnorm(2, 6) : " + res; 
+      div.innerHTML = "typeof(Reng.rnorm) : " + typeof(res); 
       var div2  = document.getElementById("mydiv2");
-      div2.innerHTML = "Reng.rnorm(2, 6).convert() : " + res.convert(); 
+      div2.innerHTML = "typeof(Reng.pi) : " + typeof(res2); 
   </script>
   </body>
 </html>

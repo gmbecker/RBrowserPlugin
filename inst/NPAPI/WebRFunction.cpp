@@ -34,13 +34,19 @@ bool RFunction::HasMethod(NPIdentifier name)
   int ret = 0;
   if(name == this->funcs->getstringidentifier("toString"))
     ret = 1;
-  
+  if(name == this->funcs->getstringidentifier("valueOf"))
+    ret = 1;
+  if(name == this->funcs->getstringidentifier("handleEvent"))
+    ret = 1;
+  if(name == this->funcs->getstringidentifier("call"))
+    ret = 1;
   return (bool) ret;
 }
 
 
 bool RFunction::Invoke(NPIdentifier name, const NPVariant *args, uint32_t argCount, NPVariant *result)
 {
+  fprintf(stderr, "\nLooking for method: %s on RFunction object.", this->funcs->utf8fromidentifier(name));fflush(stderr);
   if (name == this->funcs->getstringidentifier("toString")) 
     {
       fprintf(stderr, "\nIn tostring method of an RFunction\n");fflush(stderr);
@@ -53,7 +59,22 @@ bool RFunction::Invoke(NPIdentifier name, const NPVariant *args, uint32_t argCou
       result->value.stringValue = str;      
       return true;
     }
-    
+  if (name == this->funcs->getstringidentifier("valueOf"))
+    {
+      fprintf(stderr, "\nIn valueOf method of an RFunction\n");fflush(stderr);
+      return true;
+
+    }
+  if (name == this->funcs->getstringidentifier("handleEvent"))
+    {
+      fprintf(stderr, "\nIn handleEvent method of an RFunction\n");fflush(stderr);
+      return this->InvokeDefault(NULL, 0, result);
+    }
+      if (name == this->funcs->getstringidentifier("call")) 
+	{
+	  fprintf(stderr, "\nIn call method of an RFunction\n");fflush(stderr);
+	  return this->InvokeDefault(args, argCount, result);
+	}
   return false;
 }
 
@@ -88,21 +109,36 @@ bool RFunction::InvokeDefault(const NPVariant *args, uint32_t argCount, NPVarian
   addProt = 2;
   if(!error)
     ConvertRToNP(ans, this->instance, this->funcs, result, false);
-  else
-    ConvertRToNP(R_NilValue, this->instance, this->funcs, result, false);
+  //If it's an error, just throw an error for the browser.
+  //else
+  //  ConvertRToNP(R_NilValue, this->instance, this->funcs, result, false);
 
   UNPROTECT(argCount + addProt);
 
-  return false;
+  return !error;
 }
 
 bool RFunction::HasProperty(NPIdentifier name)
 {
-  return false;
+  fprintf(stderr, "\nLooking for property: %s on RFunction object.", this->funcs->utf8fromidentifier(name));fflush(stderr);
+  bool ret = false;
+  if (name == this->funcs->getstringidentifier("handleEvent"))
+    ret = true;
+  else if(name == this->funcs->getstringidentifier("isRObject"))
+    ret = true;
+  return ret;
 }
 
 bool RFunction::GetProperty(NPIdentifier name, NPVariant *result)
 {
+  if (name == this->funcs->getstringidentifier("handleEvent"))
+    return this->InvokeDefault(NULL, 0, result);
+  else if(name == this->funcs->getstringidentifier("isRObject"))
+    {
+      BOOLEAN_TO_NPVARIANT(true, *result); 
+      return true;
+    }
+ 
    return false;
 }
 

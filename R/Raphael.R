@@ -33,16 +33,17 @@ setAs("DevDescPtr", "QueryableDevDescPtr",
 
 
 raphaelDev = function(id = "raph_content", dim = c(600, 400),
-  col = "black", fill = "transparent", ps=10, wrapup=NULL, jscon = ScriptCon, storage = new.env() )
+  col = "black", fill = "transparent", ps=10, wrapup=NULL, jscon = ScriptCon, storage = new.env(), allocSize = 5000 )
   {
     library(RGraphicsDevice)
 
-    assign("points", list(), envir=storage)
-    assign("lines", list(), envir=storage)
-    assign("rects", list(), envir=storage)
-    assign("polylines", list(), envir=storage)
-    assign("texts", list(), envir=storage)
-    
+
+       assign("points", list(), envir=storage)
+       assign("lines", list(), envir=storage)
+       assign("rects", list(), envir=storage)
+       assign("polylines", list(), envir=storage)
+       assign("texts", list(), envir=storage)
+
     funs = as(dummyDevice(), "RJavaScriptCanvasMethods")
     
                                         # circle, line, rect
@@ -56,43 +57,47 @@ raphaelDev = function(id = "raph_content", dim = c(600, 400),
 
                                       
     funs@circle = function(x, y, r, context, dev) {
-      #retval = jsVal()
-      cnum = length(get("points", storage))
-      script = paste("var paper; paper.circle(", x , "," , y , ",", r, ");", sep="")
-
-      #retval = call_JS_Method(jscon, get("paper", env = storage),  "circle", list( x , y , r ))
-                                        #retval = callJavaScript(object = get("paper", env = storage), name = "circle", x, y, r, keepResult = TRUE)
-      
       retval = storage$paper$circle(x,y,r)
-      
+      doColors(retval, context)
       assign("points", c(get("points", storage), retval), envir = storage)
       TRUE
     }
     funs@rect = function(x1, y1, x2, y2, context, dev)
       {
-        #retval = call_JS_Method(jscon, get("paper", env = storage), "rect", list( x2 , y2 , x2 - x1 , y2 - y1 ))
-        #retval = callJavaScript(object = get("paper", env = storage), name = "rect", x2, y2, x2 - x1, y2 - y1, keepResult = TRUE)
-        retval = storage$paper$rect(x2, y2, x2-x1, y2 - y1)
+        print(paste("x1: ", x1, " x2: ", x2, " y1: ", y1, " y2: ", y2))
+        if(x1 > x2)
+          {
+            tmp = x1
+            x1 = x2
+            x2 = tmp
+          }
+        if(y1 > y2)
+          {
+            tmp = y1
+            y1 = y2
+            y2 = tmp
+          }
+        retval = storage$paper$rect(x1, y1, x2-x1, y2 - y1)
+        doColors(retval, context)
         assign("rects", c(get("rects", storage), retval), envir = storage)
         TRUE
       }
     funs@line = function(x1, y1, x2, y2, context, dev)
       {
         path = paste("M", x1, y1, "l", x2-x1, y2 - y1)
-        #retval = call_JS_Method(jscon , get("paper", env = storage ) , "path", path)
         retval = storage$paper$path(path)
+        doColors(retval, context)
         assign("lines", c(get("lines", storage), retval), envir = storage)
         TRUE
       }
 
     funs@text = function(x, y, txt, rot, hadj, context, dev)
       {
-        
-        #retval = call_JS_Method( jscon , get( "paper" , env = storage ) , "text" , list( x , y , txt ) )
+        print(paste("In text. txt is: ", txt))
         retval = storage$paper$text(x, y, txt)
         size = as.integer(max(10, context$ps) * context$cex)
-        #call_JS_Method(jscon, retval, "attr", list("font-size", size), addRoot = FALSE)
         retval$attr("font-size", size)
+        doColors(retval, context)
         assign("texts", c(get("texts", storage), retval), storage)
         TRUE
       }
@@ -107,44 +112,35 @@ raphaelDev = function(id = "raph_content", dim = c(600, 400),
     dev$startcol = as("black", "RGBInt")
 
     script = paste("Raphael('", id, "',", dim[1], " , ", dim[2], ");", sep="")
-    #tmp = jsVal()
-    #JS_EvaluateScript(jscon, JS_GetGlobalObject(jscon, returnInputs=FALSE),
-    #                  script, nchar(script), "Raphael init", 1, tmp)
-    #JS_AddRoot(jscon, tmp)
+   
     tmp = evalJavaScript(script = script, keepResult = TRUE)
-    
     assign("paper", tmp, env = storage)
     return(TRUE)
   }
-    #funs@polyline = function(...) TRUE
-    #if(FALSE)
-    #  {
+   
     funs@polyline = function(n, x, y, context, dev)
       {
-        print(paste("x length:", length(x),"class", class(x), "y length:", length(y), "class", class(y), "n:", n))
-
+        
         x = x[1:n]
         y = y[1:n]
-        print(paste("x length:", length(x),"class", class(x), "y length:", length(y), "class", class(y), "n:", n))
-        #more storage but much faster
+                                        #more storage but much faster
         diffsx = x[ 2 : n ] - x[ -n ]
         diffsy = y[ 2 : n ] - y[ -n ] 
 
         path = paste( paste( "M" , x[1], y[1]),
           paste( "l" , diffsx , diffsy , collapse = " "),
           collapse = " ")
-        #retval = call_JS_Method(jscon, get("paper", env=storage),          "path", path)
         retval = storage$paper$path(path)
+        doColors(retval, context)
+
         assign("polylines", c(get("polylines", storage), retval), envir = storage)
 
         return(TRUE)
       }
   #}
-    # No implementations for
+    
     funs@newPage = function(context, devdesc)
       {
-if(FALSE)
-  {
         storage$paper$clear()
         storage$lines = list()
         storage$points = list()
@@ -152,7 +148,8 @@ if(FALSE)
         storage$text = list()
         storage$rects = list()
       }
-      }
+
+    # No implementations for
     funs@mode = NULL
     funs@metricInfo = NULL
     funs@activate = NULL
@@ -164,11 +161,7 @@ if(FALSE)
 
     dev$ipr = rep(1/72.27, 2)
     dev$cra = rep(c(6, 13)/12) * 10
-    #dev = as(dev, "QueryableDevDescPtr")
-    #dev@getPoints = function() points
-    #don't really care about the DevDesc. may extend it later, for now I return a list with what I want in it
-    #print(class(dev))
-    #dev
+    
     list(getPoints = function() get("points", storage),
          getLines = function() get("lines", storage),
          getPolyLines = function() get("polylines", storage),
@@ -195,4 +188,41 @@ clearRaphPlot = function(dev)
     assign("lines", list(), env = dev$storage)
     assign("polylines", list(), env = dev$storage)
     assign("texts", list(), env = dev$storage)
+  }
+
+doColors = function(jsvar, context)
+  {
+    stroke = as(context$col, "RGB")
+    fill = as(context$fill, "RGB")   
+    if(!isTransparent(stroke))
+      jsvar$attr("stroke", stroke)
+    if(!isTransparent(fill))
+      jsvar$attr("fill", fill)
+   TRUE
+  }
+
+getContextColors = function(context)
+  {
+    col = as(context$col, "RGB")
+    fill = as(context$fill, "RGB")   
+    ret = list(stroke = NULL, fill = NULL)
+    if(!isTransparent(col))
+      ret$stroke = col
+    else
+      warning("transparent colors not currently supported.")
+    if(!isTransparent(fill))
+      ret$fill = fill
+    else
+      warning("transparent colors not currently supported.")
+
+    ret
+  }
+
+
+raphaelRemoveAll = function(type="points", dev)
+  {
+    switch(type,
+           points = .Call("R_NPAPI_Remove_All", PluginInstance, dev$getPoints()),
+           lines = .Call("R_NPAPI_Remove_All", PluginInstance, dev$getLines())
+           )
   }

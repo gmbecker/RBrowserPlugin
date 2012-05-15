@@ -103,7 +103,9 @@ function runScriptsNPAPI()
 			    out = Reng.source( mytag.src)
 		}
 	}
-
+    var evt = document.createEvent("Events");
+    evt.initEvent("rcoderun", true, false);
+    document.dispatchEvent(evt);
 }
 
 function doAttach()
@@ -118,9 +120,31 @@ function doAttach()
 		    break;
 		}
 	}
-    //XXX this seems to prevent the plugin crash, might not be necessary once I take out all the Gtk+ drawing code.
-    setTimeout(runScriptsNPAPI, 1000);
+    window.Reng = Reng;
 
+    runScriptsNPAPI();
+
+}
+
+function makeFun(obj)
+{
+    //    var Reng;
+    function fun()
+    {
+	var args = Array.prototype.slice.call(arguments);
+	//	alert("here I am");
+	window.Reng.listCall(obj, args);
+    }
+    return fun;
+}
+
+function isArray(obj)
+{
+    var ret = false;
+    if( obj.prototype.toString.call( someVar ) === '[oberject Array]' ) {
+	ret = true;
+    }
+    return ret;
 }
 
 window.addEventListener("load", doAttach, true, true);

@@ -1,0 +1,84 @@
+<html>
+  <head>
+    <script type="text/javascript" src="../javascript/raphael.js"> </script>
+
+    <script type="text/javascript" src="../javascript/Rhelpers.js"> </script>
+    <script type="text/R">
+      data("rat.diet", package="fields")
+      rdev1 = raphaelDev("mainplot", dim=c(400, 300))
+      rdev1$devnum = dev.cur()
+      rdev2 = raphaelDev("resplot", dim=c(400, 300))
+      rdev2$devnum = dev.cur()
+      dev.set(rdev1$devnum)
+      plot(con ~ t, data = rat.diet,
+      xlab = "Time (days)", ylab = "Median Food Intake", 
+      main = "Control group")
+      dev.set(rdev2$devnum)
+
+      xrange = range(rat.diet$t)
+      xinterps = seq(xrange[1], xrange[2], by = 0.5)
+      
+      makePath = function(preds)
+      {
+        x = preds$x
+        y = preds$y
+        n = length(x)
+
+        diffsx = x[ 2 : n ] - x[ -n ]
+        diffsy = y[ 2 : n ] - y[ -n ] 
+      
+        path = paste( paste( "M" , x[1], y[1]),
+          paste( "l" , diffsx , diffsy , collapse = " "),
+          collapse = " ")
+ 
+      
+        path
+      }
+     doChange = function()
+      {
+       doSpline()
+      } 
+     doSpline = function()
+      {
+        pline = rdev1$getPolyLines()
+            slider = getPageElement("myslider")
+      spl = smooth.spline(rat.diet$t, rat.diet$con, df = as.numeric(slider[["value"]]))
+      if(length(pline))
+        {
+
+         if(length(pline) >=2)
+         {
+           pline = pline[[2]]
+           pline$remove()
+
+
+           rdev1$storage$polylines = rdev1$storage$polylines[-2]
+           #sapply(rdev2$getPoints(), function(x) x$remove())
+          # raphRemoveAll("points", rdev2)
+          # local({points <- list()}, env = rdev2$storage)        
+	   dev.set(rdev2$devnum)
+           #points(spl$x, residuals(spl))
+	   plot(spl$x, residuals(spl))          
+	  }
+
+         dev.set(rdev1$devnum)      
+          lines(predict(spl, xinterps), col="green", lwd=2)
+          dev.set(rdev2$devnum)
+          plot(spl$x, residuals(spl))
+        } else {
+          dev.set(rdev1$devnum)      
+          lines(predict(spl, xinterps), col="green", lwd=2)
+          dev.set(rdev2$devnum)
+          plot(spl$x, residuals(spl))
+        }
+     
+      }
+    </script>
+  </head>
+  <body>
+    <embed type="application/test-r" width="0" height="0"></embed>
+    <div id="mainplot"/>
+    <div id="resplot" style="position:float-left;"/>
+    <input type="range" min="2" max="24" id="myslider" onchange = "Reng.doChange();" size="500"/>
+  </body>
+</html>

@@ -1,5 +1,5 @@
 
-callJavaScript = function( name, ..., object = getGlobalObject(), multipleArgs = FALSE, keepResult = TRUE, convertRet = FALSE, convertArgs)
+callJavaScript = function( name, ..., object = getGlobalJSObject(), multipleArgs = FALSE, keepResult = TRUE, convertRet = TRUE, convertArgs)
   {
     args = list(...)
 
@@ -18,7 +18,7 @@ callJavaScript = function( name, ..., object = getGlobalObject(), multipleArgs =
       }
   }
 
-evalJavaScript = function(script, scope = getGlobalObject(), keepResult = TRUE, convertRet=FALSE)
+evalJavaScript = function(script, scope = getGlobalJSObject(), keepResult = TRUE, convertRet=TRUE)
   {
     if(length(script)>1)
       script = paste(script, collapse = "\n")
@@ -35,7 +35,7 @@ evalJavaScript = function(script, scope = getGlobalObject(), keepResult = TRUE, 
           }
       } else {
         #NPAPI eval code goes here
-        #function(object = getGlobalObject(), name, multipleArgs = FALSE, keepResult = TRUE, convertRet = FALSE, convertArgs, ...)
+        #function(object = getGlobalJSObject(), name, multipleArgs = FALSE, keepResult = TRUE, convertRet = FALSE, convertArgs, ...)
         callJavaScript(object = scope, name = "eval", script, convertRet = convertRet, keepResult = keepResult)
       }
   }
@@ -47,12 +47,12 @@ evalJavaScript = function(script, scope = getGlobalObject(), keepResult = TRUE, 
     else
       {
         #NPAPI property set code goes here
-        NP_SetProperty(obj = object, name = name, value = value, convertRet = convertValue)
+        NP_SetProperty(obj = object, name = name, value = value, convertValue = convertValue)
       }
     object
   }
 
-jsProperty = function(object, name, convertRet = FALSE)
+jsProperty = function(object, name, convertRet = TRUE)
   {
     if(exists("ScriptCon"))
       get_JS_Property(ScriptCon, object, name)
@@ -63,7 +63,7 @@ jsProperty = function(object, name, convertRet = FALSE)
       }
   }
 
-getGlobalObject = function()
+getGlobalJSObject = function()
   {
     if(exists("ScriptCon"))
       JS_GlobalObject(ScriptCon) #Need to figure out if this needs addRoot = TRUE or not!!!
@@ -71,7 +71,7 @@ getGlobalObject = function()
       {
         #NPAPI code goes here
         res = NP_GetGlobal()
-        print("In getGlobalObject. Result:")
+        print("In getGlobalJSObject. Result:")
         print(res)
         res
       }
@@ -80,7 +80,10 @@ getGlobalObject = function()
 getPageElement = function(id, convertRet = FALSE)
   #Note: returnRef defaults to FALSE but the default behavior for DOM elements is references anyway...
   {
-    evalJavaScript(paste("document.getElementById(", id, ");"), convertRet = convertRet)
+    #evalJavaScript(paste("document.getElementById(", id, ");", sep=""), convertRet = convertRet)
+    window = getGlobalJSObject()
+    document = window[["document"]]
+    document$getElementById(id)
   }
 
 
@@ -132,6 +135,12 @@ setMethod("names", "JSValueRef", function(x)
 setMethod("[[", c("NPVariantRef", "character", "missing"), function(x, i, ...)
           {
             jsProperty(x, i, ...)
+          })
+
+
+setMethod("[[<-", c("NPVariantRef", "character", "missing"), function(x, i, ..., value)
+          {
+            jsProperty(x, i, ...) <- value
           })
 
 #setGeneric("$", function(x, name, ...) standardGeneric("$"))

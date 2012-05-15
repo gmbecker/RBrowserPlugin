@@ -7,13 +7,17 @@
       plot.new()
       plot.window(xlim=c(-5,5), ylim=c(-5, 5))
       points(x=0, y=0, cex=10)
-      print(names(dev))
       myenv = dev$storage
-     # myenv$points[[1]]$hover(function(...) print("mouse in!"), function(...) print("mouse out!"))
+      #hover won't work in chrome because typeof(npobjects) == "object
+      myenv$points[[1]]$hover(function(...) print("mouse in!"), function(...) print("mouse out!"))
       
-      #callJavaScript(object = myenv$points[[1]], name = "hover", function(...) print("mouse in!"), function(...) print("mouse out!")) 
-      node = myenv$points[[1]][["node"]]
-      node$addEventListener("mouseover", function(...) print("mouse in!!!"), TRUE)
+      
+      #node = myenv$points[[1]][["node"]]
+      #itworked = function(...) print("mouse in!!!")
+     #print(class(node))
+     # node[["onmouseover"]] = itworked
+     
+      #node$addEventListener("mouseover", itworked, FALSE)
 
     </script>
   </head>

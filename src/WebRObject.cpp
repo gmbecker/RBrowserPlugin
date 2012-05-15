@@ -119,9 +119,10 @@ bool RObject::HasProperty(NPIdentifier name)
 
 bool RObject::GetProperty(NPIdentifier name, NPVariant *result)
 {
-  if(name == this->funcs->getstringidentifier("valueOf"))
+  if(name == this->funcs->getstringidentifier("isRObject"))
     {
       BOOLEAN_TO_NPVARIANT(true, *result); 
+      return true;
     }
   //Emulate object[[name]], object$name, object@name in that order
   fprintf(stderr, "\nIn RObject::GetProperty");fflush(stderr);
@@ -359,4 +360,5 @@ bool IsMissing(SEXP obj, bool nullAlso)
       ret = 0;
     }
   }  
+	return ret;
 }

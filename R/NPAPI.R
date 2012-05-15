@@ -10,15 +10,14 @@ NP_Invoke = function(..., plug = PluginInstance, obj = NP_GetGlobal, name, conve
     .Call("R_NPAPI_Invoke", plug, obj, name, args, convertArgs, convertRet, keepResult)
   }
 
-NP_GetProperty = function( obj = NP_GetGlobal, name, convertRet = FALSE, plug = PluginInstance)
+NP_GetProperty = function( obj = NP_GetGlobal(), name, convertRet = FALSE, plug = PluginInstance)
   {
     .Call("R_NPAPI_GetProperty", plug, obj, name, convertRet)
   }
 
-NP_SetProperty = function( obj = NP_GetGlobal, name, value, plug = PluginInstance)
+NP_SetProperty = function( obj = NP_GetGlobal(), name, value, plug = PluginInstance, convertValue = TRUE)
   {
-    print("R-side in NP_SetProperty")
-    print(name)
+    
     .Call("R_NPAPI_SetProperty", plug, obj, name, value, convertValue = TRUE)
   }
 
