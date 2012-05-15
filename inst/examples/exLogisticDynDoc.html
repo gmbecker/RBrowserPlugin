@@ -1,0 +1,112 @@
+<html> <!-- xmlns="http://www.w3.org/1999/xhtml" xml:lang="en"> -->
+
+  <head>
+    <!--
+       <script type="text/javascript" src="http://github.com/DmitryBaranovskiy/raphael/raw/master/raphael.js"> </script>
+       -->    
+    <script type="text/javascript" src="../javascript/raphael.js"> </script>
+    
+    <script type="text/javascript" src="../javascript/Rhelpers.js"> </script>
+    
+    <script type="text/R" src="R/exLogisticDynDoc.R"> </script>
+    <style type="text/css">
+      .glmsummarytext {font-size:16px;}
+      .container {margin:16px;}
+    </style>
+<style type="text/css">
+      html {
+        color: black;
+        background-color:white;
+        font-size: 12pt;
+        margin:3px;
+      }
+
+      table {
+        border: solid thin;
+        margin:3px;
+      }
+
+      th {
+        background-color: #DDD;
+        border: solid thin;
+        padding: 3px;
+      }
+
+      td {
+        border: solid thin;
+        padding: 3px;
+        text-align: center;
+      }
+
+      table img {
+        border: none;
+      }
+
+      a {
+        outline: none;
+      }
+
+      a.no_decoration {
+        color: black;
+        text-decoration: none;
+      }
+
+      .smaller_font {
+        font-size: smaller;
+      } 
+
+      mtd {
+        padding-top: 0;
+        padding-bottom: 0;
+      }
+
+      mtable.thin_column_padding &gt; mtr &gt; mtd {
+        padding-left: 0.1em;
+        padding-right: 0.1em;
+      }
+
+      mtable.no_column_padding &gt; mtr &gt; mtd {
+        padding-left: 0;
+        padding-right: 0;
+      }
+
+      mtable.center_column_content &gt; mtr &gt; mtd {
+        vertical-align: middle;
+      }
+    </style>
+
+  </head>
+  <body>
+
+      <input type="radio" name="method" value="1" onclick="Reng.handleMethodChoice( this.value);" />
+      <label for="1">Linear Regression</label>
+      <input type="radio" name="method" value="2" onclick="Reng.handleMethodChoice( this.value);" />
+      <label for="2">Logistic Regression</label>
+      <input type="radio" name="method" value="3"onclick="Reng.handleMethodChoice( this.value);" />
+      <label for="3">Both Methods </label>
+
+    <div>
+
+      <div id="linregcontainer" style="float:left" class="container">
+	
+
+	<h2>Linear Regression</h2> 
+	
+	  
+	<div id="linregtable" style="font-size:50%" > </div>
+	<div id="linregplot" > </div>
+      </div>
+      <div id="logisticcontainer" style="float:left" class="container">
+
+ 	<h2>Logistic Regression</h2> 
+	<div id="logittable" > </div>
+	<div id="logitplot" > </div>
+      </div>
+    </div>
+    <div id="test1"> </div>
+    <div id="test2"> </div>
+    <div id="test3"> </div>
+    <div id="test4"> </div>
+    <embed type="application/test-r" width="0" height="0"></embed>
+  </body>
+</html>
