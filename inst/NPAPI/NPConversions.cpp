@@ -3,10 +3,12 @@
 bool ConvertRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret, bool convertRes)
 {
 
-  //XXXNot sure if this Class check will work...
-  
-  // SEXP klass;
+
   //PROTECT(klass = MAKE_CLASS("NPVariantRef"));
+//XXX If it is a promise we need the actual value. Will this come back to bite us by violating lazy loading?  
+  int err = 0;
+  if(TYPEOF(val) == PROMSXP)
+    val = R_tryEval(val, R_GlobalEnv, &err);
   if (CheckSEXPForJSRef(val))
     {
       //XXX We shouldn't have to copy here, but do we really want to pass in double pointers?
@@ -18,10 +20,8 @@ bool ConvertRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret, bo
       MakeRRefForNP(val, inst, funcs, ret);
       return true;
     }
-  int err = 0;
-//XXX If it is a promise we need the actual value. Will this come back to bite us by violating lazy loading?  
-  if(TYPEOF(val) == PROMSXP)
-    val = R_tryEval(val, R_GlobalEnv, &err);
+  
+
   //fprintf(stderr, "\nIn ConvertRToNP type: %d", TYPEOF(val));fflush(stderr);
   int len = LENGTH(val);
 

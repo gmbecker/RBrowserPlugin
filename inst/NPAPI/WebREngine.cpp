@@ -62,7 +62,8 @@ int doVarLookup(NPIdentifier name, bool func)
   int ret;
   int err = 0;
 
-  SEXP ans = doGetVar(name);
+  SEXP ans;
+  PROTECT(ans = doGetVar(name));
 
    if(ans == R_UnboundValue)
 	{
@@ -87,7 +88,8 @@ int doVarLookup(NPIdentifier name, bool func)
 	  }
 	ret = 1;
       }
-      return ret;
+   UNPROTECT(1);
+   return ret;
  }
 
 WebREngine::WebREngine (NPP instance) 
@@ -201,12 +203,14 @@ bool WebREngine::Invoke(NPIdentifier name, const NPVariant *args, uint32_t argCo
     ret = 1;
   */
   if(!error)
-    ConvertRToNP(ans, this->instance, myNPNFuncs, result, false);
+    ConvertRToNP(ans, this->instance, myNPNFuncs, result, true);
   else
-    ConvertRToNP(R_NilValue, this->instance, myNPNFuncs, result, false);
-
+    {
+      fprintf(stderr, "\n Error: R function call failed.");fflush(stderr);
+    ConvertRToNP(R_NilValue, this->instance, myNPNFuncs, result, true);
+    }
   UNPROTECT(argCount + addProt);
-  return true;
+  return !error;
 }
 
 bool WebREngine::InvokeDefault(const NPVariant *args, uint32_t argCount, NPVariant *result)
@@ -228,7 +232,19 @@ bool WebREngine::HasProperty(NPIdentifier name)
 bool WebREngine::GetProperty(NPIdentifier name, NPVariant *result)
 {
   fprintf(stderr, "\nIn WebREngine::GetProperty");fflush(stderr);
-  return ConvertRToNP(doGetVar(name), this->instance, myNPNFuncs, result, false) ;
+  SEXP val;
+  PROTECT(val = doGetVar(name));
+  int err = 0;
+  bool ret;  
+  if(TYPEOF(val) == PROMSXP)
+    val = R_tryEval(val, R_GlobalEnv, &err);
+  if(TYPEOF(val) == CLOSXP)
+    ret =  ConvertRToNP(val, this->instance, myNPNFuncs, result, false);
+  else
+    
+    ret =  ConvertRToNP(val, this->instance, myNPNFuncs, result, true) ;
+  UNPROTECT(1);
+  return ret;
 }
 
 bool WebREngine::SetProperty(NPIdentifier name, const NPVariant *value)

@@ -213,6 +213,7 @@ NP_GetValue(void* future, NPPVariable aVariable, void* aValue) {
 NPError
 NP_Shutdown()
 {
+  Rf_endEmbeddedR(0);
   return NPERR_NO_ERROR;
 }
 

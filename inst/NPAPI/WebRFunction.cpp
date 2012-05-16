@@ -108,7 +108,7 @@ bool RFunction::InvokeDefault(const NPVariant *args, uint32_t argCount, NPVarian
   
   addProt = 2;
   if(!error)
-    ConvertRToNP(ans, this->instance, this->funcs, result, false);
+    ConvertRToNP(ans, this->instance, this->funcs, result, true);
   //If it's an error, just throw an error for the browser.
   //else
   //  ConvertRToNP(R_NilValue, this->instance, this->funcs, result, false);

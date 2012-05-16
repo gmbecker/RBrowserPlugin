@@ -65,7 +65,10 @@ SEXP R_NPAPI_Invoke(SEXP plug, SEXP Robj, SEXP Rname, SEXP Rargs, SEXP RconvArgs
       return R_NilValue;
     }    
   bool success = funcs->invoke(inst, obj->value.objectValue, funcs->getstringidentifier(ccname), args, nargs, ret);
-
+  if(!success)
+    {
+      fprintf(stderr, "\nInvocation of JS method failed.");fflush(stderr);
+    }
   for(int j=0; j<nargs; j++)
     {
             if (NPVARIANT_IS_OBJECT(args[j]))
