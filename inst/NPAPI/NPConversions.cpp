@@ -22,7 +22,7 @@ bool ConvertRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret, bo
 //XXX If it is a promise we need the actual value. Will this come back to bite us by violating lazy loading?  
   if(TYPEOF(val) == PROMSXP)
     val = R_tryEval(val, R_GlobalEnv, &err);
-  fprintf(stderr, "\nIn ConvertRToNP type: %d", TYPEOF(val));fflush(stderr);
+  //fprintf(stderr, "\nIn ConvertRToNP type: %d", TYPEOF(val));fflush(stderr);
   int len = LENGTH(val);
 
   if(len > 0)
