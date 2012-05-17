@@ -1,0 +1,7 @@
+RBrowserPlugin Known Issues:
+
+1. The plugin crashes in Firefox on Ubuntu when using compiled C code in an R package which calls the INTEGER function. This is due to a symbol conflict with a shared library Firefox depends on. We are working on this issue. For now, if the package is recompiled with USE_RINTERNALS defined it will prevent the crash (this is not a long term solution). As far as we know this only happens in Firefox on Linux.
+
+2. In exLinkedPlot.html, the event handlers sometimes do not get attached to the point, even though the code thinks that the calls to the hover method is succeeding. We are looking into this.
+
+3. The Raphael graphics device is very slow and doesn't have polygons implemented. This will be fixed soon (by writing the graphics device in C, and actually implementing polygons, respectively).
