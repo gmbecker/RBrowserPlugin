@@ -7,14 +7,10 @@
       data("rat.diet", package="fields")
       rdev1 = raphaelDev("mainplot", dim=c(400, 300))
       rdev1$devnum = dev.cur()
-      rdev2 = raphaelDev("resplot", dim=c(400, 300))
-      rdev2$devnum = dev.cur()
-      dev.set(rdev1$devnum)
       plot(con ~ t, data = rat.diet,
       xlab = "Time (days)", ylab = "Median Food Intake", 
       main = "Control group")
-      dev.set(rdev2$devnum)
-
+      
       xrange = range(rat.diet$t)
       xinterps = seq(xrange[1], xrange[2], by = 0.5)
       
@@ -56,20 +52,13 @@
            #sapply(rdev2$getPoints(), function(x) x$remove())
           # raphRemoveAll("points", rdev2)
           # local({points <- list()}, env = rdev2$storage)        
-	   dev.set(rdev2$devnum)
-           #points(spl$x, residuals(spl))
-	   plot(spl$x, residuals(spl))          
 	  }
 
          dev.set(rdev1$devnum)      
           lines(predict(spl, xinterps), col="green", lwd=2)
-          dev.set(rdev2$devnum)
-          plot(spl$x, residuals(spl))
         } else {
           dev.set(rdev1$devnum)      
           lines(predict(spl, xinterps), col="green", lwd=2)
-          dev.set(rdev2$devnum)
-          plot(spl$x, residuals(spl))
         }
      
       }

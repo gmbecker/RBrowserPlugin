@@ -62,6 +62,13 @@ bool RFunction::Invoke(NPIdentifier name, const NPVariant *args, uint32_t argCou
   if (name == this->funcs->getstringidentifier("valueOf"))
     {
       fprintf(stderr, "\nIn valueOf method of an RFunction\n");fflush(stderr);
+      NPUTF8 *strdat = (NPUTF8*) this->funcs->memalloc(21+1);
+      //strdat = (NPUTF8*)"[Internal R Object]";
+      memcpy(strdat, "[Internal R Function]", 21+1);
+      NPString str ={ strdat, 21};
+      result->type = NPVariantType_String;
+      result->value.stringValue = str;      
+
       return true;
 
     }

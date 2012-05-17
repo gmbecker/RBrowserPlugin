@@ -1,0 +1,18 @@
+These are installation instructions for the RFirefox package and extension in Linux. For instructions to install RFirefox on Mac OS X please see macInstall.txt
+
+For any questions please see the AFAQ (anticipated frequently asked questions)
+
+Steps:
+
+1: install R package dependencies: bitops from CRAN, RAutoGenRunTime and RGraphicsDevice from www.omegahat.org (note in the case of Macs these packages must be installed for the 32 bit architecture currently, 64 bit arch will be supported in the future). 
+2: Run R CMD INSTALL on the RFirefox directory
+3: Create a symbolic in your plugin directory to RBrowserPlugin.SO (this may require admin privalges)
+   a: In Linux at the terminal: ln -s /usr/lib/mozilla/plugins <path-to-installed-package>/NPAPI/RBrowserPlugin.so
+   b: In Mac OSX at the terminal: ln -s /Library/Internet Plugins/RBrowserPlugin.plugin <path-to-installed-package>/NPAPI/build/Debug/RBrowserPlugin.bundle
+4: Start the terminal and set the R_HOME environmental variable (you can determine what value it should have by running the command R RHOME)
+   a: in linux (64 bit), generally: export R_HOME= /usr/lib64/R
+   b: in Mac OSX, generally: export R_HOME=/Library/Frameworks/R.Framework/Resource (I need to double check this, just use what R RHOME gives you)
+5: Launch a web browser from the terminal used in step four.
+6: Open an html file from RFirefox/inst/examples or RFirefox/inst/NPAPITests (note not all are guaranteed to fully work atm).
+
+That's it. Please send questions/comments to gmbecker@ucdavis.edu
