@@ -120,7 +120,7 @@ function doAttach()
 		    break;
 		}
 	}
-    window.Reng = Reng;
+    window.R = Reng; 
 
     runScriptsNPAPI();
 
