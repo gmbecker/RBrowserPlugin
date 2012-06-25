@@ -133,7 +133,7 @@ function makeFun(obj)
     {
 	var args = Array.prototype.slice.call(arguments);
 	//	alert("here I am");
-	window.Reng.listCall(obj, args);
+	window.R.listCall(obj, args);
     }
     return fun;
 }
