@@ -202,8 +202,11 @@ bool ConvertNPToR(NPVariant *var, NPP inst, NPNetscapeFuncs *funcs, bool convRet
 	    //XXX Taking a shortcut here, assuming only arrays have a pop method. A better while performant way to check this would be good...
 	    if (funcs->hasmethod(inst, inObject, funcs->getstringidentifier("pop")))
 	      {
+		
 		funcs->getproperty(inst, inObject, funcs->getstringidentifier("length"), &npvLength);
-		int len = npvLength.value.intValue;
+		//int len = npvLength.value.intValue;
+		int len = (int) npvLength.value.doubleValue;
+		fprintf(stderr, "\nNPArray of length %d detected. Convertin to R list/vector", len);fflush(stderr);
 		canfree = NPArrayToR(var, len, 0, inst, funcs, _ret);
 	      }
 	    else
@@ -247,7 +250,7 @@ bool NPArrayToR(NPVariant *arr, int len, int simplify, NPP inst, NPNetscapeFuncs
   for (int i = 0; i < len; i++)
     {
       funcs->getproperty(inst, arr->value.objectValue, funcs->getintidentifier(i), &curValue);
-      tmpcanfree = ConvertNPToR(&curValue, inst, funcs, false, &tmp);
+      tmpcanfree = ConvertNPToR(&curValue, inst, funcs, true, &tmp);
       SET_VECTOR_ELT(*_ret, i, tmp);
       if (!tmpcanfree)
 	canfree =  0;
