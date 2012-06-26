@@ -1,0 +1,26 @@
+<html>
+  <head>
+<!--
+    <script type="text/javascript" src="http://github.com/DmitryBaranovskiy/raphael/raw/master/raphael.js"> </script>
+-->    
+<script type="text/javascript" src="../javascript/raphael.js"> </script>
+
+<script type="text/javascript" src="../javascript/Rhelpers.js"> </script>
+
+
+    <script type="text/R">
+      rdev = raphaelDev("raph")
+      plot(1:10)
+      div = getPageElement("textdiv")
+      x = grconvertX(100, from="device", to="user")
+      y = grconvertY(100, from="device", to="user")
+      div[["innerHTML"]] = paste("user coords for device coord of (100, 100):", x, y)
+</script>
+</head>
+<body>
+    <embed id="REngine" type="application/test-r" height="0" width="0"></embed>    
+    <div>
+      <div id="raph" height="200" width="150"  />
+      <div id="textdiv" />
+</body>
+</html>
