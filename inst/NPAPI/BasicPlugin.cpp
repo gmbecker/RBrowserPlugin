@@ -53,7 +53,7 @@ int initR( const char **args, int nargs)
   SEXP call;
   PROTECT(call = allocVector(LANGSXP, 2));
   SETCAR(call, Rf_install("library"));
-  SETCAR(CDR(call), Rf_install("RFirefox"));
+  SETCAR(CDR(call), Rf_install("RBrowserPlugin"));
   R_tryEval(call, R_GlobalEnv, &error);
   
   UNPROTECT(1);

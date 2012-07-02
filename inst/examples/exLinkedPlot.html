@@ -9,7 +9,7 @@
 
 
     <script type="text/R">
-      library(RFirefox)
+ #     library(RFirefox)
       thing = raphaelDev("raphcanvas")
       plot(mtcars$hp, mtcars$mpg, xlab = "HP", ylab="MPG", main = "MtCars Hp vs Mpg", cex=3)
       
@@ -20,10 +20,12 @@
 
       addHandlers = function(pts)
       {
-      print("In addHandlers")
         sapply(1:length(pts), function(i) 
         {
-          pts[[i]]$hover(function() colorIt(i), function() unColorIt(i))
+          #pts[[i]]$hover(function() colorIt(i), function() unColorIt(i))
+          nd = pts[[i]][["node"]]
+          nd$addEventListener("mouseover", function(e) colorIt(i), convertArgs = c(TRUE, FALSE))
+          nd$addEventListener("mouseout", function(e) unColorIt(i), convertArgs = c(TRUE, FALSE))
         
           TRUE
         } )
@@ -33,8 +35,6 @@
 
       colorIt = function(i)
       {
-        print("in colorIt")
-        print(i)
       pts[[i]]$attr("fill", "ff0000")
         pts2[[i]]$attr("fill", "ff0000")
       
@@ -48,7 +48,6 @@
       }
       addHandlers(pts)
       addHandlers(pts2)
-      #colorIt(5)
     </script>
   </head>
   <body>

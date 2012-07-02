@@ -1,4 +1,5 @@
-
+setClass("NPObjectRef", contains="RCStructReference")
+setClass("NPVariantRef", contains="RCStructReference")
 NP_Invoke = function(..., plug = PluginInstance, obj = NP_GetGlobal, name, convertRet = FALSE, convertArgs, keepResult = TRUE, argList)
   {
     if(!missing(argList))

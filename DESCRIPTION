@@ -1,10 +1,9 @@
-Package: RFirefox
+Package: RBrowserPlugin
 Version: 0.1-5
-Title: R bindings to Firefox
-Description: The RFirefox R Package provides functionality for interacting with the RFirefox Firefox extension to provide two way communcation between the Firefox Javascript engine and an embedded R session.
+Title: R bindings to NPAPI Browser Plugin
+Description: The RBrowserPlugin package provides functionality for interacting with the RBrowserPlugin NPAPI Web Browser plugin to provide two way communcation between the Javascript engine and an embedded R session.
 Author: Gabriel Becker, Duncan Temple Lang
 Depends: methods, RAutoGenRunTime, RGraphicsDevice
-Suggests: SpiderMonkey
 Maintainer: Gabriel Becker <gmbecker@ucdavis.edu>
 License: GPL
   

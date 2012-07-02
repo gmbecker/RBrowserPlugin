@@ -9,16 +9,20 @@
       points(x=0, y=0, cex=10)
       myenv = dev$storage
       #hover won't work in chrome because typeof(npobjects) == "object
-      myenv$points[[1]]$hover(function(...) print("mouse in!"), function(...) print("mouse out!"))
+      #myenv$points[[1]]$hover(function(...) print("mouse in!"), function(...) print("mouse out!"))
       
       
-      #node = myenv$points[[1]][["node"]]
-      #itworked = function(...) print("mouse in!!!")
+      node = myenv$points[[1]][["node"]]
+      itworked = function(...)
+      {
+        print("mouse in!!!")
+       myenv$points[[1]]$attr("fill", "#ff0000")
+      }
      #print(class(node))
      # node[["onmouseover"]] = itworked
      
-      #node$addEventListener("mouseover", itworked, FALSE)
-
+      node$addEventListener("mouseover", itworked, FALSE, convertArgs = c(TRUE, FALSE, TRUE))
+      
     </script>
   </head>
   <body>

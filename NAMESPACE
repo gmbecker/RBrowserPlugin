@@ -1,4 +1,4 @@
-useDynLib(RFirefox)
+useDynLib(RBrowserPlugin)
 
 #exportClasses("JavaScriptRef")
 #exportClasses("nsIDocument", "nsINode")

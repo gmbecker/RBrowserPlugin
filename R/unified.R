@@ -42,6 +42,13 @@ evalJavaScript = function(script, scope = getGlobalJSObject(), keepResult = TRUE
 
 'jsProperty<-' = function(object, name, value, convertValue = TRUE)
   {
+    if(length(name) > 1)
+      {
+        for(i in seq(along=name))
+          jsProperty(object, name[i], convertValue = convertValue[i]) <- value[i]
+        return(object)
+      }
+    
     if(exists("ScriptCon"))
       set_JS_Property(ScriptCon, object, name, value)
     else
@@ -54,6 +61,8 @@ evalJavaScript = function(script, scope = getGlobalJSObject(), keepResult = TRUE
 
 jsProperty = function(object, name, convertRet = TRUE)
   {
+    if(length(name) > 1)
+      return(mapply(function(nm, conv) jsProperty(object, nm, conv), name, convertRet))
     if(exists("ScriptCon"))
       get_JS_Property(ScriptCon, object, name)
     else
@@ -71,16 +80,16 @@ getGlobalJSObject = function()
       {
         #NPAPI code goes here
         res = NP_GetGlobal()
-        print("In getGlobalJSObject. Result:")
-        print(res)
         res
       }
   }
 
 getPageElement = function(id, convertRet = FALSE)
-  #Note: returnRef defaults to FALSE but the default behavior for DOM elements is references anyway...
   {
-    #evalJavaScript(paste("document.getElementById(", id, ");", sep=""), convertRet = convertRet)
+    if(length(id) > 1)
+      return(mapply(getPageElement, id, convertRet))
+    #When JS object is implemented
+    #JS[["document"]]$getElementById(id,
     window = getGlobalJSObject()
     document = window[["document"]]
     document$getElementById(id)
@@ -103,6 +112,8 @@ removePageElement = function(id, object=NULL)
 
 addEventListener = function(target, event, rfun)
   {
+    if(length(event) > 1)
+      return(mapply(function(e, f) addEventListener(target, e, f), event, rfun))
     TRUE
   }
 
@@ -111,7 +122,7 @@ removeEventListener = function(target, event)
     TRUE
   }
 
-fireDOMEvent = function(target, type)
+raiseDOMEvent = function(target, type)
   {
 
 
@@ -149,7 +160,8 @@ setMethod("$", "NPVariantRef",
           function(x, name)
           {
 
-            fun = function( ...,  keepResult = TRUE, returnRef = FALSE, convertArgs)
+            #fun = function( ...,  keepResult = TRUE, returnRef = FALSE, convertArgs)
+            fun = function( ...,  keepResult = TRUE, convertRet = TRUE, convertArgs)
               {
               
                 args = list(...)
@@ -158,7 +170,7 @@ setMethod("$", "NPVariantRef",
                 else
                   multipleArgs = FALSE
                 
-                callJavaScript(object = x,name =  name, ... , multipleArgs = multipleArgs, keepResult = keepResult, returnRef = returnRef, convertArgs = convertArgs)
+                callJavaScript(object = x,name =  name, ... , multipleArgs = multipleArgs, keepResult = keepResult, returnRef = !convertRet, convertArgs = convertArgs)
               }
             fun
           }

@@ -32,9 +32,34 @@ setAs("DevDescPtr", "QueryableDevDescPtr",
 
 
 
+raphaelCDev = function(id = "raph_content", dim = c(600, 400), storage = new.env())
+  {
+    assign("points", list(), envir=storage)
+    assign("lines", list(), envir=storage)
+    assign("rects", list(), envir=storage)
+    assign("polylines", list(), envir=storage)
+    assign("texts", list(), envir=storage)
+    
+    script = paste("Raphael('", id, "',", dim[1], " , ", dim[2], ");", sep="")
+   
+    tmp = evalJavaScript(script = script, keepResult = TRUE)
+    assign("paper", tmp, env = storage)
+
+    .Call("R_GD_raphaelDevice", storage, PluginInstance)
+
+    list(getPoints = function() get("points", storage),
+         getLines = function() get("lines", storage),
+         getPolyLines = function() get("polylines", storage),
+         getTexts = function() get("texts", storage),
+         storage = storage
+         )
+  }
+
+
 raphaelDev = function(id = "raph_content", dim = c(600, 400),
   col = "black", fill = "transparent", ps=10, wrapup=NULL, jscon = ScriptCon, storage = new.env(), allocSize = 5000 )
   {
+    print("raphaelDev")
     library(RGraphicsDevice)
 
 
@@ -141,6 +166,7 @@ raphaelDev = function(id = "raph_content", dim = c(600, 400),
     
     funs@newPage = function(context, devdesc)
       {
+        print("In raphaelDev::newPage")
         storage$paper$clear()
         storage$lines = list()
         storage$points = list()
@@ -161,16 +187,20 @@ raphaelDev = function(id = "raph_content", dim = c(600, 400),
 
     dev$ipr = rep(1/72.27, 2)
     dev$cra = rep(c(6, 13)/12) * 10
-    
+    print(paste("\nIn raphaelDev. dev.cur():", dev.cur()))
+    assign("devnum", dev.cur(), storage)
     list(getPoints = function() get("points", storage),
          getLines = function() get("lines", storage),
          getPolyLines = function() get("polylines", storage),
          getTexts = function() get("texts", storage),
-         storage = storage
+         storage = storage,
+         devnum =  get("devnum", storage)
          )
   }
 
-  
+
+if(FALSE)
+  {
 clearRaphPlot = function(dev)
   {
     rem = function(x)
@@ -189,6 +219,8 @@ clearRaphPlot = function(dev)
     assign("polylines", list(), env = dev$storage)
     assign("texts", list(), env = dev$storage)
   }
+
+}
 
 doColors = function(jsvar, context)
   {
@@ -219,10 +251,24 @@ getContextColors = function(context)
   }
 
 
-raphaelRemoveAll = function(type="points", dev)
+raphRemoveAll = function(type="points", dev)
   {
+    match.arg(type, c("points", "lines", "texts", "polylines"))
     switch(type,
            points = .Call("R_NPAPI_Remove_All", PluginInstance, dev$getPoints()),
-           lines = .Call("R_NPAPI_Remove_All", PluginInstance, dev$getLines())
+           lines = .Call("R_NPAPI_Remove_All", PluginInstance, dev$getLines()),
+           texts = .Call("R_NPAPI_Remove_All", PluginInstance, dev$getTexts()),
+           polylines = .Call("R_NPAPI_Remove_All", PluginInstance, dev$getPolyLines())
            )
+    assign(type, list(), dev$storage)
   }
+
+raphRemoveElements = function(type="points", indexes, dev)
+{
+   match.arg(type, c("points", "lines", "texts", "polylines"))
+  sapply(indexes, function(i, lst) lst[[i]]$remove(), lst = get(type, dev$storage))
+
+  #remove chosen elements from the list of currently drawn elements
+  assign(type, get(type, dev$storage)[-indexes], dev$storage)
+
+}
