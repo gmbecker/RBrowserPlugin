@@ -50,7 +50,7 @@
 #include <Rembedded.h>
 #else
 #include <R/R.h>
-#include <R/Rdefines.h>
+#include </Rdefines.h>
 #include <R/Rembedded.h>
 #endif
 
@@ -260,4 +260,29 @@ void MakeRRefForNP(SEXP obj, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret);
 bool RObject_GetProp( RObject *obj, NPIdentifier name, NPNetscapeFuncs *funcs, NPVariant *result, bool check);
 bool IsMissing(SEXP obj, bool nullAlso);
 bool CheckSEXPForJSRef(SEXP obj);
+
+
+
+
+
+class RCallQueue
+{ 
+ public:
+  SEXP requestRCall(SEXP toEval, int *err, NPP inst);
+
+ private:
+  uint64_t enterQueue()
+  int lock();
+  int unlock();
+
+ private:
+  int isLocked;
+  uint64_t serving;
+  uint64_t lastInQueue;
+}
+
+
+
+
+
 #endif // WebR.h
