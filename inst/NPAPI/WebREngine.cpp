@@ -245,9 +245,9 @@ bool WebREngine::HasProperty(NPIdentifier name)
   bool ret;
   if(name == myNPNFuncs->getstringidentifier("eval"))
     ret = 0;
-  if(name == myNPNFuncs->getstringidentifier("listcall"))
+  else if(name == myNPNFuncs->getstringidentifier("listcall"))
     ret = 0;
-  if(name == myNPNFuncs->getstringidentifier("getRef"))
+  else if(name == myNPNFuncs->getstringidentifier("getRef"))
     ret = 0;
   else
     ret = doVarLookup(name, false);
