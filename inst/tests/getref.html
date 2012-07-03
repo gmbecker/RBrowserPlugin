@@ -1,0 +1,21 @@
+<html>
+  <head>
+    <script type="text/javascript" src = "../javascript/Rhelpers.js"></script>
+    <script type="text/javascript" src="../javascript/raphael.js"> </script>
+    <script type="text/javascript">
+      function doit(e)
+      {
+        var div1 = document.getElementById("txt");
+        var div2 = document.getElementById("txt2");
+        div1.innerHTML = "R.pi : " + R.pi;
+        div2.innerHTML = "R.getRef('pi') : " + R.getRef('pi');
+      }
+    </script>
+  </head>
+  <body>
+    <embed id="REngine" type="application/test-r" width="0" height="0"></embed>
+    <input type="button" onclick="doit(event);"/>
+    <div id="txt"></div>
+    <div id="txt2"></div>
+  </body>
+</html>

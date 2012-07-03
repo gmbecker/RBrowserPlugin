@@ -1,0 +1,31 @@
+<html>
+<body>
+  <embed type="application/test-r" width="0" height="0"></embed>
+ 
+ <div id="mydiv" ></div> 
+ <div id="mydiv2" ></div> 
+ <div id="mydiv3" ></div> 
+ <div id="mydiv4" ></div> 
+    <script type="text/javascript">
+      var Reng = document.embeds[0]; 
+      var res = Reng.eval("rnorm(2)");
+      var div  = document.getElementById("mydiv");
+      div.innerHTML = "Reng.eval('rnorm(2)') : " + res;
+
+      var div2  = document.getElementById("mydiv2"); 
+      res3 = Reng.rnorm;
+      div2.innerHTML = "Reng.rnorm : " + res3;
+
+
+      var res2 = Reng.rnorm(2, 6)
+      var div3  = document.getElementById("mydiv3");
+      div3.innerHTML = "Reng.rnorm(2, 6) : " + res2; 
+ 
+      var div4  = document.getElementById("mydiv4");
+      div4.innerHTML = "Reng.pi : " + Reng.pi;
+      
+      
+      
+  </script>
+  </body>
+</html>

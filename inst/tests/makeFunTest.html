@@ -1,0 +1,23 @@
+<html>
+  <head>
+    <script type="text/javascript" src = "../javascript/Rhelpers.js"></script>
+    <script type="text/javascript" src="../javascript/raphael.js"> </script>
+    <script type="text/R">
+      itworked = function()
+        print("it worked!")
+    </script>
+    <script type="text/javascript">
+      function doit()
+      {
+        var myfun = makeFun(window.Reng.itworked);
+        alert(typeof(myfun));
+        myfun();
+      }
+        window.addEventListener("load", doit);
+    </script>
+  </head>
+  <body>
+    <embed id="REngine" type="application/test-r" width="0" height="0"></embed>
+   <input type="button" id="mybutton">test</input>
+  </body>
+</html>

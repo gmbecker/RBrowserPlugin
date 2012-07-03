@@ -177,7 +177,7 @@ void CopyNPNFunctions(NPNetscapeFuncs *dstFuncs, NPNetscapeFuncs *srcFuncs)
 char*
 NP_GetPluginVersion()
 {
-  return PLUGIN_VERSION;
+  return (char *) PLUGIN_VERSION;
 }
 
 
@@ -192,10 +192,10 @@ NPError
 NP_GetValue(void* future, NPPVariable aVariable, void* aValue) {
   switch (aVariable) {
     case NPPVpluginNameString:
-      *((char**)aValue) = PLUGIN_NAME;
+      *((char**)aValue) = (char *) PLUGIN_NAME;
       break;
     case NPPVpluginDescriptionString:
-      *((char**)aValue) = PLUGIN_DESCRIPTION;
+      *((char**)aValue) = (char *) PLUGIN_DESCRIPTION;
       break;
     default:
       return NPERR_INVALID_PARAM;
@@ -383,11 +383,11 @@ NPP_GetValue(NPP instance, NPPVariable variable, void *value) {
       break;
       
     case NPPVpluginNameString:
-      *((char **)value) = "WebR Plugin";
+      *((char **)value) = (char *) "WebR Plugin";
       break;
       
     case NPPVpluginDescriptionString:
-      *((char **)value) = "WebR plugin";
+      *((char **)value) = (char *) "WebR plugin";
       break;
       
     case NPPVpluginScriptableNPObject:
@@ -396,14 +396,14 @@ NPP_GetValue(NPP instance, NPPVariable variable, void *value) {
 
   //so I can get into gdb
   //sleep(5);
-  fprintf(stderr, "\ninstance: %lx\n", instance);fflush(stderr);
+	fprintf(stderr, "\ninstance: %lx\n", (unsigned long int) instance);fflush(stderr);
   //fprintf(stderr, "\nmyNPNFuncs: %lx\n", myNPNFuncs);fflush(stderr);
   //fprintf(stderr, "\nmyNPNFuncs->createobject: %lx\n", myNPNFuncs->createobject);fflush(stderr);
 	if(!((InstanceData*)instance->pdata)->scriptable)
 	  {
       fprintf(stderr, "Attempting to create scriptable object");fflush(stderr);
       ((InstanceData*)instance->pdata)->scriptable = myNPNFuncs->createobject(instance, &WebREngine::_npclass);
-      fprintf(stderr, "Scriptable object created %lx", ((InstanceData*)instance->pdata)->scriptable);fflush(stderr);
+      fprintf(stderr, "Scriptable object created %lx", (unsigned long int) ((InstanceData*)instance->pdata)->scriptable);fflush(stderr);
       myNPNFuncs->retainobject((NPObject *)((InstanceData*)instance->pdata)->scriptable);
       //myNPNFuncs->retainobject(scriptable);
       
@@ -418,7 +418,7 @@ NPP_GetValue(NPP instance, NPPVariable variable, void *value) {
       rv = NPERR_GENERIC_ERROR;
       break;
     }
-  fprintf(stderr, "value set to: %lx", *((NPObject **)value));fflush(stderr);
+  fprintf(stderr, "value set to: %lx", (unsigned long int) *((NPObject **)value));fflush(stderr);
   return rv;
 }
 

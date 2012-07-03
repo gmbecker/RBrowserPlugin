@@ -80,7 +80,6 @@ bool RObject::InvokeDefault(const NPVariant *args, uint32_t argCount, NPVariant 
 bool RObject::HasProperty(NPIdentifier name)
 {
   bool ret= true;
-  NPVariant res;
   fprintf(stderr, "\nIn RObject::HasProperty");fflush(stderr);
   //we need to return false for things that need to be methods.
   if(name == this->funcs->getstringidentifier("convert"))

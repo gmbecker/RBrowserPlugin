@@ -7,7 +7,7 @@ RFunction::RFunction (NPP instance)
 
   //this->m_getVersion_id = NPN_GetStringIdentifier("getVersion");
   //  this->m_getVersion_id = myNPNFuncs->getstringidentifier("getVersion");
-  fprintf(stderr, "\nCreating RFunction object. Instance:%lx", instance);fflush(stderr);
+  fprintf(stderr, "\nCreating RFunction object. Instance:%lx", (unsigned long int) instance);fflush(stderr);
   this->instance = instance;
   this->object = NULL;
   this->converter = NULL;
@@ -89,7 +89,7 @@ bool RFunction::InvokeDefault(const NPVariant *args, uint32_t argCount, NPVarian
 {
   fprintf(stderr, "\nDirectly invoking on RFunction object");fflush(stderr);
   SEXP Rargs[argCount];
-  for(int i=0; i<argCount; i++)
+  for(uint32_t i=0; i<argCount; i++)
     {
       PROTECT(Rargs[i] = R_NilValue); 
       //when calling R functions directly we DO want arguments to be converted.
@@ -103,7 +103,7 @@ bool RFunction::InvokeDefault(const NPVariant *args, uint32_t argCount, NPVarian
   SEXP ptr;
   PROTECT(ptr = call = allocVector(LANGSXP, argCount  + 1));
   SETCAR(ptr, (SEXP) this->object );
-  for(int i=0; i < argCount; i++)
+  for(uint32_t i=0; i < argCount; i++)
     {
       ptr = CDR( ptr );
       SETCAR(ptr, Rargs[i]);

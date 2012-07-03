@@ -7,12 +7,10 @@ RObject::RObject (NPP instance)
 
   //this->m_getVersion_id = NPN_GetStringIdentifier("getVersion");
   //  this->m_getVersion_id = myNPNFuncs->getstringidentifier("getVersion");
-  fprintf(stderr, "\nCreating RObject object. Instance:%lx", instance);fflush(stderr);
   this->instance = instance;
   this->object = NULL;
   this->converter = NULL;
   //XXX Need to retain this object so it doesn't get gc'ed. Someone posted on rdevel mentioning this somewhat recently. Simon maybe?
-  fprintf(stderr, "\nLeaving RObject()\n");fflush(stderr);
 }
 
 
@@ -82,7 +80,6 @@ bool RObject::InvokeDefault(const NPVariant *args, uint32_t argCount, NPVariant 
 bool RObject::HasProperty(NPIdentifier name)
 {
   bool ret= true;
-  NPVariant res;
   fprintf(stderr, "\nIn RObject::HasProperty");fflush(stderr);
   //we need to return false for things that need to be methods.
   if(name == this->funcs->getstringidentifier("convert"))
@@ -169,11 +166,8 @@ bool RObject::Construct(const NPVariant *args, uint32_t argCount, NPVariant *res
 
 NPObject *RObject::Allocate(NPP npp, NPClass *aClass)
 {
-  fprintf(stderr, "\nIn RObject::Allocate\n");fflush(stderr);
-  
 	NPObject *pObj = (NPObject *)new RObject(npp);
 	return pObj;
-	fprintf(stderr, "\nLeaving RObject::Allocate\n");fflush(stderr);
 }
 
 void RObject::Detatch (void)

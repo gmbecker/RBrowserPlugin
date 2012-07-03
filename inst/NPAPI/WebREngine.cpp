@@ -98,7 +98,7 @@ WebREngine::WebREngine (NPP instance)
 
   //this->m_getVersion_id = NPN_GetStringIdentifier("getVersion");
   //  this->m_getVersion_id = myNPNFuncs->getstringidentifier("getVersion");
-  fprintf(stderr, "\nCreating WebREngine object. Instance:%lx", instance);fflush(stderr);
+  fprintf(stderr, "\nCreating WebREngine object. Instance:%lx", (unsigned long int) instance);fflush(stderr);
   this->instance = instance;
   fprintf(stderr, "\nLeaving WebREngine()\n");fflush(stderr);
 }
@@ -124,6 +124,8 @@ bool WebREngine::HasMethod(NPIdentifier name)
     ret = 1;
   else if (name == myNPNFuncs->getstringidentifier("C_doTest"))
     ret = 1;
+  else if (name == myNPNFuncs->getstringidentifier("getRef"))
+    ret = 1;
   else
    {
       //direct access API
@@ -138,7 +140,8 @@ bool WebREngine::Invoke(NPIdentifier name, const NPVariant *args, uint32_t argCo
 {
   fprintf(stderr, "\nIn WebREngine::Invoke - %s", myNPNFuncs->utf8fromidentifier(name));fflush(stderr);
   SEXP Rargs[argCount];
-  for(int i=0; i<argCount; i++)
+  bool convert = true;
+  for(uint32_t i=0; i<argCount; i++)
     {
       PROTECT(Rargs[i] = R_NilValue); 
             //when calling R functions directly we DO want arguments to be converted.
@@ -170,6 +173,24 @@ bool WebREngine::Invoke(NPIdentifier name, const NPVariant *args, uint32_t argCo
     }
   else if (name == myNPNFuncs->getstringidentifier("C_doTest"))
     C_doTest(this->instance, myNPNFuncs);
+  else if (name == myNPNFuncs->getstringidentifier("getRef"))
+    {
+      SEXP  call, ptr;
+      int error;  
+      PROTECT(ptr = call = allocVector(LANGSXP, 2));
+      SETCAR(ptr, Rf_install("get"));
+      ptr = CDR(ptr);
+      SETCAR(ptr, Rargs[0]);
+      
+      PROTECT(ans = R_tryEval(call, R_GlobalEnv, &error));
+      int err = 0;
+
+      if(TYPEOF(ans) == PROMSXP)
+	ans = R_tryEval(ans, R_GlobalEnv, &err);
+      //error =  ConvertRToNP(val, this->instance, myNPNFuncs, result, false);
+      addProt = 2;
+      convert = false;
+    }    
   else
     {
       
@@ -180,7 +201,7 @@ bool WebREngine::Invoke(NPIdentifier name, const NPVariant *args, uint32_t argCo
       PROTECT(ptr = call = allocVector(LANGSXP, argCount  + 1));
       SETCAR(ptr, Rf_install( (const char *) charname) );
       myNPNFuncs->memfree(charname);
-      for(int i=0; i < argCount; i++)
+      for(uint32_t i=0; i < argCount; i++)
 	{
 	  ptr = CDR( ptr );
 	  SETCAR(ptr, Rargs[i]);
@@ -203,7 +224,7 @@ bool WebREngine::Invoke(NPIdentifier name, const NPVariant *args, uint32_t argCo
     ret = 1;
   */
   if(!error)
-    ConvertRToNP(ans, this->instance, myNPNFuncs, result, true);
+    ConvertRToNP(ans, this->instance, myNPNFuncs, result, convert);
   else
     {
       fprintf(stderr, "\n Error: R function call failed.");fflush(stderr);
@@ -223,6 +244,10 @@ bool WebREngine::HasProperty(NPIdentifier name)
   fprintf(stderr, "\nIn WebREngine::HasProperty");fflush(stderr);
   bool ret;
   if(name == myNPNFuncs->getstringidentifier("eval"))
+    ret = 0;
+  if(name == myNPNFuncs->getstringidentifier("listcall"))
+    ret = 0;
+  if(name == myNPNFuncs->getstringidentifier("getRef"))
     ret = 0;
   else
     ret = doVarLookup(name, false);
