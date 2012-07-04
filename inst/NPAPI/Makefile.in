@@ -45,7 +45,7 @@ CPPFLAGS = -Wall -O0 -DXP_UNIX=1 -DMOZ_X11=1 -fPIC -g -I ../npapi-sdk-headers -I
 
 R_LD_FLAGS=-L$(R_HOME)/lib -lR
 #OBJ_FILES =  WebRPlugin.o WebREngine.o NPConversions.o WebRObject.o
-OBJ_FILES =  BasicPlugin.o WebREngine.o NPConversions.o WebRObject.o WebRFunction.o
+OBJ_FILES =  BasicPlugin.o WebREngine.o NPConversions.o WebRObject.o WebRFunction.o WebRMutex.o
 npbasicplugin : $(OBJ_FILES)
 ifeq ($(IS_MAC), 0)
 	cc $(CPPFLAGS) $(R_LD_FLAGS) -shared $(OBJ_FILES) -o RBrowserPlugin.so

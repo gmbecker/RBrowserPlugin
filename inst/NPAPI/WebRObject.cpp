@@ -103,7 +103,7 @@ bool RObject::HasProperty(NPIdentifier name)
 	SETCAR(ptr, ScalarString(mkChar(this->funcs->utf8fromidentifier(name))));
       else
 	SETCAR(ptr, ScalarInteger(this->funcs->intfromidentifier(name)));
-      PROTECT(ans = R_tryEval(call, R_GlobalEnv, &error));
+      PROTECT(ans = rQueue.requestRCall(call, R_GlobalEnv, &error, this->instance));
       UNPROTECT(2);
       //Need to check if the R property exists or not.... currently we just return true.
       if(!error)
@@ -135,7 +135,7 @@ bool RObject::GetProperty(NPIdentifier name, NPVariant *result)
   else
     SETCAR(ptr, ScalarInteger(this->funcs->intfromidentifier(name)));
   
-  PROTECT(ans = R_tryEval(call, R_GlobalEnv, &error));
+  PROTECT(ans = rQueue.requestRCall(call, R_GlobalEnv, &error, this->instance));
   bool ret = ConvertRToNP(ans, this->instance, this->funcs, result, false);
   UNPROTECT(2);
   //ConvertRToNP(ans, Robj->instance, funcs, result, false);
@@ -254,7 +254,7 @@ NPClass RObject::_npclass = {
 };
 
  
-bool RObject_GetProp(RObject *Robj, NPIdentifier name, NPNetscapeFuncs *funcs, NPVariant *result, bool check)
+bool RObject_GetProp(RObject *Robj, NPIdentifier name, NPNetscapeFuncs *funcs, NPVariant *result, bool check, NPP inst)
 {
   SEXP obj, call, ptr, ans;
   //do we need to proect here?
@@ -273,7 +273,7 @@ bool RObject_GetProp(RObject *Robj, NPIdentifier name, NPNetscapeFuncs *funcs, N
   else
     SETCAR( ptr , ScalarReal( (int) funcs->intfromidentifier(name)));
   
-  PROTECT(ans = R_tryEval( call, R_GlobalEnv, &waserr));
+  PROTECT(ans = rQueue.requestRCall( call, R_GlobalEnv, &waserr, inst));
   if(!waserr && !IsMissing(ans, true))
     {
       //non-missing, non-null result. stop looking
@@ -282,7 +282,7 @@ bool RObject_GetProp(RObject *Robj, NPIdentifier name, NPNetscapeFuncs *funcs, N
   //try $
     ptr = call;
     SETCAR(ptr, Rf_install("$"));
-    ans = R_tryEval( call, R_GlobalEnv, &waserr);
+    ans = rQueue.requestRCall( call, R_GlobalEnv, &waserr, inst);
     if(!waserr && !IsMissing(ans, true))
       toret = 1;
     else
@@ -290,7 +290,7 @@ bool RObject_GetProp(RObject *Robj, NPIdentifier name, NPNetscapeFuncs *funcs, N
 	//try @
 	ptr = call;
 	SETCAR(ptr, Rf_install("@"));
-	ans = R_tryEval( call, R_GlobalEnv, &waserr);
+	ans = rQueue.requestRCall( call, R_GlobalEnv, &waserr, inst);
 	if(!waserr && !IsMissing(ans, false))
 	  toret = 1;
 	else

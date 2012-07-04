@@ -39,6 +39,7 @@
 #ifndef WebRPlugin_h_
 #define WebRPlugin_h_
 
+#include "signal.h"
 #include "npapi.h"
 #include "npfunctions.h"
 #include <npruntime.h>
@@ -259,8 +260,8 @@ SEXP MakeNPRefForR(NPVariant *obj);
 void MakeRRefForNP(SEXP obj, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret);
 bool RObject_GetProp( RObject *obj, NPIdentifier name, NPNetscapeFuncs *funcs, NPVariant *result, bool check);
 bool IsMissing(SEXP obj, bool nullAlso);
-bool CheckSEXPForJSRef(SEXP obj);
-
+bool CheckSEXPForJSRef(SEXP obj, NPP inst);
+void makeRGlobals(NPP inst);
 
 
 
@@ -268,20 +269,20 @@ bool CheckSEXPForJSRef(SEXP obj);
 class RCallQueue
 { 
  public:
-  SEXP requestRCall(SEXP toEval, int *err, NPP inst);
+  SEXP requestRCall(SEXP toEval, SEXP env, int *err, NPP inst);
 
  private:
-  uint64_t enterQueue()
-  int lock();
-  int unlock();
+  uint64_t enterQueue();
+  void lock();
+  void unlock();
 
  private:
   int isLocked;
   uint64_t serving;
   uint64_t lastInQueue;
-}
+};
 
-
+  extern RCallQueue rQueue;
 
 
 

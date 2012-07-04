@@ -1,0 +1,41 @@
+<html>
+  <head>
+    <script type="text/javascript" src = "../javascript/Rhelpers.js"></script>
+<script type="text/javascript" src="../javascript/raphael.js"> </script>
+<script type="text/R">
+  JS = getGlobalJSObject()
+  div1 = JS[["document"]]$getElementById("divout")
+  div2 = JS[["document"]]$getElementById("divout2")
+  rfunc = function(e)
+{
+  print("in rfunc")
+  Sys.sleep(3)
+  div1[["innerHTML"]] = paste("rfunc done.")
+}
+
+  rfunc2 = function()
+{
+  print("in rfunc2")
+  div2[["innerHTML"]] = paste("rfunc2 done.")
+}
+</script>
+<script type="text/javascript">
+function callfuncs()
+{
+
+ var div2 = document.getElementById("divout2");
+ var evt = document.createEvent("MouseEvents");
+ evt.initMouseEvent("click", true, true, window,
+    0, 0, 0, 0, 0, false, false, false, false, 0, null);
+ div2.dispatchEvent(evt);
+ R.rfunc()
+}
+</script>
+</head>
+<body>
+    <embed id="REngine" type="application/test-r" width="0" height="0"></embed>
+<input type="button"  onclick="callfuncs();"/>
+<div id="divout"/>
+<div id="divout2" onclick = "R.rfunc2();" />
+</body>
+</html>

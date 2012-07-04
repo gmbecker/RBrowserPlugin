@@ -111,7 +111,8 @@ bool RFunction::InvokeDefault(const NPVariant *args, uint32_t argCount, NPVarian
   
   fprintf(stderr, "\nDirect API call: ");fflush(stderr);
   Rf_PrintValue(call);
-  PROTECT(ans = R_tryEval( call, R_GlobalEnv, &error));
+  //PROTECT(ans = R_tryEval( call, R_GlobalEnv, &error));
+  PROTECT(ans = rQueue.requestRCall( call, R_GlobalEnv, &error, this->instance));
   
   addProt = 2;
   if(!error)
@@ -264,7 +265,7 @@ NPClass RFunction::_npclass = {
 };
 
  
-bool RFunction_GetProp(RFunction *Robj, NPIdentifier name, NPNetscapeFuncs *funcs, NPVariant *result, bool check)
+bool RFunction_GetProp(RFunction *Robj, NPIdentifier name, NPNetscapeFuncs *funcs, NPVariant *result, bool check, NPP inst)
 {
   SEXP obj, call, ptr, ans;
   //do we need to proect here?
@@ -283,7 +284,7 @@ bool RFunction_GetProp(RFunction *Robj, NPIdentifier name, NPNetscapeFuncs *func
   else
     SETCAR( ptr , ScalarReal( (int) funcs->intfromidentifier(name)));
   
-  PROTECT(ans = R_tryEval( call, R_GlobalEnv, &waserr));
+  PROTECT(ans = rQueue.requestRCall( call, R_GlobalEnv, &waserr, Robj->instance));
   if(!waserr && !IsMissing(ans, true))
     {
       //non-missing, non-null result. stop looking
@@ -292,7 +293,7 @@ bool RFunction_GetProp(RFunction *Robj, NPIdentifier name, NPNetscapeFuncs *func
   //try $
     ptr = call;
     SETCAR(ptr, Rf_install("$"));
-    ans = R_tryEval( call, R_GlobalEnv, &waserr);
+    ans = rQueue.requestRCall( call, R_GlobalEnv, &waserr, Robj->instance);
     if(!waserr && !IsMissing(ans, true))
       toret = 1;
     else
@@ -300,7 +301,7 @@ bool RFunction_GetProp(RFunction *Robj, NPIdentifier name, NPNetscapeFuncs *func
 	//try @
 	ptr = call;
 	SETCAR(ptr, Rf_install("@"));
-	ans = R_tryEval( call, R_GlobalEnv, &waserr);
+	ans = rQueue.requestRCall( call, R_GlobalEnv, &waserr, Robj->instance);
 	if(!waserr && !IsMissing(ans, false))
 	  toret = 1;
 	else

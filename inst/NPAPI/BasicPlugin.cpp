@@ -24,6 +24,9 @@
 /* Structure containing pointers to functions implemented by the browser. */
 NPNetscapeFuncs *myNPNFuncs;
 
+RCallQueue rQueue;
+
+
 #define PLUGIN_NAME        "Test R Plugin"
 #define PLUGIN_DESCRIPTION PLUGIN_NAME " Working up to WebR"
 #define PLUGIN_VERSION     "1.0.0.0"
@@ -55,6 +58,7 @@ int initR( const char **args, int nargs)
   SETCAR(call, Rf_install("library"));
   SETCAR(CDR(call), Rf_install("RBrowserPlugin"));
   R_tryEval(call, R_GlobalEnv, &error);
+  
   
   UNPROTECT(1);
   return error;
@@ -271,7 +275,7 @@ NPError NPP_New(NPMIMEType pluginType, NPP instance, uint16_t mode, int16_t argc
     }
   }
   */
-
+  /*
   SEXP klass, ans, ptr;
   SEXP klass2, ans2, ptr2;
 	
@@ -294,8 +298,8 @@ NPError NPP_New(NPMIMEType pluginType, NPP instance, uint16_t mode, int16_t argc
   SET_SLOT(ans, Rf_install("ref"), ptr);
   Rf_defineVar(Rf_install("PluginInstance"), ans, R_GlobalEnv);
   UNPROTECT(6);
-  
-
+  */
+  makeRGlobals(instance);
 
   return NPERR_NO_ERROR;
 }

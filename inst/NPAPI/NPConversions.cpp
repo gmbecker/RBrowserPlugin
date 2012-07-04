@@ -8,8 +8,8 @@ bool ConvertRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret, bo
 //XXX If it is a promise we need the actual value. Will this come back to bite us by violating lazy loading?  
   int err = 0;
   if(TYPEOF(val) == PROMSXP)
-    val = R_tryEval(val, R_GlobalEnv, &err);
-  if (CheckSEXPForJSRef(val))
+    val = rQueue.requestRCall(val, R_GlobalEnv, &err, inst);
+  if (CheckSEXPForJSRef(val, inst))
     {
       //XXX We shouldn't have to copy here, but do we really want to pass in double pointers?
       *ret = *(NPVariant *) R_ExternalPtrAddr(GET_SLOT( val , Rf_install( "ref" ) ) );
@@ -270,7 +270,7 @@ bool NPArrayToR(NPVariant *arr, int len, int simplify, NPP inst, NPNetscapeFuncs
       //recursive = FALSE for the unlist call
       SETCAR( p , ScalarLogical( 0 ) );
   
-      *_ret = R_tryEval(simplifyCall , R_GlobalEnv , &wasError);
+      *_ret = rQueue.requestRCall(simplifyCall , R_GlobalEnv , &wasError, inst);
       UNPROTECT(2);
     }
   
@@ -300,7 +300,7 @@ void MakeRRefForNP(SEXP obj, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret)
   if(TYPEOF(ans) == PROMSXP)
     {
       fprintf(stderr, "\nPromise detected when creating R Reference"); fflush(stderr);//	  ans = PRVALUE(ans);
-      ans = R_tryEval(ans, R_GlobalEnv, &err);
+      ans = rQueue.requestRCall(ans, R_GlobalEnv, &err, inst);
     }
   if (TYPEOF(ans) == CLOSXP)
     {
@@ -336,11 +336,11 @@ const char * NPStringToConstChar(NPString str)
       return conchar;
 }
 
-bool CheckSEXPForJSRef(SEXP obj)
+bool CheckSEXPForJSRef(SEXP obj, NPP inst)
 {
 
   SEXP ans, call, ptr;
-  int err;
+  int err = 0;
   PROTECT(ptr = call= allocVector(LANGSXP, 3));
   SETCAR(ptr, Rf_install("is"));
   ptr = CDR(ptr);
@@ -348,10 +348,16 @@ bool CheckSEXPForJSRef(SEXP obj)
   ptr = CDR(ptr);
   SETCAR(ptr, ScalarString(mkChar("JSValueRef")));
   
-  PROTECT(ans = R_tryEval(call, R_GlobalEnv, &err));
-  bool ret = LOGICAL(ans)[0];
-  if(ret)
-    {fprintf(stderr, "\nR object contains JS reference.\n");fflush(stderr);}
+  PROTECT(ans = rQueue.requestRCall(call, R_GlobalEnv, &err, inst));
+  bool ret;
+  if (ans == R_UnboundValue)
+    ret = 0;
+  else
+    {
+      ret = LOGICAL(ans)[0];
+      if(ret)
+	{fprintf(stderr, "\nR object contains JS reference.\n");fflush(stderr);}
+    }
   UNPROTECT(2);
   return ret;
 

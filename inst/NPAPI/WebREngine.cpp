@@ -44,37 +44,46 @@ void C_doTest(NPP inst, NPNetscapeFuncs *funcs)
 
 
 
-SEXP doGetVar(NPIdentifier name)
+SEXP doGetVar(NPIdentifier name, NPP inst)
 {
  NPUTF8 *varName = (NPUTF8 *) myNPNFuncs->utf8fromidentifier(name);  
   fprintf(stderr, "\nLooking for R object : %s", (const char *)varName);fflush(stderr);
   if(!varName || !varName[0]) {
     return R_UnboundValue;
   }
-  SEXP ans;
-  ans = Rf_findVar( Rf_install((const char *)varName), R_GlobalEnv);
+  SEXP ans, call, ptr;
+  int err = 0;
+  PROTECT(ptr = call = allocVector(LANGSXP, 2));
+  SETCAR(ptr, Rf_install("get"));
+  ptr = CDR(ptr);
+  SETCAR(ptr, mkString((const char *) varName));
+  PROTECT(ans = rQueue.requestRCall(call, R_GlobalEnv, &err, inst));
+  if(err)
+    ans = R_UnboundValue;
+  //ans = Rf_findVar( Rf_install((const char *)varName), R_GlobalEnv);
   myNPNFuncs->memfree(varName);
+  UNPROTECT(1);
   return ans;
 }
 
-int doVarLookup(NPIdentifier name, bool func)
+int doVarLookup(NPIdentifier name, bool func, NPP inst)
 { 
   int ret;
   int err = 0;
 
   SEXP ans;
-  PROTECT(ans = doGetVar(name));
+  PROTECT(ans = doGetVar(name, inst));
 
    if(ans == R_UnboundValue)
-	{
-	  fprintf(stderr, "\nNo R object found.");fflush(stderr);
-	  ret = 0;
-	} else {
+     {
+       fprintf(stderr, "\nNo R object found.");fflush(stderr);
+       ret = 0;
+     } else {
      
 	//XXX If it is a promise we need the actual value. Will this come back to bite us by violating lazy loading?
 	if(TYPEOF(ans) == PROMSXP)
 	  //	  ans = PRVALUE(ans);
-	  ans = R_tryEval(ans, R_GlobalEnv, &err);
+	  ans = rQueue.requestRCall(ans, R_GlobalEnv, &err, inst);
 	// Methods only correspond to functions! normal variables are properties
 	if(TYPEOF(ans) == CLOSXP)
 	  {
@@ -157,7 +166,7 @@ bool WebREngine::Invoke(NPIdentifier name, const NPVariant *args, uint32_t argCo
       PROTECT(call = allocVector(LANGSXP, 2));
       SETCAR(call, Rf_install("parseEval"));
       SETCAR(CDR(call), Rargs[0]);
-      PROTECT(ans = R_tryEval(call, R_GlobalEnv, &error));
+      PROTECT(ans = rQueue.requestRCall(call, R_GlobalEnv, &error, this->instance));
       addProt = 2;
     }
   else if (name == myNPNFuncs->getstringidentifier("listCall"))
@@ -168,7 +177,7 @@ bool WebREngine::Invoke(NPIdentifier name, const NPVariant *args, uint32_t argCo
       SETCAR(ptr, Rargs[0]); //The function
       ptr = CDR(ptr);
       SETCAR(ptr, Rargs[1]); //the args list
-      PROTECT(ans = R_tryEval(call, R_GlobalEnv, &error));
+      PROTECT(ans = rQueue.requestRCall(call, R_GlobalEnv, &error, this->instance));
       addProt = 2;	
     }
   else if (name == myNPNFuncs->getstringidentifier("C_doTest"))
@@ -182,11 +191,7 @@ bool WebREngine::Invoke(NPIdentifier name, const NPVariant *args, uint32_t argCo
       ptr = CDR(ptr);
       SETCAR(ptr, Rargs[0]);
       
-      PROTECT(ans = R_tryEval(call, R_GlobalEnv, &error));
-      int err = 0;
-
-      if(TYPEOF(ans) == PROMSXP)
-	ans = R_tryEval(ans, R_GlobalEnv, &err);
+      PROTECT(ans = rQueue.requestRCall(call, R_GlobalEnv, &error, this->instance));
       //error =  ConvertRToNP(val, this->instance, myNPNFuncs, result, false);
       addProt = 2;
       convert = false;
@@ -209,7 +214,7 @@ bool WebREngine::Invoke(NPIdentifier name, const NPVariant *args, uint32_t argCo
 
       fprintf(stderr, "\nDirect API call: ");fflush(stderr);
       Rf_PrintValue(call);
-      PROTECT(ans = R_tryEval( call, R_GlobalEnv, &error));
+      PROTECT(ans = rQueue.requestRCall( call, R_GlobalEnv, &error, this->instance));
       
       addProt = 2;
       
@@ -250,7 +255,7 @@ bool WebREngine::HasProperty(NPIdentifier name)
   else if(name == myNPNFuncs->getstringidentifier("getRef"))
     ret = 0;
   else
-    ret = doVarLookup(name, false);
+    ret = doVarLookup(name, false, this->instance);
   return ret;
 }
 
@@ -258,11 +263,10 @@ bool WebREngine::GetProperty(NPIdentifier name, NPVariant *result)
 {
   fprintf(stderr, "\nIn WebREngine::GetProperty");fflush(stderr);
   SEXP val;
-  PROTECT(val = doGetVar(name));
-  int err = 0;
+  PROTECT(val = doGetVar(name, this->instance));
+
   bool ret;  
-  if(TYPEOF(val) == PROMSXP)
-    val = R_tryEval(val, R_GlobalEnv, &err);
+
   if(TYPEOF(val) == CLOSXP)
     ret =  ConvertRToNP(val, this->instance, myNPNFuncs, result, false);
   else
