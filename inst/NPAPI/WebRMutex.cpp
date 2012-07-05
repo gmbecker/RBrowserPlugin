@@ -1,5 +1,20 @@
 #include "WebR.h"
 
+typedef struct rCall {
+  RCallQueue *queue;
+  SEXP toeval;
+  SEXP env;
+  int *err;
+  NPP inst;
+  SEXP _ret;
+} rcall_t;
+
+typedef struct rLookup {
+  RCallQueue *queue;
+  const char *name;
+  SEXP _ret;
+} rlookup_t;
+
 void RCallQueue::lock()
 {
   this->isLocked = 1;
@@ -10,13 +25,61 @@ void RCallQueue::unlock()
   this->isLocked = 0;
 }
 
-SEXP
-RCallQueue::requestRCall(SEXP toeval, SEXP env, int *err, NPP inst)
+SEXP RCallQueue::requestRCall(SEXP toeval, SEXP env, int *err, NPP inst)
 {
-  uint64_t spot = 0;
-  spot = this->enterQueue();
+  pthread_t thr;
+  rcall_t *argsin = (rcall_t *) malloc(sizeof(rcall_t));
+  argsin->queue = this;
+  argsin->toeval = toeval;
+  argsin->env = env;
+  argsin->err = err;
+  argsin->inst = inst;
+  /*
+void * argsin =  malloc(sizeof(SEXP)*2 + sizeof(int*) + sizeof(NPP));
+  int *curpos =   (int *) argsin;
+  *(SEXP *)curpos =  toeval;
+  curpos = curpos + sizeof(SEXP);
+  *(SEXP *)curpos = env;
+  curpos = curpos + sizeof(SEXP);
+  *(int **) curpos = err;
+  curpos = curpos + sizeof(int*);
+  *(NPP *) curpos = inst; 
+  curpos = curpos + sizeof(NPP);
+  *(RCallQueue**) curpos = this;
+  */
+  (SEXP) pthread_create(&thr, NULL, &doRCall, (void*)argsin);
+
+//XXX pretty sure this is going to cause the same problem as not having threads...
+  pthread_join(thr, NULL);
+  SEXP ans = argsin->_ret;
+  free(argsin);
+  return ans;
+}
+
+void* doRCall(void * in)
+{
+  /*  
+  long long int curpos = (long long int) in;
+  SEXP toeval = (SEXP) curpos;
+  curpos = curpos + sizeof(SEXP);
+  SEXP env = (SEXP) curpos;
+  curpos = curpos + sizeof(SEXP);
+  int *err = (int *) curpos;
+  curpos = curpos + sizeof(int*);
+  NPP inst = (NPP) curpos;
+  curpos = curpos + sizeof(NPP);
+  RCallQueue *queue = *(RCallQueue **) curpos;
+  */
+  rcall_t *callin = reinterpret_cast<rcall_t*>(in);
   
-  this->waitInQueue(spot);
+  RCallQueue *queue = reinterpret_cast<RCallQueue*>(callin->queue);
+  SEXP toeval = reinterpret_cast<SEXP>(callin->toeval);
+  SEXP env = reinterpret_cast<SEXP>(callin->env);
+  int *err = reinterpret_cast<int*>(callin->err);
+  NPP inst = reinterpret_cast<NPP>(callin->inst);
+  uint64_t spot = 0;
+  spot = queue->enterQueue();
+  queue->waitInQueue(spot);
   
   if(inst)
     {
@@ -28,10 +91,10 @@ RCallQueue::requestRCall(SEXP toeval, SEXP env, int *err, NPP inst)
 
   PROTECT(call = toeval);  
   Rf_PrintValue(call);
-  Rf_PrintValue(env);
-  
+    
   PROTECT( ans = R_tryEval(toeval, env, err));
   if(err)
+
     ans = R_NilValue;
   else
     {
@@ -40,17 +103,46 @@ RCallQueue::requestRCall(SEXP toeval, SEXP env, int *err, NPP inst)
       //Unlock R and reset queue if this was the last request.
     } 
 
-  this->advanceQueue(spot);
+  queue->advanceQueue(spot);
+  callin->_ret = ans;
   UNPROTECT(1);
   return ans;
   }
 
 SEXP RCallQueue::requestRLookup(const char *name)
 {
-  uint64_t spot = 0;
-  spot = this->enterQueue();
+  pthread_t thr;
+
+  rlookup_t *argsin = (rlookup_t *) malloc(sizeof(rlookup_t));
+			     /*
+  *(RCallQueue **)argsin = this;
+  *(const char **) (argsin + sizeof(RCallQueue)) = name;
+  */
+  argsin->queue = this;
+  argsin->name = name;
+			     
+  (SEXP) pthread_create(&thr, NULL, &doRLookup, (void*) argsin);
   
-  this->waitInQueue(spot);
+  //XXX pretty sure this is going to cause the same problem as not having threads...
+  pthread_join(thr, NULL);
+  SEXP ans = argsin->_ret;
+  free(argsin);
+return ans;
+}  
+
+
+void* doRLookup(void *in)
+{
+  uint64_t spot = 0;
+  /*  RCallQueue *queue = *(RCallQueue **)in;
+  
+      const char *name = (const char*) (in + sizeof(RCallQueue *));*/
+  rlookup_t *argsin = reinterpret_cast<rlookup_t*>(in);
+  RCallQueue *queue = reinterpret_cast<RCallQueue *>(argsin->queue);
+  const char *name = reinterpret_cast<const char *>(argsin->name);
+  spot = queue->enterQueue();
+  
+  queue->waitInQueue(spot);
   
   SEXP ans;
   int err = 0;
@@ -58,8 +150,9 @@ SEXP RCallQueue::requestRLookup(const char *name)
   if(TYPEOF(ans) == PROMSXP)
     ans = R_tryEval(ans, R_GlobalEnv, &err);
   
-  this->advanceQueue(spot);
-  
+  queue->advanceQueue(spot);
+  //R_PreserveObject(ans); //XXX This is never getting released!!!!!
+  argsin->_ret = ans;
   return ans;
 }
 

@@ -44,15 +44,20 @@
 #include "npfunctions.h"
 #include <npruntime.h>
 #include <stdio.h>
+#include "pthread.h"
+
+#define CSTACK_DEFNS 1
 
 #ifndef XP_MACOSX
 #include <R.h>
 #include <Rdefines.h>
 #include <Rembedded.h>
+#include <Rinterface.h>
 #else
 #include <R/R.h>
-#include </Rdefines.h>
+#include <R/Rdefines.h>
 #include <R/Rembedded.h>
+#include <R/Rinterface.h>
 #endif
 
 
@@ -271,14 +276,15 @@ class RCallQueue
  public:
   SEXP requestRCall(SEXP toEval, SEXP env, int *err, NPP inst);
   SEXP requestRLookup(const char *name);
-
- private:
-  uint64_t enterQueue();
-  void lock();
-  void unlock();
   void waitInQueue(uint64_t spot);
   void advanceQueue(uint64_t spot);
+  uint64_t enterQueue(); 
+private:
+  
+  void lock();
+  void unlock();
 
+ 
  private:
   int isLocked;
   uint64_t serving;
@@ -290,6 +296,7 @@ class RCallQueue
 
 SEXP innerGetVar(const char * varName, NPP inst);
 SEXP doGetVar(NPIdentifier name, NPP inst);
-
+ void* doRCall(void *in);
+  void* doRLookup(void *in);
 
 #endif // WebR.h

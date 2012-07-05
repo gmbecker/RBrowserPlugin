@@ -50,8 +50,12 @@ int initR( const char **args, int nargs)
   for(int i = 0 ; i < nargs; i++)
     rargs[i] = strdup(args[i]);
   fprintf(stderr, "Attempting to start embedded R.\n");fflush(stderr);
+R_SignalHandlers = 0;
   Rf_initEmbeddedR(nargs, rargs);
   fprintf(stderr, "R initialization done.\n"); fflush(stderr);
+  
+  R_CStackLimit = (uintptr_t)-1;
+  R_SignalHandlers = 0;
   int error=0;
   SEXP call;
   PROTECT(call = allocVector(LANGSXP, 2));
