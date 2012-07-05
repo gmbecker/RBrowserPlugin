@@ -13,60 +13,96 @@ void RCallQueue::unlock()
 SEXP
 RCallQueue::requestRCall(SEXP toeval, SEXP env, int *err, NPP inst)
 {
-  sigset_t mask, oldmask;
-
   uint64_t spot = 0;
-  //If R is already busy, get in line and wait until our turn comes
-  if(this->isLocked)
-    {
-      spot = this->enterQueue();
-      
-      //http://www.gnu.org/software/libc/manual/html_node/Sigsuspend.html#Sigsuspend
-      /*      sigemptyset (&mask);
-      sigaddset (&mask, SIGUSR1);
-      
-      sigprocmask(SIG_BLOCK, &mask, &oldmask);
-      while(this->serving != spot)
-	sigsuspend(&oldmask);
-	
-      sigprocmask(SIG_UNBLOCK, &oldmask, NULL);
-      */
-    }
-  else
-    {
-      //if R wasn't busy before, lock it to indicate it is busy now
-      this->lock();
-    }
-  //indicate we are now serving this request
-  this->serving = spot;
-
+  spot = this->enterQueue();
+  
+  this->waitInQueue(spot);
+  
   if(inst)
     {
       //update PluginInstance and JS global R variables
       makeRGlobals(inst);
     }
-  SEXP ans;
-  PROTECT(ans = R_tryEval(toeval, env, err));
-  if(!err)
+  
+  SEXP ans, call;
+
+  PROTECT(call = toeval);  
+  Rf_PrintValue(call);
+  Rf_PrintValue(env);
+  
+  PROTECT( ans = R_tryEval(toeval, env, err));
+  if(err)
+    ans = R_NilValue;
+  else
     {
       if(TYPEOF(ans) == PROMSXP)
 	ans = R_tryEval(ans, env, err);
       //Unlock R and reset queue if this was the last request.
-    } else {
-    ans = R_UnboundValue;
+    } 
+
+  this->advanceQueue(spot);
+  UNPROTECT(1);
+  return ans;
   }
+
+SEXP RCallQueue::requestRLookup(const char *name)
+{
+  uint64_t spot = 0;
+  spot = this->enterQueue();
+  
+  this->waitInQueue(spot);
+  
+  SEXP ans;
+  int err = 0;
+  ans = Rf_findVar( Rf_install(name), R_GlobalEnv);
+  if(TYPEOF(ans) == PROMSXP)
+    ans = R_tryEval(ans, R_GlobalEnv, &err);
+  
+  this->advanceQueue(spot);
+  
+  return ans;
+}
+
+void RCallQueue::waitInQueue(uint64_t spot)
+{
+  sigset_t mask, oldmask;
+  //If R is already busy, wait until our turn comes
+  if(this->isLocked)
+    { 
+      //http://www.gnu.org/software/libc/manual/html_node/Sigsuspend.html#Sigsuspend
+      fprintf(stderr, "\nR is in use. Waiting in Queue spot %ld", spot);fflush(stderr);
+      sigemptyset (&mask);
+      sigaddset (&mask, SIGUSR1);
+      
+      sigprocmask(SIG_BLOCK, &mask, &oldmask);
+      //wait until our turn comes up
+      while(this->serving != spot)
+	sigsuspend(&oldmask);
+     
+      sigprocmask(SIG_UNBLOCK, &oldmask, NULL);
+    }
+  else
+    {
+      //if R wasn't busy before, lock it to indicate it is busy now
+      this->lock();
+      this->serving = spot;
+    }
+}
+
+void RCallQueue::advanceQueue(uint64_t spot)
+{
+  
+  fprintf(stderr, "\nDone serving spot %ld. LastInQueue:%ld", spot, this->lastInQueue);fflush(stderr);
   if(this->lastInQueue == spot)
     {
-      this->serving = 0;
+      this->serving = 1;
       this->lastInQueue = 0;
       this->unlock();
     } else {
     //serve the next request;
     this->serving = spot + 1;
-    //raise(SIGUSR1);
+    raise(SIGUSR1);
   }
-  UNPROTECT(1);
-  return ans;
 }
 
 uint64_t RCallQueue::enterQueue()

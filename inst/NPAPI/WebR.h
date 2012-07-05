@@ -265,16 +265,19 @@ void makeRGlobals(NPP inst);
 
 
 
-
+ 
 class RCallQueue
 { 
  public:
   SEXP requestRCall(SEXP toEval, SEXP env, int *err, NPP inst);
+  SEXP requestRLookup(const char *name);
 
  private:
   uint64_t enterQueue();
   void lock();
   void unlock();
+  void waitInQueue(uint64_t spot);
+  void advanceQueue(uint64_t spot);
 
  private:
   int isLocked;
@@ -284,6 +287,9 @@ class RCallQueue
 
   extern RCallQueue rQueue;
 
+
+SEXP innerGetVar(const char * varName, NPP inst);
+SEXP doGetVar(NPIdentifier name, NPP inst);
 
 
 #endif // WebR.h

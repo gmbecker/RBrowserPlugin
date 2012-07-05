@@ -43,26 +43,34 @@ void C_doTest(NPP inst, NPNetscapeFuncs *funcs)
 }
 
 
-
 SEXP doGetVar(NPIdentifier name, NPP inst)
 {
- NPUTF8 *varName = (NPUTF8 *) myNPNFuncs->utf8fromidentifier(name);  
+NPUTF8 *varName = (NPUTF8 *) myNPNFuncs->utf8fromidentifier(name);
+ return innerGetVar((const char *) varName, inst);
+}
+
+SEXP innerGetVar(const char * varName, NPP inst)
+{
+  //NPUTF8 *varName = (NPUTF8 *) myNPNFuncs->utf8fromidentifier(name);  
   fprintf(stderr, "\nLooking for R object : %s", (const char *)varName);fflush(stderr);
   if(!varName || !varName[0]) {
     return R_UnboundValue;
   }
+  /*
   SEXP ans, call, ptr;
   int err = 0;
   PROTECT(ptr = call = allocVector(LANGSXP, 2));
   SETCAR(ptr, Rf_install("get"));
   ptr = CDR(ptr);
-  SETCAR(ptr, mkString((const char *) varName));
+  //SETCAR(ptr, mkString((const char *) varName));
+    SETCAR(ptr, varName);
   PROTECT(ans = rQueue.requestRCall(call, R_GlobalEnv, &err, inst));
   if(err)
-    ans = R_UnboundValue;
+  ans = R_UnboundValue;*/
   //ans = Rf_findVar( Rf_install((const char *)varName), R_GlobalEnv);
-  myNPNFuncs->memfree(varName);
-  UNPROTECT(1);
+  //UNPROTECT(1);
+  SEXP ans;
+  ans = rQueue.requestRLookup(varName);
   return ans;
 }
 
@@ -183,18 +191,20 @@ bool WebREngine::Invoke(NPIdentifier name, const NPVariant *args, uint32_t argCo
   else if (name == myNPNFuncs->getstringidentifier("C_doTest"))
     C_doTest(this->instance, myNPNFuncs);
   else if (name == myNPNFuncs->getstringidentifier("getRef"))
-    {
+    {/*
       SEXP  call, ptr;
       int error;  
       PROTECT(ptr = call = allocVector(LANGSXP, 2));
       SETCAR(ptr, Rf_install("get"));
       ptr = CDR(ptr);
       SETCAR(ptr, Rargs[0]);
-      
       PROTECT(ans = rQueue.requestRCall(call, R_GlobalEnv, &error, this->instance));
       //error =  ConvertRToNP(val, this->instance, myNPNFuncs, result, false);
       addProt = 2;
+     */
+      PROTECT(ans = innerGetVar(CHAR(STRING_ELT(Rargs[0], 0)),this->instance));
       convert = false;
+      addProt = 1;
     }    
   else
     {

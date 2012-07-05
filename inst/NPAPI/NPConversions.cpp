@@ -346,11 +346,12 @@ bool CheckSEXPForJSRef(SEXP obj, NPP inst)
   ptr = CDR(ptr);
   SETCAR(ptr, obj);
   ptr = CDR(ptr);
-  SETCAR(ptr, ScalarString(mkChar("JSValueRef")));
+  //  SETCAR(ptr, ScalarString(mkChar("JSValueRef")));
+  SETCAR(ptr, ScalarString(mkChar("NPVariantRef")));
   
   PROTECT(ans = rQueue.requestRCall(call, R_GlobalEnv, &err, inst));
   bool ret;
-  if (ans == R_UnboundValue)
+  if (ans == R_UnboundValue || ans == R_NilValue)
     ret = 0;
   else
     {
