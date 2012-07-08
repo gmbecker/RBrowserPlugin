@@ -23,6 +23,9 @@
 
 /* Structure containing pointers to functions implemented by the browser. */
 NPNetscapeFuncs *myNPNFuncs;
+pthread_mutex_t rMutex;
+pthread_attr_t rThreadAttrs;
+
 
 RCallQueue rQueue;
 
@@ -50,12 +53,22 @@ int initR( const char **args, int nargs)
   for(int i = 0 ; i < nargs; i++)
     rargs[i] = strdup(args[i]);
   fprintf(stderr, "Attempting to start embedded R.\n");fflush(stderr);
-R_SignalHandlers = 0;
+  R_SignalHandlers = 0;
+  if(!getenv("R_HOME"))
+    {
+      fprintf(stderr, "\nR_HOME was not set. using /usr/lib64/R\n");fflush(stderr);
+      putenv("R_HOME=/usr/lib64/R");
+    }
   Rf_initEmbeddedR(nargs, rargs);
   fprintf(stderr, "R initialization done.\n"); fflush(stderr);
   
   R_CStackLimit = (uintptr_t)-1;
+  
   R_SignalHandlers = 0;
+  pthread_mutex_init(&rMutex, NULL);
+  pthread_attr_init(&rThreadAttrs);
+  pthread_attr_setschedpolicy(&rThreadAttrs, SCHED_FIFO);
+  rQueue.init();
   int error=0;
   SEXP call;
   PROTECT(call = allocVector(LANGSXP, 2));

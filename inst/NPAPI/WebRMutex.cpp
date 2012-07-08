@@ -15,6 +15,7 @@ typedef struct rLookup {
   SEXP _ret;
 } rlookup_t;
 
+
 void RCallQueue::lock()
 {
   this->isLocked = 1;
@@ -47,7 +48,7 @@ void * argsin =  malloc(sizeof(SEXP)*2 + sizeof(int*) + sizeof(NPP));
   curpos = curpos + sizeof(NPP);
   *(RCallQueue**) curpos = this;
   */
-  (SEXP) pthread_create(&thr, NULL, &doRCall, (void*)argsin);
+  (SEXP) pthread_create(&thr, &rThreadAttrs, &doRCall, (void*)argsin);
 
 //XXX pretty sure this is going to cause the same problem as not having threads...
   pthread_join(thr, NULL);
@@ -58,18 +59,7 @@ void * argsin =  malloc(sizeof(SEXP)*2 + sizeof(int*) + sizeof(NPP));
 
 void* doRCall(void * in)
 {
-  /*  
-  long long int curpos = (long long int) in;
-  SEXP toeval = (SEXP) curpos;
-  curpos = curpos + sizeof(SEXP);
-  SEXP env = (SEXP) curpos;
-  curpos = curpos + sizeof(SEXP);
-  int *err = (int *) curpos;
-  curpos = curpos + sizeof(int*);
-  NPP inst = (NPP) curpos;
-  curpos = curpos + sizeof(NPP);
-  RCallQueue *queue = *(RCallQueue **) curpos;
-  */
+
   rcall_t *callin = reinterpret_cast<rcall_t*>(in);
   
   RCallQueue *queue = reinterpret_cast<RCallQueue*>(callin->queue);
@@ -114,10 +104,7 @@ SEXP RCallQueue::requestRLookup(const char *name)
   pthread_t thr;
 
   rlookup_t *argsin = (rlookup_t *) malloc(sizeof(rlookup_t));
-			     /*
-  *(RCallQueue **)argsin = this;
-  *(const char **) (argsin + sizeof(RCallQueue)) = name;
-  */
+
   argsin->queue = this;
   argsin->name = name;
 			     
@@ -134,9 +121,7 @@ return ans;
 void* doRLookup(void *in)
 {
   uint64_t spot = 0;
-  /*  RCallQueue *queue = *(RCallQueue **)in;
-  
-      const char *name = (const char*) (in + sizeof(RCallQueue *));*/
+
   rlookup_t *argsin = reinterpret_cast<rlookup_t*>(in);
   RCallQueue *queue = reinterpret_cast<RCallQueue *>(argsin->queue);
   const char *name = reinterpret_cast<const char *>(argsin->name);
@@ -158,12 +143,13 @@ void* doRLookup(void *in)
 
 void RCallQueue::waitInQueue(uint64_t spot)
 {
-  sigset_t mask, oldmask;
+  //sigset_t mask, oldmask;
   //If R is already busy, wait until our turn comes
-  if(this->isLocked)
-    { 
+  //if(this->isLocked)
+  // { 
       //http://www.gnu.org/software/libc/manual/html_node/Sigsuspend.html#Sigsuspend
-      fprintf(stderr, "\nR is in use. Waiting in Queue spot %ld", spot);fflush(stderr);
+  fprintf(stderr, "\nR is in use. Waiting in Queue spot %ld, currently serving spot %ld", spot, this->serving);fflush(stderr);
+      /*
       sigemptyset (&mask);
       sigaddset (&mask, SIGUSR1);
       
@@ -173,6 +159,14 @@ void RCallQueue::waitInQueue(uint64_t spot)
 	sigsuspend(&oldmask);
      
       sigprocmask(SIG_UNBLOCK, &oldmask, NULL);
+      */
+      pthread_mutex_lock(&rMutex);
+      while(this->serving != spot)
+	{
+	  pthread_mutex_unlock(&rMutex);
+	  pthread_mutex_lock(&rMutex);
+	}
+      /*
     }
   else
     {
@@ -180,6 +174,7 @@ void RCallQueue::waitInQueue(uint64_t spot)
       this->lock();
       this->serving = spot;
     }
+      */
 }
 
 void RCallQueue::advanceQueue(uint64_t spot)
@@ -188,14 +183,19 @@ void RCallQueue::advanceQueue(uint64_t spot)
   fprintf(stderr, "\nDone serving spot %ld. LastInQueue:%ld", spot, this->lastInQueue);fflush(stderr);
   if(this->lastInQueue == spot)
     {
+      fprintf(stderr, "....Clearing Queue");fflush(stderr);
       this->serving = 1;
       this->lastInQueue = 0;
       this->unlock();
     } else {
     //serve the next request;
     this->serving = spot + 1;
-    raise(SIGUSR1);
+    //raise(SIGUSR1);
+    
+
   }
+  fprintf(stderr, "\nUnlocking queue to serve %ld", this->serving); fflush(stderr);
+  pthread_mutex_unlock(&rMutex);
 }
 
 uint64_t RCallQueue::enterQueue()
@@ -244,5 +244,12 @@ void makeRGlobals(NPP inst)
   Rf_defineVar(Rf_install("JS"), ans3, R_GlobalEnv);
   UNPROTECT(9);
 
+
+}
+
+void RCallQueue::init()
+{
+  this->serving = 1;
+  
 
 }

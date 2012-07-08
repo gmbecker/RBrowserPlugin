@@ -93,7 +93,8 @@ NPError NPP_SetValue(NPP instance, NPNVariable variable, void *value);
 }
 extern NPNetscapeFuncs *myNPNFuncs;
 extern FILE *logfile;
-
+extern pthread_mutex_t rMutex;
+extern pthread_attr_t rThreadAttrs;
 class WebREngine : public NPObject
 {
 protected:
@@ -279,6 +280,7 @@ class RCallQueue
   void waitInQueue(uint64_t spot);
   void advanceQueue(uint64_t spot);
   uint64_t enterQueue(); 
+  void init();
 private:
   
   void lock();
