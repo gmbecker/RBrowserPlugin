@@ -49,6 +49,9 @@ bool ConvertRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret, bo
 	  else
 	    BOOLEAN_TO_NPVARIANT( (bool) LOGICAL(val)[0], *ret);
 	  break;
+	case VECSXP:
+	  RVectorToNP(val, inst, funcs, ret);
+	  break;
 	case STRSXP:
 	  if(len > 1)
 	    RVectorToNP(val, inst, funcs, ret);
@@ -129,10 +132,10 @@ bool RVectorToNP(SEXP vec, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret)
 	  vartmp2->value.intValue = LOGICAL(vec)[i];
 	  break;
 	case VECSXP:
-	  ConvertRToNP(VECTOR_ELT(vec, i), inst, funcs, vartmp2, false);
+	  ConvertRToNP(VECTOR_ELT(vec, i), inst, funcs, vartmp2, true);
 	  break;
 	case STRSXP:
-	  ConvertRToNP(STRING_ELT(vec, i), inst, funcs, vartmp2, false);
+	  ConvertRToNP(STRING_ELT(vec, i), inst, funcs, vartmp2, true);
 	  break;
 	}
       //  fprintf(stderr, "\nAttempting push call");fflush(stderr);
