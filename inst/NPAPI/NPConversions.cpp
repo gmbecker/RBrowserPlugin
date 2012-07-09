@@ -209,7 +209,7 @@ bool ConvertNPToR(NPVariant *var, NPP inst, NPNetscapeFuncs *funcs, bool convRet
 		funcs->getproperty(inst, inObject, funcs->getstringidentifier("length"), &npvLength);
 		//int len = npvLength.value.intValue;
 		int len = (int) npvLength.value.doubleValue;
-		fprintf(stderr, "\nNPArray of length %d detected. Convertin to R list/vector", len);fflush(stderr);
+		fprintf(stderr, "\nNPArray of length %d detected. Converting to R list/vector", len);fflush(stderr);
 		canfree = NPArrayToR(var, len, 0, inst, funcs, _ret);
 	      }
 	    else
@@ -315,9 +315,18 @@ void MakeRRefForNP(SEXP obj, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret)
       R_PreserveObject(retobj->object);
       OBJECT_TO_NPVARIANT(retobj, *ret);
     }
+  else if (IS_S4_OBJECT(ans))
+    {
+      RS4Object *retobj;
+      retobj = (RS4Object *) funcs->createobject(inst, &RS4Object::_npclass);
+      funcs->retainobject(retobj);
+      retobj->object = ans;
+      retobj->funcs = funcs;
+      R_PreserveObject(retobj->object);
+      OBJECT_TO_NPVARIANT(retobj, *ret);
+    } 
   else
     {
-
       RObject *retobj;
       retobj = (RObject *) funcs->createobject(inst, &RObject::_npclass);
       funcs->retainobject(retobj);

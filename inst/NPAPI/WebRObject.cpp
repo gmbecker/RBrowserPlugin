@@ -3,17 +3,10 @@
 
 RObject::RObject (NPP instance) 
 {
-  
-
-  //this->m_getVersion_id = NPN_GetStringIdentifier("getVersion");
-  //  this->m_getVersion_id = myNPNFuncs->getstringidentifier("getVersion");
   this->instance = instance;
   this->object = NULL;
   this->converter = NULL;
-  //XXX Need to retain this object so it doesn't get gc'ed. Someone posted on rdevel mentioning this somewhat recently. Simon maybe?
 }
-
-
 
 void RObject::Deallocate()
 {
@@ -26,8 +19,6 @@ void RObject::Deallocate()
 
 void RObject::Invalidate()
 {
-
-
 }
 
 bool RObject::HasMethod(NPIdentifier name)
@@ -63,9 +54,7 @@ bool RObject::Invoke(NPIdentifier name, const NPVariant *args, uint32_t argCount
       memcpy(strdat, "[Internal R Object]", 19+1);
       NPString str ={ strdat, 19};
       result->type = NPVariantType_String;
-      result->value.stringValue = str;
-      
-      
+      result->value.stringValue = str;     
       return true;
     }
     
@@ -136,7 +125,7 @@ bool RObject::GetProperty(NPIdentifier name, NPVariant *result)
     SETCAR(ptr, ScalarInteger(this->funcs->intfromidentifier(name)));
   
   PROTECT(ans = rQueue.requestRCall(call, R_GlobalEnv, &error, this->instance));
-  bool ret = ConvertRToNP(ans, this->instance, this->funcs, result, false);
+  bool ret = ConvertRToNP(ans, this->instance, this->funcs, result, true);
   UNPROTECT(2);
   //ConvertRToNP(ans, Robj->instance, funcs, result, false);
   return ret;
@@ -251,6 +240,249 @@ NPClass RObject::_npclass = {
   RObject::_RemoveProperty,                                
   RObject::_Enumerate,                                     
   RObject::_Construct                                      
+};
+
+
+//special type of object for S4
+
+RS4Object::RS4Object (NPP instance) 
+{
+  this->instance = instance;
+  this->object = NULL;
+  this->converter = NULL;
+}
+
+void RS4Object::Deallocate()
+{
+  if(this->object)
+    {
+      R_ReleaseObject(this->object);
+      this->object=NULL;
+    }
+}
+
+void RS4Object::Invalidate()
+{
+}
+
+bool RS4Object::HasMethod(NPIdentifier name)
+{
+  int ret = 0;
+  if(name == this->funcs->getstringidentifier("convert"))
+    ret = 1;
+  else if(name == this->funcs->getstringidentifier("toString"))
+    ret = 1;
+  
+  return (bool) ret;
+}
+
+
+bool RS4Object::Invoke(NPIdentifier name, const NPVariant *args, uint32_t argCount, NPVariant *result)
+{
+  if(name == this->funcs->getstringidentifier("convert"))
+    {
+      if(this->converter != NULL)
+	{
+	  fprintf(stderr, "\nUser assigned JavaScript converters are not supported at this time. If you need this functionality please contact the maintainer.\n");fflush(stderr);
+	  return false;
+	}
+      //true indicates we want conversion from RS4Object to normalJavaScript object where possible.
+      ConvertRToNP(this->object, this->instance, this->funcs, result, true); 
+      return true;
+    } else if (name == this->funcs->getstringidentifier("toString")) 
+    {
+      fprintf(stderr, "\nIn tostring method of an RS4Object\n");fflush(stderr);
+      //From NPN_ReleaseVariantValue docs: NPN_ReleaseVariantValue() will call NPN_ReleaseObject() on NPVariants of type NPVARIANTTYPE_OBJECT, and NPN_FreeMem() on NPVariants of type NPVARIANTTYPE_STRING. 
+      NPUTF8 *strdat = (NPUTF8*) this->funcs->memalloc(22+1);
+      //strdat = (NPUTF8*)"[Internal R Object]";
+      memcpy(strdat, "[Internal R S4 Object]", 22+1);
+      NPString str ={ strdat, 22};
+      result->type = NPVariantType_String;
+      result->value.stringValue = str;     
+      return true;
+    }
+    
+  return false;
+}
+
+bool RS4Object::InvokeDefault(const NPVariant *args, uint32_t argCount, NPVariant *result)
+{
+  return false;
+}
+
+bool RS4Object::HasProperty(NPIdentifier name)
+{
+  bool ret= true;
+  fprintf(stderr, "\nIn RS4Object::HasProperty");fflush(stderr);
+  //we need to return false for things that need to be methods.
+  if(name == this->funcs->getstringidentifier("convert"))
+    ret = 0;
+  else if(name == this->funcs->getstringidentifier("toString"))
+    ret = 0;
+  else if(name == this->funcs->getstringidentifier("valueOf"))
+    ret = 0;
+  else if(name == this->funcs->getstringidentifier("isRObject"))
+    ret = 1;
+  else
+    {
+      ret = (bool) R_has_slot(this->object, ScalarString(mkChar(this->funcs->utf8fromidentifier(name))));
+      /*
+      PROTECT(ptr = call = allocVector(LANGSXP, 3));
+      SETCAR(ptr, Rf_install("CheckForProperty"));
+      ptr = CDR(ptr);
+      SETCAR(ptr, this-> object);
+      ptr = CDR(ptr);
+      if(this->funcs->identifierisstring(name))
+	SETCAR(ptr, ScalarString(mkChar(this->funcs->utf8fromidentifier(name))));
+      else
+	SETCAR(ptr, ScalarInteger(this->funcs->intfromidentifier(name)));
+      PROTECT(ans = rQueue.requestRCall(call, R_GlobalEnv, &error, this->instance));
+      UNPROTECT(2);
+      //Need to check if the R property exists or not.... currently we just return true.
+      if(!error)
+	ret = LOGICAL(ans)[0];
+      else
+	ret = false;
+      */
+    }
+  return ret;
+}
+
+bool RS4Object::GetProperty(NPIdentifier name, NPVariant *result)
+{
+  if(name == this->funcs->getstringidentifier("isRObject"))
+    {
+      BOOLEAN_TO_NPVARIANT(true, *result); 
+      return true;
+    }
+  //Emulate object[[name]], object$name, object@name in that order
+  fprintf(stderr, "\nIn RS4Object::GetProperty");fflush(stderr);
+  SEXP call, ptr, ans;
+  int error;
+  PROTECT(ptr = call = allocVector(LANGSXP, 3));
+  SETCAR(ptr, Rf_install("@"));
+  ptr = CDR(ptr);
+  SETCAR(ptr, this->object);
+  ptr = CDR(ptr);
+
+  SETCAR(ptr, ScalarString(mkChar(this->funcs->utf8fromidentifier(name))));
+  
+  PROTECT(ans = rQueue.requestRCall(call, R_GlobalEnv, &error, this->instance));
+  bool ret = ConvertRToNP(ans, this->instance, this->funcs, result, true);
+  UNPROTECT(2);
+  //ConvertRToNP(ans, Robj->instance, funcs, result, false);
+  return ret;
+}
+
+bool RS4Object::SetProperty(NPIdentifier name, const NPVariant *value)
+{
+  //Emulate object[[name]]<-value
+	return false;
+}
+
+bool RS4Object::RemoveProperty(NPIdentifier name)
+{
+	return false;
+}
+
+bool RS4Object::Enumerate(NPIdentifier **identifier, uint32_t *count)
+{
+    fprintf(stderr, "\nIn RS4Object::Enumerate");fflush(stderr);
+	return false;
+}
+
+bool RS4Object::Construct(const NPVariant *args, uint32_t argCount, NPVariant *result)
+{
+	return true;
+}
+
+NPObject *RS4Object::Allocate(NPP npp, NPClass *aClass)
+{
+	NPObject *pObj = (NPObject *)new RS4Object(npp);
+	return pObj;
+}
+
+void RS4Object::Detatch (void)
+{
+	m_Instance = NULL;
+}
+
+
+
+void RS4Object::_Deallocate(NPObject *npobj)
+{
+	RS4Object *pObj = ((RS4Object *) npobj);
+
+  // Call the virtual destructor.
+	pObj->Deallocate ();
+	delete pObj;
+}
+
+void RS4Object::_Invalidate(NPObject *npobj)
+{
+	((RS4Object*)npobj)->Invalidate();
+}
+
+bool RS4Object::_HasMethod(NPObject *npobj, NPIdentifier name)
+{
+	return ((RS4Object*)npobj)->HasMethod (name);
+}
+
+bool RS4Object::_Invoke(NPObject *npobj, NPIdentifier name, const NPVariant *args, uint32_t argCount, NPVariant *result)
+{
+	return ((RS4Object*)npobj)->Invoke (name, args, argCount, result);
+}
+
+bool RS4Object::_InvokeDefault(NPObject *npobj, const NPVariant *args, uint32_t argCount, NPVariant *result)
+{
+	return ((RS4Object*)npobj)->InvokeDefault (args, argCount, result);
+}
+
+bool RS4Object::_HasProperty(NPObject * npobj, NPIdentifier name)
+{
+	return ((RS4Object*)npobj)->HasProperty (name);
+}
+
+bool RS4Object::_GetProperty(NPObject *npobj, NPIdentifier name, NPVariant *result)
+{
+	return ((RS4Object*)npobj)->GetProperty (name, result);
+}
+
+bool RS4Object::_SetProperty(NPObject *npobj, NPIdentifier name, const NPVariant *value)
+{
+	return ((RS4Object*)npobj)->SetProperty (name, value);
+}
+
+bool RS4Object::_RemoveProperty(NPObject *npobj, NPIdentifier name)
+{
+	return ((RS4Object*)npobj)->RemoveProperty (name);
+}
+
+bool RS4Object::_Enumerate(NPObject *npobj, NPIdentifier **identifier, uint32_t *count)
+{
+	return ((RS4Object*)npobj)->Enumerate (identifier, count);
+}
+
+bool RS4Object::_Construct(NPObject *npobj, const NPVariant *args, uint32_t argCount, NPVariant *result)
+{
+	return ((RS4Object*)npobj)->Construct (args, argCount, result);
+}
+
+
+NPClass RS4Object::_npclass = {                              
+  NP_CLASS_STRUCT_VERSION,								                          
+  RS4Object::Allocate,                                       
+  RS4Object::_Deallocate,                                    
+  RS4Object::_Invalidate,                                    
+  RS4Object::_HasMethod,                                     
+  RS4Object::_Invoke,                                        
+  RS4Object::_InvokeDefault,                                 
+  RS4Object::_HasProperty,                                   
+  RS4Object::_GetProperty,                                   
+  RS4Object::_SetProperty,                                   
+  RS4Object::_RemoveProperty,                                
+  RS4Object::_Enumerate,                                     
+  RS4Object::_Construct                                      
 };
 
  

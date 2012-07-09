@@ -209,7 +209,7 @@ bool ConvertNPToR(NPVariant *var, NPP inst, NPNetscapeFuncs *funcs, bool convRet
 		funcs->getproperty(inst, inObject, funcs->getstringidentifier("length"), &npvLength);
 		//int len = npvLength.value.intValue;
 		int len = (int) npvLength.value.doubleValue;
-		fprintf(stderr, "\nNPArray of length %d detected. Convertin to R list/vector", len);fflush(stderr);
+		fprintf(stderr, "\nNPArray of length %d detected. Converting to R list/vector", len);fflush(stderr);
 		canfree = NPArrayToR(var, len, 0, inst, funcs, _ret);
 	      }
 	    else

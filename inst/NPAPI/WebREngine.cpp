@@ -264,6 +264,8 @@ bool WebREngine::HasProperty(NPIdentifier name)
     ret = 0;
   else if(name == myNPNFuncs->getstringidentifier("getRef"))
     ret = 0;
+  else if(name == myNPNFuncs->getstringidentifier("serving"))
+    ret = 1;
   else
     ret = doVarLookup(name, false, this->instance);
   return ret;
@@ -271,18 +273,28 @@ bool WebREngine::HasProperty(NPIdentifier name)
 
 bool WebREngine::GetProperty(NPIdentifier name, NPVariant *result)
 {
-  fprintf(stderr, "\nIn WebREngine::GetProperty");fflush(stderr);
-  SEXP val;
-  PROTECT(val = doGetVar(name, this->instance));
-
   bool ret;  
-
-  if(TYPEOF(val) == CLOSXP)
-    ret =  ConvertRToNP(val, this->instance, myNPNFuncs, result, false);
+  if(name == myNPNFuncs->getstringidentifier("serving"))
+    {
+      INT32_TO_NPVARIANT(rQueue.serving, *result);
+      ret = 1;
+    }
   else
-    
-    ret =  ConvertRToNP(val, this->instance, myNPNFuncs, result, true) ;
-  UNPROTECT(1);
+    {
+
+      fprintf(stderr, "\nIn WebREngine::GetProperty");fflush(stderr);
+      SEXP val;
+      PROTECT(val = doGetVar(name, this->instance));
+      
+     
+      
+      if(TYPEOF(val) == CLOSXP)
+	ret =  ConvertRToNP(val, this->instance, myNPNFuncs, result, false);
+      else
+	
+	ret =  ConvertRToNP(val, this->instance, myNPNFuncs, result, true) ;
+      UNPROTECT(1);
+    }
   return ret;
 }
 

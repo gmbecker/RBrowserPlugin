@@ -35,23 +35,13 @@ SEXP RCallQueue::requestRCall(SEXP toeval, SEXP env, int *err, NPP inst)
   argsin->env = env;
   argsin->err = err;
   argsin->inst = inst;
-  /*
-void * argsin =  malloc(sizeof(SEXP)*2 + sizeof(int*) + sizeof(NPP));
-  int *curpos =   (int *) argsin;
-  *(SEXP *)curpos =  toeval;
-  curpos = curpos + sizeof(SEXP);
-  *(SEXP *)curpos = env;
-  curpos = curpos + sizeof(SEXP);
-  *(int **) curpos = err;
-  curpos = curpos + sizeof(int*);
-  *(NPP *) curpos = inst; 
-  curpos = curpos + sizeof(NPP);
-  *(RCallQueue**) curpos = this;
-  */
+  
   (SEXP) pthread_create(&thr, &rThreadAttrs, &doRCall, (void*)argsin);
 
 //XXX pretty sure this is going to cause the same problem as not having threads...
   pthread_join(thr, NULL);
+  
+  doRCall((void*) argsin);
   SEXP ans = argsin->_ret;
   free(argsin);
   return ans;
@@ -67,7 +57,7 @@ void* doRCall(void * in)
   SEXP env = reinterpret_cast<SEXP>(callin->env);
   int *err = reinterpret_cast<int*>(callin->err);
   NPP inst = reinterpret_cast<NPP>(callin->inst);
-  uint64_t spot = 0;
+  int32_t spot = 0;
   spot = queue->enterQueue();
   queue->waitInQueue(spot);
   
@@ -106,11 +96,12 @@ SEXP RCallQueue::requestRLookup(const char *name)
 
   argsin->queue = this;
   argsin->name = name;
-			     
-  (SEXP) pthread_create(&thr, NULL, &doRLookup, (void*) argsin);
+ 
+  pthread_create(&thr, NULL, &doRLookup, (void*) argsin);
   
   //XXX pretty sure this is going to cause the same problem as not having threads...
   pthread_join(thr, NULL);
+  
   SEXP ans = argsin->_ret;
   free(argsin);
 return ans;
@@ -119,7 +110,7 @@ return ans;
 
 void* doRLookup(void *in)
 {
-  uint64_t spot = 0;
+  int32_t spot = 0;
 
   rlookup_t *argsin = reinterpret_cast<rlookup_t*>(in);
   RCallQueue *queue = reinterpret_cast<RCallQueue *>(argsin->queue);
@@ -140,43 +131,20 @@ void* doRLookup(void *in)
   return ans;
 }
 
-void RCallQueue::waitInQueue(uint64_t spot)
+void RCallQueue::waitInQueue(int32_t spot)
 {
-  //sigset_t mask, oldmask;
-  //If R is already busy, wait until our turn comes
-  //if(this->isLocked)
-  // { 
       //http://www.gnu.org/software/libc/manual/html_node/Sigsuspend.html#Sigsuspend
   fprintf(stderr, "\nR is in use. Waiting in Queue spot %ld, currently serving spot %ld", spot, this->serving);fflush(stderr);
-      /*
-      sigemptyset (&mask);
-      sigaddset (&mask, SIGUSR1);
-      
-      sigprocmask(SIG_BLOCK, &mask, &oldmask);
-      //wait until our turn comes up
-      while(this->serving != spot)
-	sigsuspend(&oldmask);
-     
-      sigprocmask(SIG_UNBLOCK, &oldmask, NULL);
-      */
+  
       pthread_mutex_lock(&rMutex);
       while(this->serving != spot)
 	{
 	  pthread_mutex_unlock(&rMutex);
 	  pthread_mutex_lock(&rMutex);
 	}
-      /*
-    }
-  else
-    {
-      //if R wasn't busy before, lock it to indicate it is busy now
-      this->lock();
-      this->serving = spot;
-    }
-      */
 }
 
-void RCallQueue::advanceQueue(uint64_t spot)
+void RCallQueue::advanceQueue(int32_t spot)
 {
   
   fprintf(stderr, "\nDone serving spot %ld. LastInQueue:%ld", spot, this->lastInQueue);fflush(stderr);
@@ -197,7 +165,7 @@ void RCallQueue::advanceQueue(uint64_t spot)
   pthread_mutex_unlock(&rMutex);
 }
 
-uint64_t RCallQueue::enterQueue()
+int32_t RCallQueue::enterQueue()
 {
   this->lastInQueue++;
   return this->lastInQueue;
