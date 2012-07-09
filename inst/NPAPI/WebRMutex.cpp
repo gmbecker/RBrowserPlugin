@@ -83,8 +83,7 @@ void* doRCall(void * in)
   Rf_PrintValue(call);
     
   PROTECT( ans = R_tryEval(toeval, env, err));
-  if(err)
-
+  if(*err)
     ans = R_NilValue;
   else
     {

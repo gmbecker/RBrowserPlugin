@@ -9,7 +9,7 @@ bool ConvertRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret, bo
   int err = 0;
   if(TYPEOF(val) == PROMSXP)
     val = R_tryEval(val, R_GlobalEnv, &err);
-  if (CheckSEXPForJSRef(val))
+  if (CheckSEXPForJSRef(val, inst))
     {
       //XXX We shouldn't have to copy here, but do we really want to pass in double pointers?
       *ret = *(NPVariant *) R_ExternalPtrAddr(GET_SLOT( val , Rf_install( "ref" ) ) );
@@ -336,7 +336,7 @@ const char * NPStringToConstChar(NPString str)
       return conchar;
 }
 
-bool CheckSEXPForJSRef(SEXP obj)
+bool CheckSEXPForJSRef(SEXP obj, NPP inst)
 {
 
   SEXP ans, call, ptr;
