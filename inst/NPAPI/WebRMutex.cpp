@@ -118,7 +118,8 @@ void* doRLookup(void *in)
   spot = queue->enterQueue();
   
   queue->waitInQueue(spot);
-  
+
+  fprintf(stderr, "\nDone waiting spot: %d serving %d", spot, queue->serving);fflush(stderr);
   SEXP ans;
   int err = 0;
   ans = Rf_findVar( Rf_install(name), R_GlobalEnv);
@@ -134,14 +135,29 @@ void* doRLookup(void *in)
 void RCallQueue::waitInQueue(int32_t spot)
 {
       //http://www.gnu.org/software/libc/manual/html_node/Sigsuspend.html#Sigsuspend
-  fprintf(stderr, "\nR is in use. Waiting in Queue spot %ld, currently serving spot %ld", spot, this->serving);fflush(stderr);
-  
-      pthread_mutex_lock(&rMutex);
+  fprintf(stderr, "\nIn Queue spot %ld, currently serving spot %ld", spot, this->serving);fflush(stderr);
+  if(this->serving == spot)
+    return;
+
+  pthread_mutex_lock(&queueMutex);
+  pthread_cond_wait(&queueAdvance, &queueMutex);
+  fprintf(stderr, "\nQueue advance detected. spot: %d serving: %d\n", spot, this->serving);
+  while(this->serving !=spot)
+    {
+      pthread_cond_wait(&queueAdvance, &queueMutex);
+    }
+  pthread_mutex_unlock(&queueMutex);
+  /*
+  //////
+
+      int val = pthread_mutex_lock(&rMutex);
+      fprintf(stderr, "\nInitial call to lock returned %d", val);fflush(stderr);
       while(this->serving != spot)
 	{
 	  pthread_mutex_unlock(&rMutex);
 	  pthread_mutex_lock(&rMutex);
 	}
+  */
 }
 
 void RCallQueue::advanceQueue(int32_t spot)
@@ -162,7 +178,10 @@ void RCallQueue::advanceQueue(int32_t spot)
 
   }
   fprintf(stderr, "\nUnlocking queue to serve %ld", this->serving); fflush(stderr);
-  pthread_mutex_unlock(&rMutex);
+  //  pthread_mutex_unlock(&rMutex);
+  pthread_mutex_lock(&queueMutex);
+  pthread_cond_broadcast(&queueAdvance);
+  pthread_mutex_unlock(&queueMutex);
 }
 
 int32_t RCallQueue::enterQueue()

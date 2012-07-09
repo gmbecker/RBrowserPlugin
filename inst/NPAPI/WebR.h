@@ -94,7 +94,10 @@ NPError NPP_SetValue(NPP instance, NPNVariable variable, void *value);
 extern NPNetscapeFuncs *myNPNFuncs;
 extern FILE *logfile;
 extern pthread_mutex_t rMutex;
+extern pthread_mutex_t queueMutex;
 extern pthread_attr_t rThreadAttrs;
+extern pthread_cond_t queueAdvance;
+
 class WebREngine : public NPObject
 {
 protected:

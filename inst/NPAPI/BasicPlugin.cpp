@@ -24,8 +24,9 @@
 /* Structure containing pointers to functions implemented by the browser. */
 NPNetscapeFuncs *myNPNFuncs;
 pthread_mutex_t rMutex;
+pthread_mutex_t queueMutex;
 pthread_attr_t rThreadAttrs;
-
+pthread_cond_t queueAdvance;
 
 RCallQueue rQueue;
 
@@ -66,6 +67,7 @@ int initR( const char **args, int nargs)
   
   R_SignalHandlers = 0;
   pthread_mutex_init(&rMutex, NULL);
+  pthread_mutex_init(&queueMutex, NULL);
   pthread_attr_init(&rThreadAttrs);
   pthread_attr_setschedpolicy(&rThreadAttrs, SCHED_FIFO);
   rQueue.init();
