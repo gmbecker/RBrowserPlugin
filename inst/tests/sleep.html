@@ -9,10 +9,8 @@
   i = 0
   rfunc = function(e)
 {
-  print("in rfunc")
-  for(j in 1:10000000) i <<- j
-  print(JS)
-div1 = JS[["document"]]$getElementById("divout")  
+  Sys.sleep(3)
+  div1 = JS[["document"]]$getElementById("divout")  
   div1[["innerHTML"]] = paste("rfunc done.")
 }
 
@@ -27,22 +25,22 @@ div1 = JS[["document"]]$getElementById("divout")
 <script type="text/javascript">
 function callfuncs()
 {
-
+/*
  var div2 = document.getElementById("divout2");
  var evt = document.createEvent("MouseEvents");
  evt.initMouseEvent("click", true, true, window,
     0, 0, 0, 0, 0, false, false, false, false, 0, null);
  div2.dispatchEvent(evt);
-
+*/
  R.rfunc2()
 }
 </script>
 </head>
 <body>
     <embed id="REngine" type="application/test-r" width="0" height="0"></embed>
-<input type="button"  onclick="callfuncs();"/>
+<input type="button"  onclick="R.rfunc();"/>
 <input type="button"  onclick="R.rfunc2();"/>
 <div id="divout" ></div>
-<div id="divout2" onclick="R.rfunc();"></div>
+<div id="divout2" ></div>
 </body>
 </html>

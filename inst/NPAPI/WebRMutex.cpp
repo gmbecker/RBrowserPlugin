@@ -36,10 +36,10 @@ SEXP RCallQueue::requestRCall(SEXP toeval, SEXP env, int *err, NPP inst)
   argsin->err = err;
   argsin->inst = inst;
   
-  (SEXP) pthread_create(&thr, &rThreadAttrs, &doRCall, (void*)argsin);
+  //(SEXP) pthread_create(&thr, &rThreadAttrs, &doRCall, (void*)argsin);
 
 //XXX pretty sure this is going to cause the same problem as not having threads...
-  pthread_join(thr, NULL);
+  //pthread_join(thr, NULL);
   
   doRCall((void*) argsin);
   SEXP ans = argsin->_ret;
@@ -97,11 +97,11 @@ SEXP RCallQueue::requestRLookup(const char *name)
   argsin->queue = this;
   argsin->name = name;
  
-  pthread_create(&thr, NULL, &doRLookup, (void*) argsin);
+  //pthread_create(&thr, NULL, &doRLookup, (void*) argsin);
   
   //XXX pretty sure this is going to cause the same problem as not having threads...
-  pthread_join(thr, NULL);
-  
+  //pthread_join(thr, NULL);
+  doRLookup((void*) argsin);
   SEXP ans = argsin->_ret;
   free(argsin);
 return ans;
@@ -139,14 +139,14 @@ void RCallQueue::waitInQueue(int32_t spot)
   if(this->serving == spot)
     return;
 
-  pthread_mutex_lock(&queueMutex);
-  pthread_cond_wait(&queueAdvance, &queueMutex);
-  fprintf(stderr, "\nQueue advance detected. spot: %d serving: %d\n", spot, this->serving);
-  while(this->serving !=spot)
-    {
-      pthread_cond_wait(&queueAdvance, &queueMutex);
-    }
-  pthread_mutex_unlock(&queueMutex);
+  //pthread_mutex_lock(&queueMutex);
+  //pthread_cond_wait(&queueAdvance, &queueMutex);
+  //fprintf(stderr, "\nQueue advance detected. spot: %d serving: %d\n", spot, this->serving);
+  //  while(this->serving !=spot)
+  // {
+      //pthread_cond_wait(&queueAdvance, &queueMutex);
+  // }
+  // pthread_mutex_unlock(&queueMutex);
   /*
   //////
 
@@ -179,9 +179,11 @@ void RCallQueue::advanceQueue(int32_t spot)
   }
   fprintf(stderr, "\nUnlocking queue to serve %ld", this->serving); fflush(stderr);
   //  pthread_mutex_unlock(&rMutex);
+  /*
   pthread_mutex_lock(&queueMutex);
   pthread_cond_broadcast(&queueAdvance);
   pthread_mutex_unlock(&queueMutex);
+  */
 }
 
 int32_t RCallQueue::enterQueue()
@@ -222,7 +224,7 @@ void makeRGlobals(NPP inst)
   NPVariant *winvar =  (NPVariant *) myNPNFuncs->memalloc(sizeof(NPVariant));
   OBJECT_TO_NPVARIANT(domwin, *winvar);
   PROTECT( klass3 = MAKE_CLASS( "NPVariantRef" ) );
-  PROTECT( ans3 = NEW( klass2 ) );
+  PROTECT( ans3 = NEW( klass3 ) );
   PROTECT( ptr3 = R_MakeExternalPtr( winvar,
                                      Rf_install("DomWindow"),
                                      R_NilValue));

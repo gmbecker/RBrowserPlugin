@@ -1,0 +1,46 @@
+<html>
+  <head>
+    <script type="text/javascript" src="../../../RFirefox/inst/javascript/Rhelpers.js"></script>  
+    <script type="text/javascript">
+      function dotest()
+      {
+        var numdiv = document.getElementById("numdiv");
+        var numres = R.numtest();
+        numdiv.innerHTML = "numeric: " + numres + " (" + typeof(numres) + ")";
+        var chardiv = document.getElementById("chardiv");
+        var charres = R.chartest();
+        chardiv.innerHTML = "character: " + charres + " (" + typeof(charres) + ")";
+        var logdiv = document.getElementById("logdiv");
+        var logres = R.logtest();
+        logdiv.innerHTML = "logical: " + logres + " (" + typeof(logres) + ")";
+        var s4div = document.getElementById("s4div");
+        var s4res = R.s4test();
+        s4div.innerHTML = "S4 Object: " + s4res + " (" + typeof(s4res) + ")";
+
+        var listdiv = document.getElementById("listdiv");
+        var listres = R.listtest();
+        listdiv.innerHTML = "list: " + listres + " (" + typeof(listres) + ")";
+        var nameddiv = document.getElementById("nameddiv");
+        var namedres = R.namedtest();
+        nameddiv.innerHTML = "named list: " + namedres + " (" + typeof(namedres) + ")";
+}
+    </script>
+    <script type="text/R">
+      numtest = function() 5
+      chartest = function() "Hi there."
+      logtest = function() TRUE
+      listtest = function() list(6, "hi");
+      namedtest = function() list(num = 7, char = "there")
+      setClass("myclass", representation(a = "numeric"))
+      s4test = function() new("myclass", a= 10)
+    </script>
+  </head>
+  <body>
+    <embed id="REngine" type="application/test-r" height="0" width="0"></embed>
+    <input type="button" onclick="dotest();"/>
+    <div id="numdiv"></div>
+    <div id="chardiv"></div>
+    <div id="logdiv"></div>
+    <div id="s4div"></div>
+    <div id="listdiv"></div>
+    <div id="nameddiv"></div>

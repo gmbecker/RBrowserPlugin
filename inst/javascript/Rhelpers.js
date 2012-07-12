@@ -150,23 +150,8 @@ function isArray(obj)
 window.addEventListener("load", doAttach, true, true);
 
 
-//Horrible hack!!!!! XXX
-
-function pausecomp(ms) {
-ms += new Date().getTime();
-while (new Date() < ms){}
-} 
-
-
-function waitInQueue(spot, fun, args)
+function args(obj)
 {
-
-    while(R.serving < spot)
-	{
-	    true;
-	}
-
-    var argsarray = Array.prototype.slice.call(arguments);
-    //	alert("here I am");
-    return window.R.listCall(fun, argsarray);
+    obj.namedArrayForR = true;
+    return obj;
 }
