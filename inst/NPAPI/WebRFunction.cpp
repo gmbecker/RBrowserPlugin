@@ -75,7 +75,7 @@ bool RFunction::Invoke(NPIdentifier name, const NPVariant *args, uint32_t argCou
   if (name == this->funcs->getstringidentifier("handleEvent"))
     {
       fprintf(stderr, "\nIn handleEvent method of an RFunction\n");fflush(stderr);
-      return this->InvokeDefault(NULL, 0, result);
+      return this->InvokeDefault(args, argCount, result);
     }
       if (name == this->funcs->getstringidentifier("call")) 
 	{
@@ -87,7 +87,11 @@ bool RFunction::Invoke(NPIdentifier name, const NPVariant *args, uint32_t argCou
 
 bool RFunction::InvokeDefault(const NPVariant *args, uint32_t argCount, NPVariant *result)
 {
-  fprintf(stderr, "\nDirectly invoking on RFunction object");fflush(stderr);
+ 
+  if(argCount && args[0].type == NPVariantType_Object && this->funcs->hasproperty(this->instance, args[0].value.objectValue, this->funcs->getstringidentifier("namedArrayForR")))
+    {
+      return doNamedCall(this->instance, this->object, args, argCount, result);
+    }
   SEXP Rargs[argCount];
   for(uint32_t i=0; i<argCount; i++)
     {

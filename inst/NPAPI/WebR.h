@@ -356,5 +356,5 @@ SEXP innerGetVar(const char * varName, NPP inst);
 SEXP doGetVar(NPIdentifier name, NPP inst);
  void* doRCall(void *in);
   void* doRLookup(void *in);
-
+bool doNamedCall(NPP inst, SEXP fun, const NPVariant *argsIn, uint32_t count, NPVariant *_res);
 #endif // WebR.h

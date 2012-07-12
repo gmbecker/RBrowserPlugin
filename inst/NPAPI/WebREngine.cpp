@@ -152,35 +152,87 @@ bool WebREngine::HasMethod(NPIdentifier name)
   return (bool) ret;
 }
 
+bool doNamedCall(NPP inst, SEXP fun, const NPVariant *argsIn, uint32_t count, NPVariant *_res)
+{
+  fprintf(stderr, "\nAttempting to create R call with named arguments\n");fflush(stderr);
+  uint32_t idcount = 0;
+  // NPIdentifier **ids = (NPIdentifier **) myNPNFuncs->memalloc(sizeof(NPIdentifier*));;
+  NPIdentifier *ids;
+  NPObject *obj = argsIn[0].value.objectValue;
+  bool success = myNPNFuncs->enumerate(inst, obj, &ids, &idcount);
+  SEXP call, ans, ptr, tmp;
+  NPVariant curprop;
+  PROTECT(ptr = call = allocVector(LANGSXP, 1 + idcount - 1));
+  SETCAR(ptr, fun);
+  PROTECT(tmp = R_NilValue);
+  for(int i =0; i < idcount; i++)
+    {
+      if(ids[i] != myNPNFuncs->getstringidentifier("namedArrayForR"))
+	{
+      fprintf(stderr, "\nAccessing property %s\n", myNPNFuncs->utf8fromidentifier(ids[i]));fflush(stderr);
+      ptr = CDR(ptr);
+      myNPNFuncs->getproperty(inst, obj, ids[i], &curprop);
+      ConvertNPToR(&curprop, inst, myNPNFuncs, true, &tmp);
+      SETCAR(ptr, tmp);
+      SET_TAG(ptr, Rf_install((const char *) myNPNFuncs->utf8fromidentifier(ids[i])));
+	}
+    }
+  /*
+  if(count > 1)
+    {
+      for(int j = 1; j < count; j++)
+	{
+	  ptr = CDR(ptr);
+	  ConvertNPToR((NPVariant *) &argsIn[j], inst, myNPNFuncs, true, &tmp);
+	  SETCAR(ptr, tmp);
+	}
+    }
+  */
+  fprintf(stderr, "\nFull call:\n");fflush(stderr);
+  Rf_PrintValue(call);
+  int err = 0;
+  PROTECT(ans = R_tryEval(call, R_GlobalEnv, &err));
+  ConvertRToNP(ans, inst, myNPNFuncs, _res, true);
+  // myNPNFuncs->memfree(*ids);
+  myNPNFuncs->memfree(ids);
+  return !err;
+} 
 
 bool WebREngine::Invoke(NPIdentifier name, const NPVariant *args, uint32_t argCount, NPVariant *result)
 {
   fprintf(stderr, "\nIn WebREngine::Invoke - %s", myNPNFuncs->utf8fromidentifier(name));fflush(stderr);
   SEXP Rargs[argCount];
   bool convert = true;
-  for(uint32_t i=0; i<argCount; i++)
+  /*
+  if(argCount && args[0].type == NPVariantType_Object && myNPNFuncs->hasproperty(this->instance, args[0].value.objectValue, myNPNFuncs->getstringidentifier("namedArrayForR")))
     {
-      PROTECT(Rargs[i] = R_NilValue); 
-            //when calling R functions directly we DO want arguments to be converted.
-      ConvertNPToR((NPVariant *) &(args[i]), this->instance, myNPNFuncs, true, &Rargs[i]);
+      return doNamedCall(this->instance, name, args, argCount, result);
     }
-  SEXP ans;
-  SEXP call, ptr; 
-  int error = 0;
-  int addProt = 0;
- if(name == myNPNFuncs->getstringidentifier("eval"))
-    {
-      
-      PROTECT(call = allocVector(LANGSXP, 2));
-      SETCAR(call, Rf_install("parseEval"));
-      SETCAR(CDR(call), Rargs[0]);
-      PROTECT(ans = rQueue.requestRCall(call, R_GlobalEnv, &error, this->instance));
-      addProt = 2;
-    }
-  else if (name == myNPNFuncs->getstringidentifier("listCall"))
-    {
-      PROTECT(ptr = call = allocVector(LANGSXP, 3));
-      SETCAR(call, Rf_install("do.call"));
+  */
+
+    for(uint32_t i=0; i<argCount; i++)
+      {
+	PROTECT(Rargs[i] = R_NilValue); 
+	//when calling R functions directly we DO want arguments to be converted.
+	ConvertNPToR((NPVariant *) &(args[i]), this->instance, myNPNFuncs, true, &Rargs[i]);
+      }
+    SEXP ans;
+    SEXP call, ptr; 
+    int error = 0;
+    int addProt = 0;
+    if(name == myNPNFuncs->getstringidentifier("eval"))
+      {
+	
+	PROTECT(call = allocVector(LANGSXP, 2));
+	SETCAR(call, Rf_install("parseEval"));
+	SETCAR(CDR(call), Rargs[0]);
+	PROTECT(ans = rQueue.requestRCall(call, R_GlobalEnv, &error, this->instance));
+	addProt = 2;
+      }
+    else if (name == myNPNFuncs->getstringidentifier("listCall"))
+      {
+	PROTECT(ptr = call = allocVector(LANGSXP, 3));
+	SETCAR(call, Rf_install("do.call"));
       ptr = CDR(call);
       SETCAR(ptr, Rargs[0]); //The function
       ptr = CDR(ptr);
