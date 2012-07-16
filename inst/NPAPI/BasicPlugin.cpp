@@ -23,11 +23,12 @@
 
 /* Structure containing pointers to functions implemented by the browser. */
 NPNetscapeFuncs *myNPNFuncs;
+/*
 pthread_mutex_t rMutex;
 pthread_mutex_t queueMutex;
 pthread_attr_t rThreadAttrs;
 pthread_cond_t queueAdvance;
-
+*/
 RCallQueue rQueue;
 
 
@@ -66,10 +67,12 @@ int initR( const char **args, int nargs)
   R_CStackLimit = (uintptr_t)-1;
   
   R_SignalHandlers = 0;
+  /*
   pthread_mutex_init(&rMutex, NULL);
   pthread_mutex_init(&queueMutex, NULL);
   pthread_attr_init(&rThreadAttrs);
   pthread_attr_setschedpolicy(&rThreadAttrs, SCHED_FIFO);
+  */
   rQueue.init();
   int error=0;
   SEXP call;
@@ -179,6 +182,9 @@ void CopyNPNFunctions(NPNetscapeFuncs *dstFuncs, NPNetscapeFuncs *srcFuncs)
   dstFuncs->releasevariantvalue = srcFuncs->releasevariantvalue;
   dstFuncs->setexception = srcFuncs->setexception;
   dstFuncs->construct = srcFuncs->construct;
+
+  //This was missing for some reason?!?!
+  dstFuncs->enumerate = srcFuncs->enumerate;
   
   if (srcFuncs->version >= NPVERS_MACOSX_HAS_COCOA_EVENTS) { // 23 
     dstFuncs->scheduletimer = srcFuncs->scheduletimer;  
