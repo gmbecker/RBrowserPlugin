@@ -15,7 +15,7 @@ bool ConvertRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret, bo
       *ret = *(NPVariant *) R_ExternalPtrAddr(GET_SLOT( val , Rf_install( "ref" ) ) );
       return true;
 	}
-  if(!convertRes)
+  if(!convertRes || IS_S4_OBJECT(val))
     {
       MakeRRefForNP(val, inst, funcs, ret);
       return true;
@@ -317,13 +317,27 @@ void MakeRRefForNP(SEXP obj, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret)
     }
   else if (IS_S4_OBJECT(ans))
     {
-      RS4Object *retobj;
-      retobj = (RS4Object *) funcs->createobject(inst, &RS4Object::_npclass);
-      funcs->retainobject(retobj);
-      retobj->object = ans;
-      retobj->funcs = funcs;
-      R_PreserveObject(retobj->object);
-      OBJECT_TO_NPVARIANT(retobj, *ret);
+      if(checkForRefClass(ans))
+	{
+
+	  RRefClassObject *retobj;
+	  retobj = (RRefClassObject *) funcs->createobject(inst, &RRefClassObject::_npclass);
+	  funcs->retainobject(retobj);
+	  retobj->object = ans;
+	  retobj->funcs = funcs;
+	  R_PreserveObject(retobj->object);
+	  OBJECT_TO_NPVARIANT(retobj, *ret);
+
+	} else {
+
+	RS4Object *retobj;
+	retobj = (RS4Object *) funcs->createobject(inst, &RS4Object::_npclass);
+	funcs->retainobject(retobj);
+	retobj->object = ans;
+	retobj->funcs = funcs;
+	R_PreserveObject(retobj->object);
+	OBJECT_TO_NPVARIANT(retobj, *ret);
+      }
     } 
   else
     {
@@ -374,4 +388,22 @@ bool CheckSEXPForJSRef(SEXP obj, NPP inst)
   UNPROTECT(2);
   return ret;
 
+}
+
+bool checkForRefClass(SEXP obj)
+{
+  SEXP ans, call, ptr;
+  PROTECT(call = ptr = allocVector(LANGSXP, 3));
+  SETCAR(ptr, Rf_install("is"));
+  ptr = CDR(ptr);
+  SETCAR(ptr, obj);
+  ptr = CDR(ptr);
+  SETCAR(ptr, ScalarString(mkChar("envRefClass")));
+  int err = 0;
+  bool ret = true;
+  PROTECT(ans = R_tryEval(call, R_GlobalEnv, &err));
+  if(err || !LOGICAL(ans)[0])
+    ret = false;
+  
+  return ret;
 }

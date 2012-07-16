@@ -1,0 +1,60 @@
+<html>
+  <head>
+    <script type="text/javascript" src="../../../RFirefox/inst/javascript/Rhelpers.js"></script>  
+    <script type="text/R">
+      myc = setRefClass("myclass", fields = list(a = "numeric", b = "character", 
+      c = function(value) { 
+      if(missing(value))
+        .c
+      else
+        .c <<- value
+      },
+       .c = "numeric"
+      ), methods = list(add = function() a + .c))
+      doRefClasstest = function()
+      {
+             myc$new( a = 6, b = "hi there", c  = 10)
+      }
+    </script>
+    <script type="text/javascript">
+      function dotest()
+{
+      var rc = R.doRefClasstest()
+      document.getElementById("obj").innerHTML = "rc: " + rc;
+      document.getElementById("a").innerHTML = "rc.a: " + rc.a;
+      document.getElementById("b").innerHTML = "rc.b: " + rc.b;
+      document.getElementById("c").innerHTML = "rc.c (active binding function): " + rc.c;
+      document.getElementById("add").innerHTML = "rc.add(): " + rc.add();
+
+      rc.a = 5;
+      var result = false;
+      if (rc.a == 5)
+        result = "success";
+      else
+        result = "failure";
+      document.getElementById("set").innerHTML = "testing setting field values: " +  result; 
+      result = false;
+      rc.c = 5;
+      if (rc.c == 5)
+        result = "success";
+      else
+        result = "failure";
+      document.getElementById("set2").innerHTML = "testing setting field values (active binding funciton): " +  result; 
+
+      }
+
+    </script>
+
+</head>
+<body>    
+  <embed id="REngine" type="application/test-r" height="0" width="0"></embed>
+  <input type="button" onclick="dotest();"/>
+  <div id="obj"></div>
+  <div id="a"></div>
+  <div id="b"></div>
+  <div id="c"></div>
+  <div id="add"></div>
+  <div id="set"></div>
+  <div id="set2"></div>
+  </body>
+</html>  

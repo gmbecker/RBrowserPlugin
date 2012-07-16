@@ -1,0 +1,27 @@
+<html>
+  <head>
+    <script type="text/javascript" src="../../../RFirefox/inst/javascript/Rhelpers.js"></script>  
+    <script type="text/R">
+      setClass("myclass", representation(a ="numeric", b = "character"))
+      doS4test = function()
+      {
+        new("myclass", a = 10, b = "hello there")
+      }
+    </script>
+    <script type="text/javascript">
+      function dotest()
+{
+      var s4 = R.doS4test();
+      s4.a = "oops";
+      document.getElementById("obj").innerHTML = "s4: " + s4;
+      document.getElementById("a").innerHTML = "s4.a: " + s4.a; } 
+    </script>
+</head>
+<body>    
+  <embed id="REngine" type="application/test-r" height="0" width="0"></embed>
+  <input type="button" onclick="dotest();"/>
+  Press the button to attempt to set slot a to "oops" (an invalid value for the slot)
+  <div id="obj"></div>
+  <div id="a"></div>
+  </body>
+</html>  

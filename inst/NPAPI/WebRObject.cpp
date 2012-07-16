@@ -376,8 +376,40 @@ bool RS4Object::GetProperty(NPIdentifier name, NPVariant *result)
 
 bool RS4Object::SetProperty(NPIdentifier name, const NPVariant *value)
 {
-  //Emulate object[[name]]<-value
+  //Emulate object@name <- value
+  bool ret = this->HasProperty(name);
+  if(ret)
+    {
+      SEXP tmp, ptr, call, tmp2;
+      int err = 0;
+      PROTECT(call = ptr = allocVector(LANGSXP, 4));
+      //SETCAR(ptr, Rf_install("@<-"));
+      SETCAR(ptr, Rf_install("checkSlotAssignment"));
+      
+      ptr = CDR(ptr);
+      SETCAR(ptr, this->object);
+      ptr = CDR(ptr);
+      SETCAR(ptr, ScalarString(mkChar((funcs->utf8fromidentifier(name)))));
+      ptr = CDR(ptr);
+      
+      PROTECT(tmp = R_NilValue);
+      ConvertNPToR((NPVariant *)value, this->instance, this->funcs, true, &tmp);
+      SETCAR(ptr, tmp);
+      //this->object = R_tryEval(call, R_GlobalEnv, &err);
+      tmp2 = R_tryEval(call, R_GlobalEnv, &err);
+      if(err)
 	return false;
+      
+      SETCAR(call, Rf_install("@<-"));
+      this->object = R_tryEval(call, R_GlobalEnv, &err);
+      ret = !(bool)err;
+      /*
+      //XXX We should probably use tryEval so we can catch errors without it potentially crashing?
+      SET_SLOT(this->object, ScalarString(mkChar(funcs->utf8fromidentifier(name))), tmp);
+      */
+      UNPROTECT(1);
+    }
+  return ret;
 }
 
 bool RS4Object::RemoveProperty(NPIdentifier name)
@@ -485,7 +517,7 @@ NPClass RS4Object::_npclass = {
   RS4Object::_Construct                                      
 };
 
- 
+/* 
 bool RObject_GetProp(RObject *Robj, NPIdentifier name, NPNetscapeFuncs *funcs, NPVariant *result, bool check, NPP inst)
 {
   SEXP obj, call, ptr, ans;
@@ -569,14 +601,14 @@ bool IsMissing(SEXP obj, bool nullAlso)
     ret = (STRING_ELT(obj, 0) == NA_STRING);
     break;
 
-    /* Same code for LISTSXP and VECSXP : */
+  
  
   case VECSXP:   
   case LISTSXP:
     ret = IsMissing(VECTOR_ELT(obj, 0), nullAlso);
     break;
   case RAWSXP:
-    /* no such thing as a raw NA */
+  
     ret = 0;
     break;
   default:
@@ -588,3 +620,306 @@ bool IsMissing(SEXP obj, bool nullAlso)
   }  
 	return ret;
 }
+
+*/
+
+
+RRefClassObject::RRefClassObject (NPP instance) 
+{
+  this->instance = instance;
+  this->object = NULL;
+  this->converter = NULL;
+}
+
+void RRefClassObject::Deallocate()
+{
+  if(this->object)
+    {
+      R_ReleaseObject(this->object);
+      this->object=NULL;
+    }
+}
+
+void RRefClassObject::Invalidate()
+{
+}
+
+bool RRefClassObject::HasMethod(NPIdentifier name)
+{
+  int ret = 0;
+  if(name == this->funcs->getstringidentifier("convert"))
+    ret = 1;
+  else if(name == this->funcs->getstringidentifier("toString"))
+    ret = 1;
+  /*
+  else
+    {
+      SEXP call, ans, ptr;
+      int error=0;
+      PROTECT(ptr = call = allocVector(LANGSXP, 3));
+      SETCAR(ptr, Rf_install("checkForMethod"));
+      ptr = CDR(ptr);
+      SETCAR(ptr, this-> object);
+      ptr = CDR(ptr);
+      if(this->funcs->identifierisstring(name))
+	SETCAR(ptr, ScalarString(mkChar(this->funcs->utf8fromidentifier(name))));
+      else
+	SETCAR(ptr, ScalarInteger(this->funcs->intfromidentifier(name)));
+      PROTECT(ans = rQueue.requestRCall(call, R_GlobalEnv, &error, this->instance));
+      UNPROTECT(2);
+      //Need to check if the R property exists or not.... currently we just return true.
+      if(!error)
+	ret = LOGICAL(ans)[0];
+      else
+	ret = false;
+      
+
+    }
+  */
+  return (bool) ret;
+}
+
+
+bool RRefClassObject::Invoke(NPIdentifier name, const NPVariant *args, uint32_t argCount, NPVariant *result)
+{
+  if(name == this->funcs->getstringidentifier("convert"))
+    {
+      if(this->converter != NULL)
+	{
+	  fprintf(stderr, "\nUser assigned JavaScript converters are not supported at this time. If you need this functionality please contact the maintainer.\n");fflush(stderr);
+	  return false;
+	}
+      //true indicates we want conversion from RRefClassObject to normalJavaScript object where possible.
+      ConvertRToNP(this->object, this->instance, this->funcs, result, true); 
+      return true;
+    } else if (name == this->funcs->getstringidentifier("toString")) 
+    {
+      fprintf(stderr, "\nIn tostring method of an RRefClassObject\n");fflush(stderr);
+      //From NPN_ReleaseVariantValue docs: NPN_ReleaseVariantValue() will call NPN_ReleaseObject() on NPVariants of type NPVARIANTTYPE_OBJECT, and NPN_FreeMem() on NPVariants of type NPVARIANTTYPE_STRING. 
+      NPUTF8 *strdat = (NPUTF8*) this->funcs->memalloc(34+1);
+      //strdat = (NPUTF8*)"[Internal R Object]";
+      memcpy(strdat, "[Internal R ReferenceClass Object]", 34+1);
+      NPString str ={ strdat, 34};
+      result->type = NPVariantType_String;
+      result->value.stringValue = str;     
+      return true;
+    }
+    
+  return false;
+}
+
+bool RRefClassObject::InvokeDefault(const NPVariant *args, uint32_t argCount, NPVariant *result)
+{
+  return false;
+}
+
+bool RRefClassObject::HasProperty(NPIdentifier name)
+{
+  bool ret= true;
+  fprintf(stderr, "\nIn RRefClassObject::HasProperty");fflush(stderr);
+  //we need to return false for things that need to be methods.
+  if(name == this->funcs->getstringidentifier("convert"))
+    ret = 0;
+  else if(name == this->funcs->getstringidentifier("toString"))
+    ret = 0;
+  else if(name == this->funcs->getstringidentifier("valueOf"))
+    ret = 0;
+  else if(name == this->funcs->getstringidentifier("isRObject"))
+    ret = 1;
+  else
+    {
+      SEXP call, ans, ptr;
+      int error=0;
+      PROTECT(call = ptr = allocVector(LANGSXP, 3));
+      SETCAR(ptr, Rf_install("checkForFieldorMethod"));
+      ptr = CDR(ptr);
+      SETCAR(ptr, this-> object);
+      ptr = CDR(ptr);
+      if(this->funcs->identifierisstring(name))
+	SETCAR(ptr, ScalarString(mkChar(this->funcs->utf8fromidentifier(name))));
+      else
+	SETCAR(ptr, ScalarInteger(this->funcs->intfromidentifier(name)));
+      PROTECT(ans = rQueue.requestRCall(call, R_GlobalEnv, &error, this->instance));
+
+      //Need to check if the R property exists or not.... currently we just return true.
+      if(!error)
+	ret = LOGICAL(ans)[0];
+      else
+	ret = false;
+      UNPROTECT(2);
+    }
+  return ret;
+}
+
+bool RRefClassObject::GetProperty(NPIdentifier name, NPVariant *result)
+{
+  if(name == this->funcs->getstringidentifier("isRObject"))
+    {
+      BOOLEAN_TO_NPVARIANT(true, *result); 
+      return true;
+    }
+  //Emulate object[[name]], object$name, object@name in that order
+  fprintf(stderr, "\nIn RRefClassObject::GetProperty");fflush(stderr);
+  SEXP call, ptr, ans;
+  int error;
+  bool isString = this->funcs->identifierisstring(name);
+  PROTECT(ptr = call = allocVector(LANGSXP, 3));
+  if(isString)
+    SETCAR(ptr, Rf_install("$"));
+  else
+    SETCAR(ptr, Rf_install("[["));
+  ptr = CDR(ptr);
+  SETCAR(ptr, this->object);
+  ptr = CDR(ptr);
+  if(isString)
+    SETCAR(ptr, ScalarString(mkChar(this->funcs->utf8fromidentifier(name))));
+  else
+    SETCAR(ptr, ScalarInteger(this->funcs->intfromidentifier(name)));
+  
+  PROTECT(ans = rQueue.requestRCall(call, R_GlobalEnv, &error, this->instance));
+  bool ret = ConvertRToNP(ans, this->instance, this->funcs, result, true);
+  UNPROTECT(2);
+  //ConvertRToNP(ans, Robj->instance, funcs, result, false);
+  return ret;
+}
+
+bool RRefClassObject::SetProperty(NPIdentifier name, const NPVariant *value)
+{
+  bool ret = false;
+  if(this->HasProperty(name))
+    {
+      SEXP  call, ptr, val;
+      int err = 0;
+      PROTECT(call = ptr = allocVector(LANGSXP, 4));
+      PROTECT(val = R_NilValue);
+      bool isString = this->funcs->identifierisstring(name);
+      if(isString)
+	SETCAR(ptr, Rf_install("$<-"));
+      else
+	SETCAR(ptr, Rf_install("[[<-"));
+  
+ 
+      ptr = CDR(ptr);
+      SETCAR(ptr, this->object);
+      ptr = CDR(ptr);
+      if(isString)
+	SETCAR(ptr, ScalarString(mkChar(this->funcs->utf8fromidentifier(name))));
+      else
+	SETCAR(ptr, ScalarInteger(this->funcs->intfromidentifier(name)));
+      
+      bool success = ConvertNPToR((NPVariant *)value, this->instance, this->funcs, true, &val);
+      ptr = CDR(ptr);
+      SETCAR(ptr, val);
+      this->object = R_tryEval(call, R_GlobalEnv, &err);
+      ret = !(bool)err;
+      UNPROTECT(2);
+
+    }
+  //Emulate object[[name]]<-value
+  return ret;
+}
+
+bool RRefClassObject::RemoveProperty(NPIdentifier name)
+{
+	return false;
+}
+
+bool RRefClassObject::Enumerate(NPIdentifier **identifier, uint32_t *count)
+{
+    fprintf(stderr, "\nIn RRefClassObject::Enumerate");fflush(stderr);
+	return false;
+}
+
+bool RRefClassObject::Construct(const NPVariant *args, uint32_t argCount, NPVariant *result)
+{
+	return true;
+}
+
+NPObject *RRefClassObject::Allocate(NPP npp, NPClass *aClass)
+{
+	NPObject *pObj = (NPObject *)new RRefClassObject(npp);
+	return pObj;
+}
+
+void RRefClassObject::Detatch (void)
+{
+	m_Instance = NULL;
+}
+
+
+
+void RRefClassObject::_Deallocate(NPObject *npobj)
+{
+	RRefClassObject *pObj = ((RRefClassObject *) npobj);
+
+  // Call the virtual destructor.
+	pObj->Deallocate ();
+	delete pObj;
+}
+
+void RRefClassObject::_Invalidate(NPObject *npobj)
+{
+	((RRefClassObject*)npobj)->Invalidate();
+}
+
+bool RRefClassObject::_HasMethod(NPObject *npobj, NPIdentifier name)
+{
+	return ((RRefClassObject*)npobj)->HasMethod (name);
+}
+
+bool RRefClassObject::_Invoke(NPObject *npobj, NPIdentifier name, const NPVariant *args, uint32_t argCount, NPVariant *result)
+{
+	return ((RRefClassObject*)npobj)->Invoke (name, args, argCount, result);
+}
+
+bool RRefClassObject::_InvokeDefault(NPObject *npobj, const NPVariant *args, uint32_t argCount, NPVariant *result)
+{
+	return ((RRefClassObject*)npobj)->InvokeDefault (args, argCount, result);
+}
+
+bool RRefClassObject::_HasProperty(NPObject * npobj, NPIdentifier name)
+{
+	return ((RRefClassObject*)npobj)->HasProperty (name);
+}
+
+bool RRefClassObject::_GetProperty(NPObject *npobj, NPIdentifier name, NPVariant *result)
+{
+	return ((RRefClassObject*)npobj)->GetProperty (name, result);
+}
+
+bool RRefClassObject::_SetProperty(NPObject *npobj, NPIdentifier name, const NPVariant *value)
+{
+	return ((RRefClassObject*)npobj)->SetProperty (name, value);
+}
+
+bool RRefClassObject::_RemoveProperty(NPObject *npobj, NPIdentifier name)
+{
+	return ((RRefClassObject*)npobj)->RemoveProperty (name);
+}
+
+bool RRefClassObject::_Enumerate(NPObject *npobj, NPIdentifier **identifier, uint32_t *count)
+{
+	return ((RRefClassObject*)npobj)->Enumerate (identifier, count);
+}
+
+bool RRefClassObject::_Construct(NPObject *npobj, const NPVariant *args, uint32_t argCount, NPVariant *result)
+{
+	return ((RRefClassObject*)npobj)->Construct (args, argCount, result);
+}
+
+
+NPClass RRefClassObject::_npclass = {                              
+  NP_CLASS_STRUCT_VERSION,				                          
+  RRefClassObject::Allocate,                                       
+  RRefClassObject::_Deallocate,                                    
+  RRefClassObject::_Invalidate,                                    
+  RRefClassObject::_HasMethod,                                     
+  RRefClassObject::_Invoke,                                        
+  RRefClassObject::_InvokeDefault,                                 
+  RRefClassObject::_HasProperty,                                   
+  RRefClassObject::_GetProperty,                                   
+  RRefClassObject::_SetProperty,                                   
+  RRefClassObject::_RemoveProperty,                                
+  RRefClassObject::_Enumerate,                                     
+  RRefClassObject::_Construct                                      
+};
