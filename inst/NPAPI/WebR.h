@@ -39,19 +39,25 @@
 #ifndef WebRPlugin_h_
 #define WebRPlugin_h_
 
+#include "signal.h"
 #include "npapi.h"
 #include "npfunctions.h"
 #include <npruntime.h>
 #include <stdio.h>
+//#include "pthread.h"
+
+#define CSTACK_DEFNS 1
 
 #ifndef XP_MACOSX
 #include <R.h>
 #include <Rdefines.h>
 #include <Rembedded.h>
+#include <Rinterface.h>
 #else
 #include <R/R.h>
 #include <R/Rdefines.h>
 #include <R/Rembedded.h>
+#include <R/Rinterface.h>
 #endif
 
 
@@ -87,7 +93,12 @@ NPError NPP_SetValue(NPP instance, NPNVariable variable, void *value);
 }
 extern NPNetscapeFuncs *myNPNFuncs;
 extern FILE *logfile;
-
+/*
+extern pthread_mutex_t rMutex;
+extern pthread_mutex_t queueMutex;
+extern pthread_attr_t rThreadAttrs;
+extern pthread_cond_t queueAdvance;
+*/
 class WebREngine : public NPObject
 {
 protected:
@@ -247,6 +258,109 @@ protected:
 };
 
 
+class RS4Object : public NPObject
+{
+protected:
+    // Class member functions that do the real work
+    void Deallocate();
+    void Invalidate();
+    bool HasMethod(NPIdentifier name);
+    bool Invoke(NPIdentifier name, const NPVariant *args, uint32_t argCount, NPVariant *result);
+    bool InvokeDefault(const NPVariant *args, uint32_t argCount, NPVariant *result);
+    bool HasProperty(NPIdentifier name);
+    bool GetProperty(NPIdentifier name, NPVariant *result);
+    bool SetProperty(NPIdentifier name, const NPVariant *value);
+    bool RemoveProperty(NPIdentifier name);
+    bool Enumerate(NPIdentifier **identifier, uint32_t *count);
+    bool Construct(const NPVariant *args, uint32_t argCount, NPVariant *result);
+
+public:
+  RS4Object(NPP instance);
+    		void Detatch (void);
+
+		// This is the method used to create the NPObject
+    // This method should not be called explicitly
+    // Instead, use NPN_CreateObject
+    static NPObject* Allocate(NPP npp, NPClass *aClass);
+
+    /////////////////////////////
+    // Static NPObject methods //
+    /////////////////////////////
+    static void _Deallocate(NPObject *npobj);
+    static void _Invalidate(NPObject *npobj);
+    static bool _HasMethod(NPObject *npobj, NPIdentifier name);
+    static bool _Invoke(NPObject *npobj, NPIdentifier name, const NPVariant *args, uint32_t argCount, NPVariant *result);
+    static bool _InvokeDefault(NPObject *npobj, const NPVariant *args, uint32_t argCount, NPVariant *result);
+    static bool _HasProperty(NPObject * npobj, NPIdentifier name);
+    static bool _GetProperty(NPObject *npobj, NPIdentifier name, NPVariant *result);
+    static bool _SetProperty(NPObject *npobj, NPIdentifier name, const NPVariant *value);
+    static bool _RemoveProperty(NPObject *npobj, NPIdentifier name);
+    static bool _Enumerate(NPObject *npobj, NPIdentifier **identifier, uint32_t *count);
+    static bool _Construct(NPObject *npobj, const NPVariant *args, uint32_t argCount, NPVariant *result);
+ 
+  static NPClass _npclass;
+    
+  SEXP object;
+  NPObject *converter;
+  NPP instance;
+  //Do we really need this? we seem to in order to be able to create references from the R side...
+  NPNetscapeFuncs *funcs;
+protected:
+  NPP m_Instance;
+};
+
+
+class RRefClassObject : public NPObject
+{
+protected:
+    // Class member functions that do the real work
+    void Deallocate();
+    void Invalidate();
+    bool HasMethod(NPIdentifier name);
+    bool Invoke(NPIdentifier name, const NPVariant *args, uint32_t argCount, NPVariant *result);
+    bool InvokeDefault(const NPVariant *args, uint32_t argCount, NPVariant *result);
+    bool HasProperty(NPIdentifier name);
+    bool GetProperty(NPIdentifier name, NPVariant *result);
+    bool SetProperty(NPIdentifier name, const NPVariant *value);
+    bool RemoveProperty(NPIdentifier name);
+    bool Enumerate(NPIdentifier **identifier, uint32_t *count);
+    bool Construct(const NPVariant *args, uint32_t argCount, NPVariant *result);
+
+public:
+  RRefClassObject(NPP instance);
+    		void Detatch (void);
+
+		// This is the method used to create the NPObject
+    // This method should not be called explicitly
+    // Instead, use NPN_CreateObject
+    static NPObject* Allocate(NPP npp, NPClass *aClass);
+
+    /////////////////////////////
+    // Static NPObject methods //
+    /////////////////////////////
+    static void _Deallocate(NPObject *npobj);
+    static void _Invalidate(NPObject *npobj);
+    static bool _HasMethod(NPObject *npobj, NPIdentifier name);
+    static bool _Invoke(NPObject *npobj, NPIdentifier name, const NPVariant *args, uint32_t argCount, NPVariant *result);
+    static bool _InvokeDefault(NPObject *npobj, const NPVariant *args, uint32_t argCount, NPVariant *result);
+    static bool _HasProperty(NPObject * npobj, NPIdentifier name);
+    static bool _GetProperty(NPObject *npobj, NPIdentifier name, NPVariant *result);
+    static bool _SetProperty(NPObject *npobj, NPIdentifier name, const NPVariant *value);
+    static bool _RemoveProperty(NPObject *npobj, NPIdentifier name);
+    static bool _Enumerate(NPObject *npobj, NPIdentifier **identifier, uint32_t *count);
+    static bool _Construct(NPObject *npobj, const NPVariant *args, uint32_t argCount, NPVariant *result);
+ 
+  static NPClass _npclass;
+    
+  SEXP object;
+  NPObject *converter;
+  NPP instance;
+  //Do we really need this? we seem to in order to be able to create references from the R side...
+  NPNetscapeFuncs *funcs;
+protected:
+  NPP m_Instance;
+};
+
 
 
 bool ConvertRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret, bool convertRes);
@@ -259,5 +373,40 @@ SEXP MakeNPRefForR(NPVariant *obj);
 void MakeRRefForNP(SEXP obj, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret);
 bool RObject_GetProp( RObject *obj, NPIdentifier name, NPNetscapeFuncs *funcs, NPVariant *result, bool check);
 bool IsMissing(SEXP obj, bool nullAlso);
-bool CheckSEXPForJSRef(SEXP obj);
+bool CheckSEXPForJSRef(SEXP obj, NPP inst);
+void makeRGlobals(NPP inst);
+bool checkForRefClass(SEXP obj);
+
+
+ 
+class RCallQueue
+{ 
+ public:
+  SEXP requestRCall(SEXP toEval, SEXP env, int *err, NPP inst);
+  SEXP requestRLookup(const char *name);
+  void waitInQueue(int32_t spot);
+  void advanceQueue(int32_t spot);
+  int32_t enterQueue(); 
+  void init();
+  int32_t serving;
+private:
+  
+  void lock();
+  void unlock();
+
+ 
+ private:
+  int isLocked;
+
+  int32_t lastInQueue;
+};
+
+  extern RCallQueue rQueue;
+
+
+SEXP innerGetVar(const char * varName, NPP inst);
+SEXP doGetVar(NPIdentifier name, NPP inst);
+ void* doRCall(void *in);
+  void* doRLookup(void *in);
+bool doNamedCall(NPP inst, SEXP fun, const NPVariant *argsIn, uint32_t count, NPVariant *_res);
 #endif // WebR.h

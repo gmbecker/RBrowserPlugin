@@ -148,3 +148,10 @@ function isArray(obj)
 }
 
 window.addEventListener("load", doAttach, true, true);
+
+
+function args(obj)
+{
+    obj.namedArrayForR = true;
+    return obj;
+}

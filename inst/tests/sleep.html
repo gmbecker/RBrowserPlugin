@@ -3,55 +3,44 @@
     <script type="text/javascript" src = "../javascript/Rhelpers.js"></script>
 <script type="text/javascript" src="../javascript/raphael.js"> </script>
 <script type="text/R">
+  JS = getGlobalJSObject()
+
 
   i = 0
   rfunc = function(e)
 {
-  print("in rfunc")
-  for(j in 1:10000000) i <<- j
-  print(JS)
-div1 = JS[["document"]]$getElementById("divout")  
+  Sys.sleep(3)
+  div1 = JS[["document"]]$getElementById("divout")  
   div1[["innerHTML"]] = paste("rfunc done.")
-
 }
 
   rfunc2 = function()
 {
-div2 = JS[["document"]]$getElementById("divout2")  
-  div2[["innerHTML"]] = paste("rfunc2 done.")
-}
-</script>
-<script type="text/javascript">
-function call funcs()
-{
- var div2 = document.getElementbyId("divout2");
- div2 = JS[["document"]]$getElementById("divout2")  
+  print("in rfunc2")
+  print(JS)
+			     div2 = JS[["document"]]$getElementById("divout2")  
   div2[["innerHTML"]] = paste("rfunc2 done.", i)
 }
 </script>
 <script type="text/javascript">
 function callfuncs()
 {
-
+/*
  var div2 = document.getElementById("divout2");
-
  var evt = document.createEvent("MouseEvents");
  evt.initMouseEvent("click", true, true, window,
     0, 0, 0, 0, 0, false, false, false, false, 0, null);
  div2.dispatchEvent(evt);
-
- R.rfunc()
-
+*/
+ R.rfunc2()
 }
 </script>
 </head>
 <body>
     <embed id="REngine" type="application/test-r" width="0" height="0"></embed>
-
-<input type="button"  onclick="callfuncs();"/>
+<input type="button"  onclick="R.rfunc();"/>
 <input type="button"  onclick="R.rfunc2();"/>
 <div id="divout" ></div>
-<div id="divout2" onclick="R.rfunc2();"></div>
-
+<div id="divout2" ></div>
 </body>
 </html>

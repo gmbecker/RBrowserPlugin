@@ -9,7 +9,7 @@ bool ConvertRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret, bo
   int err = 0;
   if(TYPEOF(val) == PROMSXP)
     val = R_tryEval(val, R_GlobalEnv, &err);
-  if (CheckSEXPForJSRef(val))
+  if (CheckSEXPForJSRef(val, inst))
     {
       //XXX We shouldn't have to copy here, but do we really want to pass in double pointers?
       *ret = *(NPVariant *) R_ExternalPtrAddr(GET_SLOT( val , Rf_install( "ref" ) ) );
@@ -48,6 +48,9 @@ bool ConvertRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret, bo
 	    RVectorToNP(val, inst, funcs, ret);
 	  else
 	    BOOLEAN_TO_NPVARIANT( (bool) LOGICAL(val)[0], *ret);
+	  break;
+	case VECSXP:
+	  RVectorToNP(val, inst, funcs, ret);
 	  break;
 	case STRSXP:
 	  if(len > 1)
@@ -129,10 +132,10 @@ bool RVectorToNP(SEXP vec, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret)
 	  vartmp2->value.intValue = LOGICAL(vec)[i];
 	  break;
 	case VECSXP:
-	  ConvertRToNP(VECTOR_ELT(vec, i), inst, funcs, vartmp2, false);
+	  ConvertRToNP(VECTOR_ELT(vec, i), inst, funcs, vartmp2, true);
 	  break;
 	case STRSXP:
-	  ConvertRToNP(STRING_ELT(vec, i), inst, funcs, vartmp2, false);
+	  ConvertRToNP(STRING_ELT(vec, i), inst, funcs, vartmp2, true);
 	  break;
 	}
       //  fprintf(stderr, "\nAttempting push call");fflush(stderr);
@@ -206,7 +209,7 @@ bool ConvertNPToR(NPVariant *var, NPP inst, NPNetscapeFuncs *funcs, bool convRet
 		funcs->getproperty(inst, inObject, funcs->getstringidentifier("length"), &npvLength);
 		//int len = npvLength.value.intValue;
 		int len = (int) npvLength.value.doubleValue;
-		fprintf(stderr, "\nNPArray of length %d detected. Convertin to R list/vector", len);fflush(stderr);
+		fprintf(stderr, "\nNPArray of length %d detected. Converting to R list/vector", len);fflush(stderr);
 		canfree = NPArrayToR(var, len, 0, inst, funcs, _ret);
 	      }
 	    else
@@ -336,7 +339,7 @@ const char * NPStringToConstChar(NPString str)
       return conchar;
 }
 
-bool CheckSEXPForJSRef(SEXP obj)
+bool CheckSEXPForJSRef(SEXP obj, NPP inst)
 {
 
   SEXP ans, call, ptr;

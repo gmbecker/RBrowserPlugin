@@ -8,14 +8,14 @@ bool ConvertRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret, bo
 //XXX If it is a promise we need the actual value. Will this come back to bite us by violating lazy loading?  
   int err = 0;
   if(TYPEOF(val) == PROMSXP)
-    val = R_tryEval(val, R_GlobalEnv, &err);
-  if (CheckSEXPForJSRef(val))
+    val = rQueue.requestRCall(val, R_GlobalEnv, &err, inst);
+  if (CheckSEXPForJSRef(val, inst))
     {
       //XXX We shouldn't have to copy here, but do we really want to pass in double pointers?
       *ret = *(NPVariant *) R_ExternalPtrAddr(GET_SLOT( val , Rf_install( "ref" ) ) );
       return true;
 	}
-  if(!convertRes)
+  if(!convertRes || IS_S4_OBJECT(val))
     {
       MakeRRefForNP(val, inst, funcs, ret);
       return true;
@@ -48,6 +48,9 @@ bool ConvertRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret, bo
 	    RVectorToNP(val, inst, funcs, ret);
 	  else
 	    BOOLEAN_TO_NPVARIANT( (bool) LOGICAL(val)[0], *ret);
+	  break;
+	case VECSXP:
+	  RVectorToNP(val, inst, funcs, ret);
 	  break;
 	case STRSXP:
 	  if(len > 1)
@@ -129,10 +132,10 @@ bool RVectorToNP(SEXP vec, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret)
 	  vartmp2->value.intValue = LOGICAL(vec)[i];
 	  break;
 	case VECSXP:
-	  ConvertRToNP(VECTOR_ELT(vec, i), inst, funcs, vartmp2, false);
+	  ConvertRToNP(VECTOR_ELT(vec, i), inst, funcs, vartmp2, true);
 	  break;
 	case STRSXP:
-	  ConvertRToNP(STRING_ELT(vec, i), inst, funcs, vartmp2, false);
+	  ConvertRToNP(STRING_ELT(vec, i), inst, funcs, vartmp2, true);
 	  break;
 	}
       //  fprintf(stderr, "\nAttempting push call");fflush(stderr);
@@ -206,7 +209,7 @@ bool ConvertNPToR(NPVariant *var, NPP inst, NPNetscapeFuncs *funcs, bool convRet
 		funcs->getproperty(inst, inObject, funcs->getstringidentifier("length"), &npvLength);
 		//int len = npvLength.value.intValue;
 		int len = (int) npvLength.value.doubleValue;
-		fprintf(stderr, "\nNPArray of length %d detected. Convertin to R list/vector", len);fflush(stderr);
+		fprintf(stderr, "\nNPArray of length %d detected. Converting to R list/vector", len);fflush(stderr);
 		canfree = NPArrayToR(var, len, 0, inst, funcs, _ret);
 	      }
 	    else
@@ -270,7 +273,7 @@ bool NPArrayToR(NPVariant *arr, int len, int simplify, NPP inst, NPNetscapeFuncs
       //recursive = FALSE for the unlist call
       SETCAR( p , ScalarLogical( 0 ) );
   
-      *_ret = R_tryEval(simplifyCall , R_GlobalEnv , &wasError);
+      *_ret = rQueue.requestRCall(simplifyCall , R_GlobalEnv , &wasError, inst);
       UNPROTECT(2);
     }
   
@@ -300,7 +303,7 @@ void MakeRRefForNP(SEXP obj, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret)
   if(TYPEOF(ans) == PROMSXP)
     {
       fprintf(stderr, "\nPromise detected when creating R Reference"); fflush(stderr);//	  ans = PRVALUE(ans);
-      ans = R_tryEval(ans, R_GlobalEnv, &err);
+      ans = rQueue.requestRCall(ans, R_GlobalEnv, &err, inst);
     }
   if (TYPEOF(ans) == CLOSXP)
     {
@@ -312,9 +315,32 @@ void MakeRRefForNP(SEXP obj, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret)
       R_PreserveObject(retobj->object);
       OBJECT_TO_NPVARIANT(retobj, *ret);
     }
+  else if (IS_S4_OBJECT(ans))
+    {
+      if(checkForRefClass(ans))
+	{
+
+	  RRefClassObject *retobj;
+	  retobj = (RRefClassObject *) funcs->createobject(inst, &RRefClassObject::_npclass);
+	  funcs->retainobject(retobj);
+	  retobj->object = ans;
+	  retobj->funcs = funcs;
+	  R_PreserveObject(retobj->object);
+	  OBJECT_TO_NPVARIANT(retobj, *ret);
+
+	} else {
+
+	RS4Object *retobj;
+	retobj = (RS4Object *) funcs->createobject(inst, &RS4Object::_npclass);
+	funcs->retainobject(retobj);
+	retobj->object = ans;
+	retobj->funcs = funcs;
+	R_PreserveObject(retobj->object);
+	OBJECT_TO_NPVARIANT(retobj, *ret);
+      }
+    } 
   else
     {
-
       RObject *retobj;
       retobj = (RObject *) funcs->createobject(inst, &RObject::_npclass);
       funcs->retainobject(retobj);
@@ -336,23 +362,48 @@ const char * NPStringToConstChar(NPString str)
       return conchar;
 }
 
-bool CheckSEXPForJSRef(SEXP obj)
+bool CheckSEXPForJSRef(SEXP obj, NPP inst)
 {
 
   SEXP ans, call, ptr;
-  int err;
+  int err = 0;
   PROTECT(ptr = call= allocVector(LANGSXP, 3));
   SETCAR(ptr, Rf_install("is"));
   ptr = CDR(ptr);
   SETCAR(ptr, obj);
   ptr = CDR(ptr);
-  SETCAR(ptr, ScalarString(mkChar("JSValueRef")));
+  //  SETCAR(ptr, ScalarString(mkChar("JSValueRef")));
+  SETCAR(ptr, ScalarString(mkChar("NPVariantRef")));
   
-  PROTECT(ans = R_tryEval(call, R_GlobalEnv, &err));
-  bool ret = LOGICAL(ans)[0];
-  if(ret)
-    {fprintf(stderr, "\nR object contains JS reference.\n");fflush(stderr);}
+  PROTECT(ans = rQueue.requestRCall(call, R_GlobalEnv, &err, inst));
+  bool ret;
+  if (ans == R_UnboundValue || ans == R_NilValue)
+    ret = 0;
+  else
+    {
+      ret = LOGICAL(ans)[0];
+      if(ret)
+	{fprintf(stderr, "\nR object contains JS reference.\n");fflush(stderr);}
+    }
   UNPROTECT(2);
   return ret;
 
+}
+
+bool checkForRefClass(SEXP obj)
+{
+  SEXP ans, call, ptr;
+  PROTECT(call = ptr = allocVector(LANGSXP, 3));
+  SETCAR(ptr, Rf_install("is"));
+  ptr = CDR(ptr);
+  SETCAR(ptr, obj);
+  ptr = CDR(ptr);
+  SETCAR(ptr, ScalarString(mkChar("envRefClass")));
+  int err = 0;
+  bool ret = true;
+  PROTECT(ans = R_tryEval(call, R_GlobalEnv, &err));
+  if(err || !LOGICAL(ans)[0])
+    ret = false;
+  
+  return ret;
 }

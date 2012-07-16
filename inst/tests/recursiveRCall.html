@@ -1,0 +1,30 @@
+<html>
+  <head>
+    <script type="text/javascript" src = "../javascript/Rhelpers.js"></script>
+<script type="text/javascript" src="../javascript/raphael.js"> </script>
+<script type="text/R">
+  div = getPageElement("divout")
+  rfunc = function(e)
+{
+  JS = getGlobalJSObject()
+  JS$innerfunc(5)
+}
+
+  rfunc2 = function(i)
+{
+  div.innerHTML = paste("success:", i)
+}
+</script>
+<script type="text/javascript">
+function innerfunc(i)
+{
+ R.rfunc2(i);
+}
+</script>
+</head>
+<body>
+    <embed id="REngine" type="application/test-r" width="0" height="0"></embed>
+<input type="button"  onclick="R.rfunc(event);"/>
+<div id="divout"/>
+</body>
+</html>

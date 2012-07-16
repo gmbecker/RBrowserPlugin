@@ -7,7 +7,7 @@ RFunction::RFunction (NPP instance)
 
   //this->m_getVersion_id = NPN_GetStringIdentifier("getVersion");
   //  this->m_getVersion_id = myNPNFuncs->getstringidentifier("getVersion");
-  fprintf(stderr, "\nCreating RFunction object. Instance:%lx", instance);fflush(stderr);
+  fprintf(stderr, "\nCreating RFunction object. Instance:%lx", (unsigned long int) instance);fflush(stderr);
   this->instance = instance;
   this->object = NULL;
   this->converter = NULL;
@@ -75,7 +75,7 @@ bool RFunction::Invoke(NPIdentifier name, const NPVariant *args, uint32_t argCou
   if (name == this->funcs->getstringidentifier("handleEvent"))
     {
       fprintf(stderr, "\nIn handleEvent method of an RFunction\n");fflush(stderr);
-      return this->InvokeDefault(NULL, 0, result);
+      return this->InvokeDefault(args, argCount, result);
     }
       if (name == this->funcs->getstringidentifier("call")) 
 	{
@@ -87,9 +87,13 @@ bool RFunction::Invoke(NPIdentifier name, const NPVariant *args, uint32_t argCou
 
 bool RFunction::InvokeDefault(const NPVariant *args, uint32_t argCount, NPVariant *result)
 {
-  fprintf(stderr, "\nDirectly invoking on RFunction object");fflush(stderr);
+ 
+  if(argCount && args[0].type == NPVariantType_Object && this->funcs->hasproperty(this->instance, args[0].value.objectValue, this->funcs->getstringidentifier("namedArrayForR")))
+    {
+      return doNamedCall(this->instance, this->object, args, argCount, result);
+    }
   SEXP Rargs[argCount];
-  for(int i=0; i<argCount; i++)
+  for(uint32_t i=0; i<argCount; i++)
     {
       PROTECT(Rargs[i] = R_NilValue); 
       //when calling R functions directly we DO want arguments to be converted.
@@ -103,7 +107,7 @@ bool RFunction::InvokeDefault(const NPVariant *args, uint32_t argCount, NPVarian
   SEXP ptr;
   PROTECT(ptr = call = allocVector(LANGSXP, argCount  + 1));
   SETCAR(ptr, (SEXP) this->object );
-  for(int i=0; i < argCount; i++)
+  for(uint32_t i=0; i < argCount; i++)
     {
       ptr = CDR( ptr );
       SETCAR(ptr, Rargs[i]);
@@ -111,7 +115,8 @@ bool RFunction::InvokeDefault(const NPVariant *args, uint32_t argCount, NPVarian
   
   fprintf(stderr, "\nDirect API call: ");fflush(stderr);
   Rf_PrintValue(call);
-  PROTECT(ans = R_tryEval( call, R_GlobalEnv, &error));
+  //PROTECT(ans = R_tryEval( call, R_GlobalEnv, &error));
+  PROTECT(ans = rQueue.requestRCall( call, R_GlobalEnv, &error, this->instance));
   
   addProt = 2;
   if(!error)
@@ -264,7 +269,7 @@ NPClass RFunction::_npclass = {
 };
 
  
-bool RFunction_GetProp(RFunction *Robj, NPIdentifier name, NPNetscapeFuncs *funcs, NPVariant *result, bool check)
+bool RFunction_GetProp(RFunction *Robj, NPIdentifier name, NPNetscapeFuncs *funcs, NPVariant *result, bool check, NPP inst)
 {
   SEXP obj, call, ptr, ans;
   //do we need to proect here?
@@ -283,7 +288,7 @@ bool RFunction_GetProp(RFunction *Robj, NPIdentifier name, NPNetscapeFuncs *func
   else
     SETCAR( ptr , ScalarReal( (int) funcs->intfromidentifier(name)));
   
-  PROTECT(ans = R_tryEval( call, R_GlobalEnv, &waserr));
+  PROTECT(ans = rQueue.requestRCall( call, R_GlobalEnv, &waserr, Robj->instance));
   if(!waserr && !IsMissing(ans, true))
     {
       //non-missing, non-null result. stop looking
@@ -292,7 +297,7 @@ bool RFunction_GetProp(RFunction *Robj, NPIdentifier name, NPNetscapeFuncs *func
   //try $
     ptr = call;
     SETCAR(ptr, Rf_install("$"));
-    ans = R_tryEval( call, R_GlobalEnv, &waserr);
+    ans = rQueue.requestRCall( call, R_GlobalEnv, &waserr, Robj->instance);
     if(!waserr && !IsMissing(ans, true))
       toret = 1;
     else
@@ -300,7 +305,7 @@ bool RFunction_GetProp(RFunction *Robj, NPIdentifier name, NPNetscapeFuncs *func
 	//try @
 	ptr = call;
 	SETCAR(ptr, Rf_install("@"));
-	ans = R_tryEval( call, R_GlobalEnv, &waserr);
+	ans = rQueue.requestRCall( call, R_GlobalEnv, &waserr, Robj->instance);
 	if(!waserr && !IsMissing(ans, false))
 	  toret = 1;
 	else

@@ -44,11 +44,12 @@ IS_MAC=@IS_MAC@
 CPPFLAGS = -Wall -O0 -DXP_UNIX=1 -DMOZ_X11=1 -fPIC -g -I ../npapi-sdk-headers -I$ /usr/share/R/include
 
 R_LD_FLAGS=-L$(R_HOME)/lib -lR
+#LD_FLAGS=-lpthread
 #OBJ_FILES =  WebRPlugin.o WebREngine.o NPConversions.o WebRObject.o
-OBJ_FILES =  BasicPlugin.o WebREngine.o NPConversions.o WebRObject.o WebRFunction.o
+OBJ_FILES =  BasicPlugin.o WebREngine.o NPConversions.o WebRObject.o WebRFunction.o WebRMutex.o
 npbasicplugin : $(OBJ_FILES)
 ifeq ($(IS_MAC), 0)
-	cc $(CPPFLAGS) $(R_LD_FLAGS) -shared $(OBJ_FILES) -o RBrowserPlugin.so
+	cc $(CPPFLAGS) $(R_LD_FLAGS) $(LD_FLAGS) -shared $(OBJ_FILES) -o RBrowserPlugin.so
 else
 	#we need to make sure to clean every time because some stuff seems to be getting cached when it shouldn't
 	xcodebuild clean -configuration Debug -sdk macosx10.5 ARCHS="i386"

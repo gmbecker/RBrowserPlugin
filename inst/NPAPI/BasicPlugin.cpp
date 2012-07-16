@@ -23,6 +23,14 @@
 
 /* Structure containing pointers to functions implemented by the browser. */
 NPNetscapeFuncs *myNPNFuncs;
+/*
+pthread_mutex_t rMutex;
+pthread_mutex_t queueMutex;
+pthread_attr_t rThreadAttrs;
+pthread_cond_t queueAdvance;
+*/
+RCallQueue rQueue;
+
 
 #define PLUGIN_NAME        "Test R Plugin"
 #define PLUGIN_DESCRIPTION PLUGIN_NAME " Working up to WebR"
@@ -47,14 +55,32 @@ int initR( const char **args, int nargs)
   for(int i = 0 ; i < nargs; i++)
     rargs[i] = strdup(args[i]);
   fprintf(stderr, "Attempting to start embedded R.\n");fflush(stderr);
+  R_SignalHandlers = 0;
+  if(!getenv("R_HOME"))
+    {
+      fprintf(stderr, "\nR_HOME was not set. using /usr/lib64/R\n");fflush(stderr);
+      putenv("R_HOME=/usr/lib64/R");
+    }
   Rf_initEmbeddedR(nargs, rargs);
   fprintf(stderr, "R initialization done.\n"); fflush(stderr);
+  
+  R_CStackLimit = (uintptr_t)-1;
+  
+  R_SignalHandlers = 0;
+  /*
+  pthread_mutex_init(&rMutex, NULL);
+  pthread_mutex_init(&queueMutex, NULL);
+  pthread_attr_init(&rThreadAttrs);
+  pthread_attr_setschedpolicy(&rThreadAttrs, SCHED_FIFO);
+  */
+  rQueue.init();
   int error=0;
   SEXP call;
   PROTECT(call = allocVector(LANGSXP, 2));
   SETCAR(call, Rf_install("library"));
   SETCAR(CDR(call), Rf_install("RBrowserPlugin"));
   R_tryEval(call, R_GlobalEnv, &error);
+  
   
   UNPROTECT(1);
   return error;
@@ -156,6 +182,9 @@ void CopyNPNFunctions(NPNetscapeFuncs *dstFuncs, NPNetscapeFuncs *srcFuncs)
   dstFuncs->releasevariantvalue = srcFuncs->releasevariantvalue;
   dstFuncs->setexception = srcFuncs->setexception;
   dstFuncs->construct = srcFuncs->construct;
+
+  //This was missing for some reason?!?!
+  dstFuncs->enumerate = srcFuncs->enumerate;
   
   if (srcFuncs->version >= NPVERS_MACOSX_HAS_COCOA_EVENTS) { // 23 
     dstFuncs->scheduletimer = srcFuncs->scheduletimer;  
@@ -177,7 +206,7 @@ void CopyNPNFunctions(NPNetscapeFuncs *dstFuncs, NPNetscapeFuncs *srcFuncs)
 char*
 NP_GetPluginVersion()
 {
-  return PLUGIN_VERSION;
+  return (char *) PLUGIN_VERSION;
 }
 
 
@@ -192,10 +221,10 @@ NPError
 NP_GetValue(void* future, NPPVariable aVariable, void* aValue) {
   switch (aVariable) {
     case NPPVpluginNameString:
-      *((char**)aValue) = PLUGIN_NAME;
+      *((char**)aValue) = (char *) PLUGIN_NAME;
       break;
     case NPPVpluginDescriptionString:
-      *((char**)aValue) = PLUGIN_DESCRIPTION;
+      *((char**)aValue) = (char *) PLUGIN_DESCRIPTION;
       break;
     default:
       return NPERR_INVALID_PARAM;
@@ -271,7 +300,7 @@ NPError NPP_New(NPMIMEType pluginType, NPP instance, uint16_t mode, int16_t argc
     }
   }
   */
-
+  /*
   SEXP klass, ans, ptr;
   SEXP klass2, ans2, ptr2;
 	
@@ -294,8 +323,8 @@ NPError NPP_New(NPMIMEType pluginType, NPP instance, uint16_t mode, int16_t argc
   SET_SLOT(ans, Rf_install("ref"), ptr);
   Rf_defineVar(Rf_install("PluginInstance"), ans, R_GlobalEnv);
   UNPROTECT(6);
-  
-
+  */
+  makeRGlobals(instance);
 
   return NPERR_NO_ERROR;
 }
@@ -383,11 +412,11 @@ NPP_GetValue(NPP instance, NPPVariable variable, void *value) {
       break;
       
     case NPPVpluginNameString:
-      *((char **)value) = "WebR Plugin";
+      *((char **)value) = (char *) "WebR Plugin";
       break;
       
     case NPPVpluginDescriptionString:
-      *((char **)value) = "WebR plugin";
+      *((char **)value) = (char *) "WebR plugin";
       break;
       
     case NPPVpluginScriptableNPObject:
@@ -396,14 +425,14 @@ NPP_GetValue(NPP instance, NPPVariable variable, void *value) {
 
   //so I can get into gdb
   //sleep(5);
-  fprintf(stderr, "\ninstance: %lx\n", instance);fflush(stderr);
+	fprintf(stderr, "\ninstance: %lx\n", (unsigned long int) instance);fflush(stderr);
   //fprintf(stderr, "\nmyNPNFuncs: %lx\n", myNPNFuncs);fflush(stderr);
   //fprintf(stderr, "\nmyNPNFuncs->createobject: %lx\n", myNPNFuncs->createobject);fflush(stderr);
 	if(!((InstanceData*)instance->pdata)->scriptable)
 	  {
       fprintf(stderr, "Attempting to create scriptable object");fflush(stderr);
       ((InstanceData*)instance->pdata)->scriptable = myNPNFuncs->createobject(instance, &WebREngine::_npclass);
-      fprintf(stderr, "Scriptable object created %lx", ((InstanceData*)instance->pdata)->scriptable);fflush(stderr);
+      fprintf(stderr, "Scriptable object created %lx", (unsigned long int) ((InstanceData*)instance->pdata)->scriptable);fflush(stderr);
       myNPNFuncs->retainobject((NPObject *)((InstanceData*)instance->pdata)->scriptable);
       //myNPNFuncs->retainobject(scriptable);
       
@@ -418,7 +447,7 @@ NPP_GetValue(NPP instance, NPPVariable variable, void *value) {
       rv = NPERR_GENERIC_ERROR;
       break;
     }
-  fprintf(stderr, "value set to: %lx", *((NPObject **)value));fflush(stderr);
+  fprintf(stderr, "value set to: %lx", (unsigned long int) *((NPObject **)value));fflush(stderr);
   return rv;
 }
 

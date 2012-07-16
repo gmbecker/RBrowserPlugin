@@ -1,0 +1,21 @@
+<html>
+  <head>
+    <script type="text/javascript" src = "../javascript/Rhelpers.js"></script>
+<script type="text/javascript" src="../javascript/raphael.js"> </script>
+<script type="text/R">
+  myfun = function(a, b = "failure", c = "failure")
+    { 
+      div = JS[["document"]]$getElementById("divout")
+      div[["innerHTML"]] = b
+      div2 = JS[["document"]]$getElementById("divout2")
+      div2[["innerHTML"]] = c
+    }
+</script>
+</head>
+<body>
+    <embed id="REngine" type="application/test-r" width="0" height="0"></embed>
+<input type="button"  onclick="R.myfun(args({b : 'success!', c: 'success!'}));"/>
+<div id="divout"></div>
+<div id="divout2"></div>
+</body>
+</html>
