@@ -75,7 +75,7 @@ bool RFunction::Invoke(NPIdentifier name, const NPVariant *args, uint32_t argCou
   if (name == this->funcs->getstringidentifier("handleEvent"))
     {
       fprintf(stderr, "\nIn handleEvent method of an RFunction\n");fflush(stderr);
-      return this->InvokeDefault(NULL, 0, result);
+      return this->InvokeDefault(args, argCount, result);
     }
       if (name == this->funcs->getstringidentifier("call")) 
 	{
@@ -87,13 +87,17 @@ bool RFunction::Invoke(NPIdentifier name, const NPVariant *args, uint32_t argCou
 
 bool RFunction::InvokeDefault(const NPVariant *args, uint32_t argCount, NPVariant *result)
 {
-  fprintf(stderr, "\nDirectly invoking on RFunction object");fflush(stderr);
+ 
+  if(argCount && args[0].type == NPVariantType_Object && this->funcs->hasproperty(this->instance, args[0].value.objectValue, this->funcs->getstringidentifier("namedArrayForR")))
+    {
+      return doNamedCall(this->instance, this->object, args, argCount, result, this->funcs);
+    }
   SEXP Rargs[argCount];
   for(uint32_t i=0; i<argCount; i++)
     {
       PROTECT(Rargs[i] = R_NilValue); 
       //when calling R functions directly we DO want arguments to be converted.
-      ConvertNPToR((NPVariant *) &(args[i]), this->instance, this->funcs, true, &Rargs[i]);
+      ConvertNPToR((NPVariant *) &(args[i]), this->instance, this->funcs, CONV_DEFAULT, &Rargs[i]);
     }
   SEXP ans;
   SEXP call; 
@@ -111,11 +115,12 @@ bool RFunction::InvokeDefault(const NPVariant *args, uint32_t argCount, NPVarian
   
   fprintf(stderr, "\nDirect API call: ");fflush(stderr);
   Rf_PrintValue(call);
+  //PROTECT(ans = R_tryEval( call, R_GlobalEnv, &error));
   PROTECT(ans = R_tryEval( call, R_GlobalEnv, &error));
   
   addProt = 2;
   if(!error)
-    ConvertRToNP(ans, this->instance, this->funcs, result, true);
+    ConvertRToNP(ans, this->instance, this->funcs, result, CONV_DEFAULT);
   //If it's an error, just throw an error for the browser.
   //else
   //  ConvertRToNP(R_NilValue, this->instance, this->funcs, result, false);
@@ -264,56 +269,47 @@ NPClass RFunction::_npclass = {
 };
 
  
-bool RFunction_GetProp(RFunction *Robj, NPIdentifier name, NPNetscapeFuncs *funcs, NPVariant *result, bool check)
+bool doNamedCall(NPP inst, SEXP fun, const NPVariant *argsIn, uint32_t count, NPVariant *_res, NPNetscapeFuncs *funcs)
 {
-  SEXP obj, call, ptr, ans;
-  //do we need to proect here?
-  obj = Robj->object;
-  int waserr = 0;
-  bool toret = 0;
-  PROTECT(ptr = call = allocVector(LANGSXP, 3));
-  
-  //try [[
-  SETCAR(ptr, Rf_install("[["));
-  ptr = CDR( ptr );
-  SETCAR(ptr, obj);
-  ptr = CDR( ptr );
-  if(funcs->identifierisstring(name))
-    SETCAR( ptr , Rf_install( (const char *) funcs->utf8fromidentifier(name)));
-  else
-    SETCAR( ptr , ScalarReal( (int) funcs->intfromidentifier(name)));
-  
-  PROTECT(ans = R_tryEval( call, R_GlobalEnv, &waserr));
-  if(!waserr && !IsMissing(ans, true))
+  fprintf(stderr, "\nAttempting to create R call with named arguments\n");fflush(stderr);
+  uint32_t idcount = 0;
+   NPIdentifier *ids;
+  NPObject *obj = argsIn[0].value.objectValue;
+  bool success = funcs->enumerate(inst, obj, &ids, &idcount);
+  SEXP call, ans, ptr, tmp;
+  NPVariant curprop;
+  PROTECT(ptr = call = allocVector(LANGSXP, 1 + idcount - 1));
+  SETCAR(ptr, fun);
+  PROTECT(tmp = R_NilValue);
+  for(int i =0; i < idcount; i++)
     {
-      //non-missing, non-null result. stop looking
-      toret = 1;
-    } else {
-  //try $
-    ptr = call;
-    SETCAR(ptr, Rf_install("$"));
-    ans = R_tryEval( call, R_GlobalEnv, &waserr);
-    if(!waserr && !IsMissing(ans, true))
-      toret = 1;
-    else
-      {
-	//try @
-	ptr = call;
-	SETCAR(ptr, Rf_install("@"));
-	ans = R_tryEval( call, R_GlobalEnv, &waserr);
-	if(!waserr && !IsMissing(ans, false))
-	  toret = 1;
-	else
-	  {
-	    ans = NEW_NUMERIC(1);
-	    REAL(ans)[0] = NA_REAL;
-	  }
-      }
-  }
-  
-  ConvertRToNP(ans, Robj->instance, funcs, result, false);
-  if(!check)
-    return true;
-  else
-    return toret;
-}
+      if(ids[i] != funcs->getstringidentifier("namedArrayForR"))
+	{
+      fprintf(stderr, "\nAccessing property %s\n", funcs->utf8fromidentifier(ids[i]));fflush(stderr);
+      ptr = CDR(ptr);
+      funcs->getproperty(inst, obj, ids[i], &curprop);
+      ConvertNPToR(&curprop, inst, funcs, CONV_DEFAULT, &tmp);
+      SETCAR(ptr, tmp);
+      SET_TAG(ptr, Rf_install((const char *) funcs->utf8fromidentifier(ids[i])));
+	}
+    }
+  /*
+  if(count > 1)
+    {
+      for(int j = 1; j < count; j++)
+	{
+	  ptr = CDR(ptr);
+	  ConvertNPToR((NPVariant *) &argsIn[j], inst, myNPNFuncs, true, &tmp);
+	  SETCAR(ptr, tmp);
+	}
+    }
+  */
+  fprintf(stderr, "\nFull call:\n");fflush(stderr);
+  Rf_PrintValue(call);
+  int err = 0;
+  PROTECT(ans = R_tryEval(call, R_GlobalEnv, &err));
+  ConvertRToNP(ans, inst, funcs, _res, CONV_DEFAULT);
+  // funcs->memfree(*ids);
+  funcs->memfree(ids);
+  return !err;
+} 

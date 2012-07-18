@@ -173,6 +173,7 @@ raphaelDev = function(id = "raph_content", dim = c(600, 400),
         storage$polylines = list()
         storage$text = list()
         storage$rects = list()
+        print("leaving newPage")
       }
 
     # No implementations for
@@ -225,12 +226,18 @@ clearRaphPlot = function(dev)
 doColors = function(jsvar, context)
   {
     stroke = as(context$col, "RGB")
-    fill = as(context$fill, "RGB")   
+    fill = as(context$fill, "RGB")
+    
     if(!isTransparent(stroke))
-      jsvar$attr("stroke", stroke)
+      jsvar$attr("stroke", getColorHex(stroke))
     if(!isTransparent(fill))
-      jsvar$attr("fill", fill)
+      jsvar$attr("fill", getColorHex(fill))
    TRUE
+  }
+
+getColorHex = function(col)
+  {
+    paste(c("#", paste(as.character.hexmode(col2rgb( col ) ), collapse="") ), collapse = "")
   }
 
 getContextColors = function(context)

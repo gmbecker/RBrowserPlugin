@@ -43,7 +43,7 @@ bool RObject::Invoke(NPIdentifier name, const NPVariant *args, uint32_t argCount
 	  return false;
 	}
       //true indicates we want conversion from RObject to normalJavaScript object where possible.
-      ConvertRToNP(this->object, this->instance, this->funcs, result, true); 
+      ConvertRToNP(this->object, this->instance, this->funcs, result, CONV_DEFAULT); 
       return true;
     } else if (name == this->funcs->getstringidentifier("toString")) 
     {
@@ -125,7 +125,7 @@ bool RObject::GetProperty(NPIdentifier name, NPVariant *result)
     SETCAR(ptr, ScalarInteger(this->funcs->intfromidentifier(name)));
   
   PROTECT(ans = rQueue.requestRCall(call, R_GlobalEnv, &error, this->instance));
-  bool ret = ConvertRToNP(ans, this->instance, this->funcs, result, true);
+  bool ret = ConvertRToNP(ans, this->instance, this->funcs, result, CONV_DEFAULT);
   UNPROTECT(2);
   //ConvertRToNP(ans, Robj->instance, funcs, result, false);
   return ret;
@@ -287,7 +287,7 @@ bool RS4Object::Invoke(NPIdentifier name, const NPVariant *args, uint32_t argCou
 	  return false;
 	}
       //true indicates we want conversion from RS4Object to normalJavaScript object where possible.
-      ConvertRToNP(this->object, this->instance, this->funcs, result, true); 
+      ConvertRToNP(this->object, this->instance, this->funcs, result, CONV_DEFAULT); 
       return true;
     } else if (name == this->funcs->getstringidentifier("toString")) 
     {
@@ -368,7 +368,7 @@ bool RS4Object::GetProperty(NPIdentifier name, NPVariant *result)
   SETCAR(ptr, ScalarString(mkChar(this->funcs->utf8fromidentifier(name))));
   
   PROTECT(ans = rQueue.requestRCall(call, R_GlobalEnv, &error, this->instance));
-  bool ret = ConvertRToNP(ans, this->instance, this->funcs, result, true);
+  bool ret = ConvertRToNP(ans, this->instance, this->funcs, result, CONV_DEFAULT);
   UNPROTECT(2);
   //ConvertRToNP(ans, Robj->instance, funcs, result, false);
   return ret;
@@ -393,7 +393,7 @@ bool RS4Object::SetProperty(NPIdentifier name, const NPVariant *value)
       ptr = CDR(ptr);
       
       PROTECT(tmp = R_NilValue);
-      ConvertNPToR((NPVariant *)value, this->instance, this->funcs, true, &tmp);
+      ConvertNPToR((NPVariant *)value, this->instance, this->funcs, CONV_DEFAULT, &tmp);
       SETCAR(ptr, tmp);
       //this->object = R_tryEval(call, R_GlobalEnv, &err);
       tmp2 = R_tryEval(call, R_GlobalEnv, &err);
@@ -565,7 +565,7 @@ bool RObject_GetProp(RObject *Robj, NPIdentifier name, NPNetscapeFuncs *funcs, N
       }
   }
   
-  ConvertRToNP(ans, Robj->instance, funcs, result, false);
+  ConvertRToNP(ans, Robj->instance, funcs, result, CONV_REF);
   if(!check)
     return true;
   else
@@ -690,7 +690,7 @@ bool RRefClassObject::Invoke(NPIdentifier name, const NPVariant *args, uint32_t 
 	  return false;
 	}
       //true indicates we want conversion from RRefClassObject to normalJavaScript object where possible.
-      ConvertRToNP(this->object, this->instance, this->funcs, result, true); 
+      ConvertRToNP(this->object, this->instance, this->funcs, result, CONV_DEFAULT); 
       return true;
     } else if (name == this->funcs->getstringidentifier("toString")) 
     {
@@ -777,7 +777,7 @@ bool RRefClassObject::GetProperty(NPIdentifier name, NPVariant *result)
     SETCAR(ptr, ScalarInteger(this->funcs->intfromidentifier(name)));
   
   PROTECT(ans = rQueue.requestRCall(call, R_GlobalEnv, &error, this->instance));
-  bool ret = ConvertRToNP(ans, this->instance, this->funcs, result, true);
+  bool ret = ConvertRToNP(ans, this->instance, this->funcs, result, CONV_DEFAULT);
   UNPROTECT(2);
   //ConvertRToNP(ans, Robj->instance, funcs, result, false);
   return ret;
@@ -807,7 +807,7 @@ bool RRefClassObject::SetProperty(NPIdentifier name, const NPVariant *value)
       else
 	SETCAR(ptr, ScalarInteger(this->funcs->intfromidentifier(name)));
       
-      bool success = ConvertNPToR((NPVariant *)value, this->instance, this->funcs, true, &val);
+      bool success = ConvertNPToR((NPVariant *)value, this->instance, this->funcs, CONV_DEFAULT, &val);
       ptr = CDR(ptr);
       SETCAR(ptr, val);
       this->object = R_tryEval(call, R_GlobalEnv, &err);

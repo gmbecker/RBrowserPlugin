@@ -1,6 +1,6 @@
 #include "WebR.h"
 
-bool ConvertRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret, bool convertRes)
+bool ConvertRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret, convert_t convertRes)
 {
 
 
@@ -15,14 +15,22 @@ bool ConvertRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret, bo
       *ret = *(NPVariant *) R_ExternalPtrAddr(GET_SLOT( val , Rf_install( "ref" ) ) );
       return true;
 	}
+  /*
   if(!convertRes)
     {
       MakeRRefForNP(val, inst, funcs, ret);
       return true;
     }
-  
+  */
 
-  //fprintf(stderr, "\nIn ConvertRToNP type: %d", TYPEOF(val));fflush(stderr);
+ if(convertRes == CONV_REF || (convertRes == CONV_DEFAULT && (IS_S4_OBJECT(val) || TYPEOF(val) == CLOSXP) ) ) 
+    {
+      MakeRRefForNP(val, inst, funcs, ret);
+      return true;
+    }
+
+
+  //fprintf(stderr, "\nIn ConvertRoNP type: %d", TYPEOF(val));fflush(stderr);
   int len = LENGTH(val);
 
   if(len > 0)
@@ -82,11 +90,6 @@ bool ConvertRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret, bo
 	default:
 	  {
 	    MakeRRefForNP(val, inst, funcs,ret);
-	    /*
-	    char *buf = (char *) funcs->memalloc((14+sizeof(long int) + 1)*sizeof(char));;
-	    sprintf(buf, "_SEXP:Object_:%ld", val);
-	    STRINGZ_TO_NPVARIANT((const char *) buf, *ret);
-	    */
 	  }
 	  break;
 	}
@@ -97,7 +100,7 @@ bool ConvertRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret, bo
 bool RVectorToNP(SEXP vec, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret)
 {
   int len = LENGTH(vec);
-  fprintf(stderr, "\n R vector of length: %d detected", len); fflush(stderr);
+  fprintf(stderr, "\n R vector or list of length: %d detected", len); fflush(stderr);
   
   NPObject *domwin = NULL;
   NPVariant *vartmp2 = (NPVariant *) funcs->memalloc(sizeof(NPVariant));
@@ -132,14 +135,13 @@ bool RVectorToNP(SEXP vec, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret)
 	  vartmp2->value.intValue = LOGICAL(vec)[i];
 	  break;
 	case VECSXP:
-	  ConvertRToNP(VECTOR_ELT(vec, i), inst, funcs, vartmp2, true);
+	  ConvertRToNP(VECTOR_ELT(vec, i), inst, funcs, vartmp2, CONV_DEFAULT);
 	  break;
 	case STRSXP:
-	  ConvertRToNP(STRING_ELT(vec, i), inst, funcs, vartmp2, true);
+	  ConvertRToNP(STRING_ELT(vec, i), inst, funcs, vartmp2, CONV_DEFAULT);
 	  break;
 	}
-      //  fprintf(stderr, "\nAttempting push call");fflush(stderr);
-      //NPN_Invoke(inst, ret->value.objectValue, NPN_GetStringIdentifier("push"), vartmp, 1, vartmp2);
+
       funcs->invoke(inst, ret->value.objectValue, funcs->getstringidentifier("push"), vartmp2, 1, vartmp3);
     }
   fprintf(stderr, "\nConversion loop complete.");fflush(stderr);
@@ -155,12 +157,12 @@ bool RVectorToNP(SEXP vec, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret)
   
 }
 
-bool ConvertNPToR(NPVariant *var, NPP inst, NPNetscapeFuncs *funcs, bool convRet,  SEXP *_ret) 
+bool ConvertNPToR(NPVariant *var, NPP inst, NPNetscapeFuncs *funcs, convert_t convRet,  SEXP *_ret) 
 //Returns a bool indicating whether the variant passed in is safe to free (ie if we did NOT create new references to it within R)
 {
   int canfree = 1;
   
-  if(!convRet)
+  if(convRet == CONV_REF)
     {
       *_ret = MakeNPRefForR(var);
       canfree = 0;
@@ -224,10 +226,17 @@ bool ConvertNPToR(NPVariant *var, NPP inst, NPNetscapeFuncs *funcs, bool convRet
 		    canfree = 1;
 		  } else
 		  {							   
-		    fprintf(stderr, "\nGeneric NPObject detected. No Conversion found.");
-		    *_ret = MakeNPRefForR(var);
-		  
-		    canfree = 0;
+		    if(convRet == CONV_DEFAULT)
+		      {
+			//No specific conversion found so we return a reference
+			*_ret = MakeNPRefForR(var);
+		    
+			canfree = 0;
+		      } else {
+		      //CONV_COPY - force (shallow) copy. Deep copy would drag over the entire JS scope because of parent/child properties
+		      *_ret = CopyNPObjForR(var, inst, funcs);
+		      canfree = 1;
+		    }
 		  }
 	      }
 	  }
@@ -253,7 +262,7 @@ bool NPArrayToR(NPVariant *arr, int len, int simplify, NPP inst, NPNetscapeFuncs
   for (int i = 0; i < len; i++)
     {
       funcs->getproperty(inst, arr->value.objectValue, funcs->getintidentifier(i), &curValue);
-      tmpcanfree = ConvertNPToR(&curValue, inst, funcs, true, &tmp);
+      tmpcanfree = ConvertNPToR(&curValue, inst, funcs, CONV_DEFAULT, &tmp);
       SET_VECTOR_ELT(*_ret, i, tmp);
       if (!tmpcanfree)
 	canfree =  0;
@@ -292,6 +301,32 @@ SEXP MakeNPRefForR(NPVariant *ref)
 
   //XXX need to add finalizer!!
   SET_SLOT( ans , Rf_install( "ref" ), Rptr );
+  UNPROTECT(3);
+  return ans;
+}
+
+
+SEXP CopyNPObjForR(NPVariant *ref, NPP inst, NPNetscapeFuncs *funcs)
+//This creates a shallow copy of the JS object as an R list (ie properties are copied, but with the default conversion mechanics). Deep copying is not allowed because it would drag over the entire JS scope, probably multiple times, due to parent/child based properties.
+{
+
+  uint32_t idcount = 0;
+  NPIdentifier *ids;
+  NPObject *obj = ref->value.objectValue;
+  NPVariant curprop;
+  bool success = funcs->enumerate(inst, obj, &ids, &idcount);
+  SEXP ans, tmp, names;
+  PROTECT(ans = allocVector(VECSXP, idcount));
+  PROTECT(names = allocVector(STRSXP, idcount));
+  PROTECT(tmp = R_NilValue);
+  for(int i =0; i < idcount; i++)
+    {
+      funcs->getproperty(inst, obj, ids[i], &curprop);
+      ConvertNPToR(&curprop, inst, funcs, CONV_DEFAULT, &tmp);
+      SET_ELEMENT(ans, i, tmp);
+      SET_STRING_ELT(names, i, mkChar(funcs->utf8fromidentifier(ids[i])));
+    }
+  SET_NAMES(ans, names);
   UNPROTECT(3);
   return ans;
 }
@@ -349,7 +384,7 @@ bool CheckSEXPForJSRef(SEXP obj, NPP inst)
   ptr = CDR(ptr);
   SETCAR(ptr, obj);
   ptr = CDR(ptr);
-  SETCAR(ptr, ScalarString(mkChar("JSValueRef")));
+  SETCAR(ptr, ScalarString(mkChar("NPVariantRef")));
   
   PROTECT(ans = R_tryEval(call, R_GlobalEnv, &err));
   bool ret = LOGICAL(ans)[0];
@@ -358,4 +393,23 @@ bool CheckSEXPForJSRef(SEXP obj, NPP inst)
   UNPROTECT(2);
   return ret;
 
+}
+
+
+bool checkForRefClass(SEXP obj)
+{
+  SEXP ans, call, ptr;
+  PROTECT(call = ptr = allocVector(LANGSXP, 3));
+  SETCAR(ptr, Rf_install("is"));
+  ptr = CDR(ptr);
+  SETCAR(ptr, obj);
+  ptr = CDR(ptr);
+  SETCAR(ptr, ScalarString(mkChar("envRefClass")));
+  int err = 0;
+  bool ret = true;
+  PROTECT(ans = R_tryEval(call, R_GlobalEnv, &err));
+  if(err || !LOGICAL(ans)[0])
+    ret = false;
+  
+  return ret;
 }

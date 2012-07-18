@@ -60,6 +60,15 @@
 #include <R/Rinterface.h>
 #endif
 
+typedef enum convert_behavior {
+  CONV_REF = 0,
+  CONV_DEFAULT,
+  CONV_COPY
+} convert_t;
+  
+
+
+
 
 void SetNPPFuncs(NPPluginFuncs *pFuncs);
 int initR( const char **args, int nargs);
@@ -363,14 +372,15 @@ protected:
 
 
 
-bool ConvertRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret, bool convertRes);
+bool ConvertRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret, convert_t convertRes);
 bool RVectorToNP(SEXP vec, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret);
-bool ConvertNPToR(NPVariant *var, NPP inst, NPNetscapeFuncs *funcs, bool retRef, SEXP *_ret) ;
+bool ConvertNPToR(NPVariant *var, NPP inst, NPNetscapeFuncs *funcs, convert_t convRet, SEXP *_ret) ;
 bool NPArrayToR(NPVariant *arr, int len, int simplify, NPP inst, NPNetscapeFuncs *funcs, SEXP *_ret);
 SEXP makeNPVarRef(NPVariant *ref);
 void CopyNPNFunctions(NPNetscapeFuncs *dstFuncs, NPNetscapeFuncs *srcFuncs);
 SEXP MakeNPRefForR(NPVariant *obj);
 void MakeRRefForNP(SEXP obj, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret);
+SEXP CopyNPObjForR(NPVariant *ref, NPP inst, NPNetscapeFuncs *funcs);
 bool RObject_GetProp( RObject *obj, NPIdentifier name, NPNetscapeFuncs *funcs, NPVariant *result, bool check);
 bool IsMissing(SEXP obj, bool nullAlso);
 bool CheckSEXPForJSRef(SEXP obj, NPP inst);
@@ -408,5 +418,5 @@ SEXP innerGetVar(const char * varName, NPP inst);
 SEXP doGetVar(NPIdentifier name, NPP inst);
  void* doRCall(void *in);
   void* doRLookup(void *in);
-bool doNamedCall(NPP inst, SEXP fun, const NPVariant *argsIn, uint32_t count, NPVariant *_res);
+bool doNamedCall(NPP inst, SEXP fun, const NPVariant *argsIn, uint32_t count, NPVariant *_res, NPNetscapeFuncs *funcs);
 #endif // WebR.h

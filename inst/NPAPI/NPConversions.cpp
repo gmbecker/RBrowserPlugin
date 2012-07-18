@@ -1,6 +1,6 @@
 #include "WebR.h"
 
-bool ConvertRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret, bool convertRes)
+bool ConvertRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret, convert_t convertRes)
 {
 
 
@@ -15,12 +15,13 @@ bool ConvertRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret, bo
       *ret = *(NPVariant *) R_ExternalPtrAddr(GET_SLOT( val , Rf_install( "ref" ) ) );
       return true;
 	}
-  if(!convertRes || IS_S4_OBJECT(val))
+
+  if(convertRes == CONV_REF || (convertRes == CONV_DEFAULT && (IS_S4_OBJECT(val) || TYPEOF(val) == CLOSXP) ) ) 
     {
       MakeRRefForNP(val, inst, funcs, ret);
       return true;
     }
-  
+
 
   //fprintf(stderr, "\nIn ConvertRToNP type: %d", TYPEOF(val));fflush(stderr);
   int len = LENGTH(val);
@@ -67,6 +68,17 @@ bool ConvertRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret, bo
 	      STRINGZ_TO_NPVARIANT(dat, *ret);
 	    }
 	  break;
+	case CHARSXP:
+	  {
+
+	      const char *fromR = CHAR(val);
+	      fprintf(stderr, "\nProcessing CHARSXP: %s\n", fromR);fflush(stderr);
+	      //+1 for the null termination char
+	      int len = strlen(fromR) + 1;
+	      char *dat = (char *) funcs->memalloc(len*sizeof(char));
+	      memcpy(dat, fromR, len);
+	      STRINGZ_TO_NPVARIANT(dat, *ret);
+	  }
 	case CLOSXP:
 	  {
 	    fprintf(stderr, "\nConverting R function to JavaScript function.");fflush(stderr);
@@ -81,12 +93,8 @@ bool ConvertRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret, bo
 	  break;
 	default:
 	  {
+	    fprintf(stderr, "\nUnrecognized type: %d. Creating reference.\n", TYPEOF(val));fflush(stderr); 
 	    MakeRRefForNP(val, inst, funcs,ret);
-	    /*
-	    char *buf = (char *) funcs->memalloc((14+sizeof(long int) + 1)*sizeof(char));;
-	    sprintf(buf, "_SEXP:Object_:%ld", val);
-	    STRINGZ_TO_NPVARIANT((const char *) buf, *ret);
-	    */
 	  }
 	  break;
 	}
@@ -97,8 +105,8 @@ bool ConvertRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret, bo
 bool RVectorToNP(SEXP vec, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret)
 {
   int len = LENGTH(vec);
-  fprintf(stderr, "\n R vector of length: %d detected", len); fflush(stderr);
-  
+  fprintf(stderr, "\n R vector or list of length: %d detected", len); fflush(stderr);
+ 
   NPObject *domwin = NULL;
   NPVariant *vartmp2 = (NPVariant *) funcs->memalloc(sizeof(NPVariant));
   NPVariant *vartmp3 = (NPVariant *) funcs->memalloc(sizeof(NPVariant));
@@ -132,14 +140,13 @@ bool RVectorToNP(SEXP vec, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret)
 	  vartmp2->value.intValue = LOGICAL(vec)[i];
 	  break;
 	case VECSXP:
-	  ConvertRToNP(VECTOR_ELT(vec, i), inst, funcs, vartmp2, true);
+	  ConvertRToNP(VECTOR_ELT(vec, i), inst, funcs, vartmp2, CONV_DEFAULT);
 	  break;
 	case STRSXP:
-	  ConvertRToNP(STRING_ELT(vec, i), inst, funcs, vartmp2, true);
+	  ConvertRToNP(STRING_ELT(vec, i), inst, funcs, vartmp2, CONV_DEFAULT);
 	  break;
 	}
-      //  fprintf(stderr, "\nAttempting push call");fflush(stderr);
-      //NPN_Invoke(inst, ret->value.objectValue, NPN_GetStringIdentifier("push"), vartmp, 1, vartmp2);
+
       funcs->invoke(inst, ret->value.objectValue, funcs->getstringidentifier("push"), vartmp2, 1, vartmp3);
     }
   fprintf(stderr, "\nConversion loop complete.");fflush(stderr);
@@ -155,12 +162,12 @@ bool RVectorToNP(SEXP vec, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret)
   
 }
 
-bool ConvertNPToR(NPVariant *var, NPP inst, NPNetscapeFuncs *funcs, bool convRet,  SEXP *_ret) 
+bool ConvertNPToR(NPVariant *var, NPP inst, NPNetscapeFuncs *funcs, convert_t convRet,  SEXP *_ret) 
 //Returns a bool indicating whether the variant passed in is safe to free (ie if we did NOT create new references to it within R)
 {
   int canfree = 1;
   
-  if(!convRet)
+  if(convRet == CONV_REF)
     {
       *_ret = MakeNPRefForR(var);
       canfree = 0;
@@ -224,10 +231,17 @@ bool ConvertNPToR(NPVariant *var, NPP inst, NPNetscapeFuncs *funcs, bool convRet
 		    canfree = 1;
 		  } else
 		  {							   
-		    fprintf(stderr, "\nGeneric NPObject detected. No Conversion found.");
-		    *_ret = MakeNPRefForR(var);
-		  
-		    canfree = 0;
+		    if(convRet == CONV_DEFAULT)
+		      {
+			//No specific conversion found so we return a reference
+			*_ret = MakeNPRefForR(var);
+		    
+			canfree = 0;
+		      } else {
+		      //CONV_COPY - force (shallow) copy. Deep copy would drag over the entire JS scope because of parent/child properties
+		      *_ret = CopyNPObjForR(var, inst, myNPNFuncs);
+		      canfree = 1;
+		    }
 		  }
 	      }
 	  }
@@ -253,7 +267,7 @@ bool NPArrayToR(NPVariant *arr, int len, int simplify, NPP inst, NPNetscapeFuncs
   for (int i = 0; i < len; i++)
     {
       funcs->getproperty(inst, arr->value.objectValue, funcs->getintidentifier(i), &curValue);
-      tmpcanfree = ConvertNPToR(&curValue, inst, funcs, true, &tmp);
+      tmpcanfree = ConvertNPToR(&curValue, inst, funcs, CONV_DEFAULT, &tmp);
       SET_VECTOR_ELT(*_ret, i, tmp);
       if (!tmpcanfree)
 	canfree =  0;
@@ -295,6 +309,33 @@ SEXP MakeNPRefForR(NPVariant *ref)
   UNPROTECT(3);
   return ans;
 }
+
+SEXP CopyNPObjForR(NPVariant *ref, NPP inst, NPNetscapeFuncs *funcs)
+//This creates a shallow copy of the JS object as an R list (ie properties are copied, but with the default conversion mechanics). Deep copying is not allowed because it would drag over the entire JS scope, probably multiple times, due to parent/child based properties.
+{
+
+  uint32_t idcount = 0;
+  NPIdentifier *ids;
+  NPObject *obj = ref->value.objectValue;
+  NPVariant curprop;
+  bool success = myNPNFuncs->enumerate(inst, obj, &ids, &idcount);
+  SEXP ans, tmp, names;
+  PROTECT(ans = allocVector(VECSXP, idcount));
+  PROTECT(names = allocVector(STRSXP, idcount));
+  PROTECT(tmp = R_NilValue);
+  for(int i =0; i < idcount; i++)
+    {
+      myNPNFuncs->getproperty(inst, obj, ids[i], &curprop);
+      ConvertNPToR(&curprop, inst, myNPNFuncs, CONV_DEFAULT, &tmp);
+      SET_ELEMENT(ans, i, tmp);
+      SET_STRING_ELT(names, i, mkChar(myNPNFuncs->utf8fromidentifier(ids[i])));
+    }
+  SET_NAMES(ans, names);
+  UNPROTECT(3);
+  return ans;
+}
+
+
 
 void MakeRRefForNP(SEXP obj, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret)
 {
@@ -365,6 +406,9 @@ const char * NPStringToConstChar(NPString str)
 bool CheckSEXPForJSRef(SEXP obj, NPP inst)
 {
 
+ if(!IS_S4_OBJECT(obj))
+    return false;
+
   SEXP ans, call, ptr;
   int err = 0;
   PROTECT(ptr = call= allocVector(LANGSXP, 3));
@@ -392,6 +436,7 @@ bool CheckSEXPForJSRef(SEXP obj, NPP inst)
 
 bool checkForRefClass(SEXP obj)
 {
+
   SEXP ans, call, ptr;
   PROTECT(call = ptr = allocVector(LANGSXP, 3));
   SETCAR(ptr, Rf_install("is"));

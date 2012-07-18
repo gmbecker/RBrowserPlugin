@@ -42,7 +42,7 @@ SEXP R_NPAPI_Invoke(SEXP plug, SEXP Robj, SEXP Rname, SEXP Rargs, SEXP RconvArgs
       Rf_error("Robj is not an NPVariant containing an NPObject.");
       return R_NilValue;
     }
-  int convRet = LOGICAL(RconvRet)[0];
+  convert_t convRet = (convert_t) INTEGER(RconvRet)[0];
   
  
   int nargs = LENGTH(Rargs);
@@ -50,7 +50,7 @@ SEXP R_NPAPI_Invoke(SEXP plug, SEXP Robj, SEXP Rname, SEXP Rargs, SEXP RconvArgs
   
   for(int i = 0; i < nargs; i++)
     {
-      ConvertRToNP(VECTOR_ELT(Rargs, i), inst, funcs, &(args[i]), LOGICAL(RconvArgs)[i]);
+      ConvertRToNP(VECTOR_ELT(Rargs, i), inst, funcs, &(args[i]), (convert_t) INTEGER(RconvArgs)[i]);
     }
 
   NPVariant *ret = (NPVariant *) funcs->memalloc(sizeof(NPVariant)); 
@@ -115,7 +115,7 @@ SEXP R_NPAPI_GetProperty(SEXP plug, SEXP Robj, SEXP Rname, SEXP RconvRet)
       Rf_error("Robj is not an NPVariant containing an NPObject.");
       return R_NilValue;
     }
-  int convRet = LOGICAL(RconvRet)[0];
+  convert_t convRet = (convert_t) INTEGER(RconvRet)[0];
 
 
   NPVariant *ret = (NPVariant *) funcs->memalloc(sizeof(NPVariant)); 
@@ -160,7 +160,7 @@ SEXP R_NPAPI_SetProperty(SEXP plug, SEXP Robj, SEXP Rname, SEXP Rval, SEXP Rconv
       Rf_error("Robj is not an NPVariant containing an NPObject.");
       return R_NilValue;
     }
-  int convVal = LOGICAL(RconvValue)[0];
+  convert_t convVal = (convert_t) INTEGER(RconvValue)[0];
 
   
   //NPVariant *val = (NPVariant *) funcs->memalloc(sizeof(NPVariant)); 
@@ -236,7 +236,7 @@ SEXP R_NP_GetGlobal(SEXP Rplug)
   
   SEXP ans;
   PROTECT(ans = R_NilValue);
-  ConvertNPToR(toret, inst, funcs, false, &ans);
+  ConvertNPToR(toret, inst, funcs, CONV_REF, &ans);
   UNPROTECT(1);
   return ans;
 }

@@ -1,11 +1,11 @@
 
-callJavaScript = function( name, ..., object = getGlobalJSObject(), multipleArgs = FALSE, keepResult = TRUE, convertRet = TRUE, convertArgs)
+callJavaScript = function( name, ..., object = getGlobalJSObject(), multipleArgs = FALSE, keepResult = TRUE, convertRet = "default", convertArgs = NULL)
   {
     args = list(...)
 
     if(missing(convertArgs))
-      convertArgs = rep(TRUE, times=length(args))
-
+      print("convertArgs is missing!!!")
+   
     #check whether we are in Firefox or NPAPI-browser
     if(exists("ScriptCon"))
       #Need to update the RFirefox API if this is going to stay in
@@ -18,7 +18,7 @@ callJavaScript = function( name, ..., object = getGlobalJSObject(), multipleArgs
       }
   }
 
-evalJavaScript = function(script, scope = getGlobalJSObject(), keepResult = TRUE, convertRet=TRUE)
+evalJavaScript = function(script, scope = getGlobalJSObject(), keepResult = TRUE, convertRet="default")
   {
     if(length(script)>1)
       script = paste(script, collapse = "\n")
@@ -40,7 +40,7 @@ evalJavaScript = function(script, scope = getGlobalJSObject(), keepResult = TRUE
       }
   }
 
-'jsProperty<-' = function(object, name, value, convertValue = TRUE)
+'jsProperty<-' = function(object, name, value, convertValue = "default")
   {
     if(length(name) > 1)
       {
@@ -59,7 +59,7 @@ evalJavaScript = function(script, scope = getGlobalJSObject(), keepResult = TRUE
     object
   }
 
-jsProperty = function(object, name, convertRet = TRUE)
+jsProperty = function(object, name, convertRet = "default")
   {
     if(length(name) > 1)
       return(mapply(function(nm, conv) jsProperty(object, nm, conv), name, convertRet))
@@ -84,15 +84,15 @@ getGlobalJSObject = function()
       }
   }
 
-getPageElement = function(id, convertRet = FALSE)
+getPageElement = function(id, convertRet = "default")
   {
     if(length(id) > 1)
       return(mapply(getPageElement, id, convertRet))
     #When JS object is implemented
-    #JS[["document"]]$getElementById(id,
-    window = getGlobalJSObject()
-    document = window[["document"]]
-    document$getElementById(id)
+    JS[["document"]]$getElementById(id, convertRet)
+    #window = getGlobalJSObject()
+    #document = window[["document"]]
+    #document$getElementById(id)
   }
 
 
@@ -161,7 +161,7 @@ setMethod("$", "NPVariantRef",
           {
 
             #fun = function( ...,  keepResult = TRUE, returnRef = FALSE, convertArgs)
-            fun = function( ...,  keepResult = TRUE, convertRet = TRUE, convertArgs)
+            fun = function( ...,  keepResult = TRUE, convertRet = "default", convertArgs = NULL)
               {
               
                 args = list(...)
@@ -169,8 +169,8 @@ setMethod("$", "NPVariantRef",
                   multipleArgs = TRUE
                 else
                   multipleArgs = FALSE
-                
-                callJavaScript(object = x,name =  name, ... , multipleArgs = multipleArgs, keepResult = keepResult, returnRef = !convertRet, convertArgs = convertArgs)
+
+                callJavaScript(object = x,name =  name, ... , multipleArgs = multipleArgs, keepResult = keepResult, convertRet = convertRet, convertArgs = convertArgs)
               }
             fun
           }
