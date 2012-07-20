@@ -175,6 +175,8 @@ void CopyS4ToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret)
 
 void CopyRefClassToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret)
 {
+fprintf(stderr, "\nCopying of ReferenceClass objects is not supported. Creating Reference\n");fflush(stderr);
+  MakeRRefForNP(val, inst, funcs, ret);
 }
 /*
 bool ConvertRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret, convert_t convertRes)
