@@ -10,12 +10,31 @@
       div2 = JS[["document"]]$getElementById("divout2")
       div2[["innerHTML"]] = c
     }
+  addpi = function(a)
+{
+ pi + a
+}
+</script>
+<script type="text/javascript">
+  function dotest()
+{
+  R.myfun(args({b: "success!", c:"success!"}))
+  var pi1 = R.addpi( args( {a: 10} ) );
+  var pi2 = R.addpi( args( {a: 10, convertRet: 'reference'} ) );
+  document.getElementById("divout3").innerHTML = "R.addpi( args( {a: 10} ) ): " + pi1;
+  document.getElementById("divout4").innerHTML = "R.addpi( args( {a: 10, convertRet: 'reference'} ) ): " + pi2;
+
+
+
+}
 </script>
 </head>
 <body>
     <embed id="REngine" type="application/test-r" width="0" height="0"></embed>
-<input type="button"  onclick="R.myfun(args({b : 'success!', c: 'success!'}));"/>
+<input type="button"  onclick="dotest();"/>
 <div id="divout"></div>
 <div id="divout2"></div>
+<div id="divout3"></div>
+<div id="divout4"></div>
 </body>
 </html>

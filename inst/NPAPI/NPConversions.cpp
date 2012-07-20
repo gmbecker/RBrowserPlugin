@@ -4,7 +4,6 @@ bool ConvertRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret, co
 {
 
 
-  //PROTECT(klass = MAKE_CLASS("NPVariantRef"));
 //XXX If it is a promise we need the actual value. Will this come back to bite us by violating lazy loading?  
   int err = 0;
   if(TYPEOF(val) == PROMSXP)
@@ -23,7 +22,7 @@ bool ConvertRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret, co
     }
 
 
-  //fprintf(stderr, "\nIn ConvertRToNP type: %d", TYPEOF(val));fflush(stderr);
+
   int len = LENGTH(val);
 
   if(len > 0)
@@ -113,11 +112,20 @@ bool RVectorToNP(SEXP vec, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret)
   //NPVariant vartmp2;
 
   NPError res;
-    
+  bool named = !isNull(GET_NAMES(vec));
   res = funcs->getvalue(inst, NPNVWindowNPObject , &domwin);
- 
-  NPIdentifier arrid = funcs->getstringidentifier("Array");
   funcs->retainobject(domwin);
+  NPIdentifier arrid;
+  SEXP names;
+  if(named)
+    {
+      fprintf(stderr, "\nVector has non-NULL names. Creating associative array\n");fflush(stderr);
+      arrid = funcs->getstringidentifier("Object");
+      PROTECT(names = GET_NAMES(vec));
+    }
+  else
+    arrid = funcs->getstringidentifier("Array");
+  
    
   funcs->invoke(inst, domwin, arrid, NULL, 0, ret);
   //fprintf(stderr, "\nJS array object created.");fflush(stderr);
@@ -136,8 +144,8 @@ bool RVectorToNP(SEXP vec, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret)
 	  vartmp2->value.intValue = INTEGER(vec)[i];
 	  break;
 	case LGLSXP:
-	  vartmp2->type=NPVariantType_Int32;
-	  vartmp2->value.intValue = LOGICAL(vec)[i];
+	  vartmp2->type=NPVariantType_Bool;
+	  vartmp2->value.boolValue = (bool) LOGICAL(vec)[i];
 	  break;
 	case VECSXP:
 	  ConvertRToNP(VECTOR_ELT(vec, i), inst, funcs, vartmp2, CONV_DEFAULT);
@@ -147,9 +155,20 @@ bool RVectorToNP(SEXP vec, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret)
 	  break;
 	}
 
-      funcs->invoke(inst, ret->value.objectValue, funcs->getstringidentifier("push"), vartmp2, 1, vartmp3);
+      if(named)
+	funcs->setproperty(inst, ret->value.objectValue, funcs->getstringidentifier(CHAR(STRING_ELT(names, i))), vartmp2);
+      else
+	funcs->invoke(inst, ret->value.objectValue, funcs->getstringidentifier("push"), vartmp2, 1, vartmp3);
     }
   fprintf(stderr, "\nConversion loop complete.");fflush(stderr);
+
+  if(named)
+    {
+      vartmp2->type=NPVariantType_Bool;
+      vartmp2->value.boolValue = true;
+      funcs->setproperty(inst, ret->value.objectValue, funcs->getstringidentifier("__CopiedFromR__"), vartmp2);
+      UNPROTECT(1);
+    }
 
   funcs->releaseobject(domwin);
   /*
@@ -158,6 +177,7 @@ bool RVectorToNP(SEXP vec, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret)
   */  
   funcs->releasevariantvalue(vartmp3);
   funcs->releasevariantvalue(vartmp2);
+  
   return true;
   
 }
@@ -231,17 +251,21 @@ bool ConvertNPToR(NPVariant *var, NPP inst, NPNetscapeFuncs *funcs, convert_t co
 		    canfree = 1;
 		  } else
 		  {							   
-		    if(convRet == CONV_DEFAULT)
+		    tmp = funcs->getproperty(inst, inObject, funcs->getstringidentifier("__CopiedFromR__"), &isRObject);
+		    if(convRet == CONV_COPY || (tmp && NPVARIANT_IS_BOOLEAN(isRObject) && isRObject.value.boolValue))
+		      {
+			//CONV_COPY - force (shallow) copy. Deep copy would drag over the entire JS scope because of parent/child properties
+		      *_ret = CopyNPObjForR(var, inst, myNPNFuncs);
+		      canfree = 1;
+		      }
+		    else
+		      //CONV_DEFAULT and object is not a copy of an R object (eg associative array created when copying named vector)
 		      {
 			//No specific conversion found so we return a reference
 			*_ret = MakeNPRefForR(var);
 		    
 			canfree = 0;
-		      } else {
-		      //CONV_COPY - force (shallow) copy. Deep copy would drag over the entire JS scope because of parent/child properties
-		      *_ret = CopyNPObjForR(var, inst, myNPNFuncs);
-		      canfree = 1;
-		    }
+		      }
 		  }
 	      }
 	  }
@@ -325,6 +349,7 @@ SEXP CopyNPObjForR(NPVariant *ref, NPP inst, NPNetscapeFuncs *funcs)
   PROTECT(tmp = R_NilValue);
   for(int i =0; i < idcount; i++)
     {
+      
       myNPNFuncs->getproperty(inst, obj, ids[i], &curprop);
       ConvertNPToR(&curprop, inst, myNPNFuncs, CONV_DEFAULT, &tmp);
       SET_ELEMENT(ans, i, tmp);

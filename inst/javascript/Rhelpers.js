@@ -137,21 +137,28 @@ function makeFun(obj)
     }
     return fun;
 }
-
+/*
 function isArray(obj)
 {
     var ret = false;
-    if( obj.prototype.toString.call( someVar ) === '[oberject Array]' ) {
+    if( obj.prototype.toString.call( someVar ) === '[object Array]' ) 
 	ret = true;
-    }
     return ret;
 }
-
+*/
 window.addEventListener("load", doAttach, true, true);
 
 
 function args(obj)
 {
-    obj.namedArrayForR = true;
+    obj.namedArgsForR = true;
+    if(typeof obj.convertRet == "undefined" || obj.convertRet == "default" || obj.convertRet == 1)
+	obj.convertRet = 1; //default
+    else if (obj.convertRet == "reference" || obj.convertRet == 0)
+	obj.convertRet = 0; //force reference
+    else if (obj.convertRet == "copy" || object.convertRet == 2)
+	obj.convertRet = 2; //force copy
+    else
+	throw "Unrecognized value for convertRet argument:" + obj.convertRet;
     return obj;
 }

@@ -88,7 +88,7 @@ bool RFunction::Invoke(NPIdentifier name, const NPVariant *args, uint32_t argCou
 bool RFunction::InvokeDefault(const NPVariant *args, uint32_t argCount, NPVariant *result)
 {
  
-  if(argCount && args[0].type == NPVariantType_Object && this->funcs->hasproperty(this->instance, args[0].value.objectValue, this->funcs->getstringidentifier("namedArrayForR")))
+  if(argCount && args[0].type == NPVariantType_Object && this->funcs->hasproperty(this->instance, args[0].value.objectValue, this->funcs->getstringidentifier("namedArgsForR")))
     {
       return doNamedCall(this->instance, this->object, args, argCount, result, this->funcs);
     }
@@ -333,12 +333,26 @@ bool doNamedCall(NPP inst, SEXP fun, const NPVariant *argsIn, uint32_t count, NP
   bool success = funcs->enumerate(inst, obj, &ids, &idcount);
   SEXP call, ans, ptr, tmp;
   NPVariant curprop;
-  PROTECT(ptr = call = allocVector(LANGSXP, 1 + idcount - 1));
+  convert_t conv= CONV_DEFAULT;
+  int len = 1 + idcount -1;
+  if(funcs->hasproperty(inst, obj, funcs->getstringidentifier("convertRet")))
+    len = len -1; //the convertRet property isn't going to be used as an argument in the function call
+  PROTECT(ptr = call = allocVector(LANGSXP, len));
   SETCAR(ptr, fun);
   PROTECT(tmp = R_NilValue);
+
   for(int i =0; i < idcount; i++)
-    {
-      if(ids[i] != funcs->getstringidentifier("namedArrayForR"))
+    { 
+      if(ids[i] == funcs->getstringidentifier("convertRet"))
+	{
+	  //switched between 3 options on Javascript side and converted to number
+	  funcs->getproperty(inst, obj, ids[i], &curprop);
+	  if(NPVARIANT_IS_INT32(curprop))
+	    conv = (convert_t) curprop.value.intValue;
+	  else
+	    conv = (convert_t) curprop.value.doubleValue;
+	} 
+      else if(ids[i] != funcs->getstringidentifier("namedArgsForR"))
 	{
       fprintf(stderr, "\nAccessing property %s\n", funcs->utf8fromidentifier(ids[i]));fflush(stderr);
       ptr = CDR(ptr);
@@ -348,22 +362,12 @@ bool doNamedCall(NPP inst, SEXP fun, const NPVariant *argsIn, uint32_t count, NP
       SET_TAG(ptr, Rf_install((const char *) funcs->utf8fromidentifier(ids[i])));
 	}
     }
-  /*
-  if(count > 1)
-    {
-      for(int j = 1; j < count; j++)
-	{
-	  ptr = CDR(ptr);
-	  ConvertNPToR((NPVariant *) &argsIn[j], inst, myNPNFuncs, true, &tmp);
-	  SETCAR(ptr, tmp);
-	}
-    }
-  */
+
   fprintf(stderr, "\nFull call:\n");fflush(stderr);
   Rf_PrintValue(call);
   int err = 0;
   PROTECT(ans = rQueue.requestRCall(call, R_GlobalEnv, &err, inst));
-  ConvertRToNP(ans, inst, funcs, _res, CONV_DEFAULT);
+  ConvertRToNP(ans, inst, funcs, _res, conv);
   // myNPNFuncs->memfree(*ids);
   funcs->memfree(ids);
   return !err;
