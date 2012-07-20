@@ -13,6 +13,10 @@ getMethods = function(obj)
     obj$getRefClass()$methods()
   }
 
+getSlotNames = function(obj)
+  {
+    names(getSlots(class(obj)))
+  }
 
 checkForField = function(obj, name)
   {

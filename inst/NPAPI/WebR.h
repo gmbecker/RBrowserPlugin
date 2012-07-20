@@ -382,7 +382,7 @@ SEXP MakeNPRefForR(NPVariant *obj);
 void MakeRRefForNP(SEXP obj, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret);
 void MakeCopyRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret);
 void CopyS4ToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret);
-
+void CopyRefClassToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret);
 SEXP CopyNPObjForR(NPVariant *ref, NPP inst, NPNetscapeFuncs *funcs);
 bool RObject_GetProp( RObject *obj, NPIdentifier name, NPNetscapeFuncs *funcs, NPVariant *result, bool check);
 bool IsMissing(SEXP obj, bool nullAlso);

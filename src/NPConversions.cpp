@@ -138,6 +138,46 @@ void MakeCopyRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret)
 
 void CopyS4ToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret)
 {
+  if(checkForRefClass(val))
+    return CopyRefClassToNP(val, inst, funcs, ret);
+
+  SEXP call, ptr, slots, tmp;
+  int err = 0;
+  NPObject *domwin;
+  NPError res;
+  NPIdentifier constructorId = funcs->getstringidentifier("Object");
+  NPVariant *vartmp2 = (NPVariant *) funcs->memalloc(sizeof(NPVariant));
+
+  res = funcs->getvalue(inst, NPNVWindowNPObject , &domwin);
+  funcs->retainobject(domwin);
+  funcs->invoke(inst, domwin, constructorId, NULL, 0, ret);
+  PROTECT(ptr = call = allocVector(LANGSXP, 2));
+  SETCAR(call, Rf_install("getSlotNames"));
+  ptr = CDR(ptr);
+  SETCAR(ptr, val);
+  PROTECT(slots = R_tryEval(call, R_GlobalEnv, &err));
+  int len = LENGTH(slots);
+  for (int i = 0; i < len; i++)
+    {
+      ConvertRToNP(GET_SLOT(val, Rf_install(CHAR(STRING_ELT(slots, i)))), inst, funcs, vartmp2, CONV_DEFAULT); 
+      funcs->setproperty(inst, ret->value.objectValue, funcs->getstringidentifier(CHAR(STRING_ELT(slots, i))), vartmp2);
+
+    }
+
+  vartmp2->type=NPVariantType_Bool;
+  vartmp2->value.boolValue = true;
+  funcs->setproperty(inst, ret->value.objectValue, funcs->getstringidentifier("__CopiedFromR__"), vartmp2);
+  
+  ConvertRToNP(GET_CLASS(val), inst, funcs, vartmp2, CONV_DEFAULT);
+  funcs->setproperty(inst, ret->value.objectValue, funcs->getstringidentifier("__S4Class__"), vartmp2);
+  UNPROTECT(2);
+  funcs->memfree(vartmp2);
+
+}
+
+
+void CopyRefClassToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret)
+{
 }
 
 /*
