@@ -1,5 +1,146 @@
 #include "WebR.h"
 
+
+bool ConvertRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret, convert_t convRes)
+{
+
+//If it is a promise we need the actual value.  
+  int err = 0;
+  if(TYPEOF(val) == PROMSXP)
+    val = R_tryEval(val, R_GlobalEnv, &err);
+  //Is it already a reference to an existing NP/JS object? If so just return that object!
+  if (CheckSEXPForJSRef(val, inst))
+    {
+      //XXX We shouldn't have to copy here, but do we really want to pass in double pointers?
+      *ret = *(NPVariant *) R_ExternalPtrAddr(GET_SLOT( val , Rf_install( "ref" ) ) );
+      return true;
+    }
+
+  if(convRes == CONV_COPY)
+    {
+      MakeCopyRToNP(val, inst, funcs, ret);
+      return true;
+    }
+  if(convRes == CONV_REF)
+    {
+      MakeRRefForNP(val, inst, funcs, ret);
+      return true;
+    }
+  
+  //Default marshalling behavior
+  switch(TYPEOF(val))
+    {
+    case NILSXP:
+      break;
+    case REALSXP:
+    case INTSXP:
+    case LGLSXP:
+    case STRSXP:
+    case CHARSXP:
+    case VECSXP:
+      MakeCopyRToNP(val, inst, funcs, ret);
+      break;
+    case CLOSXP:
+    case S4SXP:
+    default:
+      MakeRRefForNP(val, inst, funcs, ret);
+      break;
+    }
+  return true;
+}
+
+void MakeCopyRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret)
+{
+
+  if(IS_S4_OBJECT(val))
+    CopyS4ToNP(val, inst, funcs, ret);
+  else
+    {
+      int len = LENGTH(val);
+      if(len == 0)
+	return;
+      
+
+      switch(TYPEOF(val))
+	{
+	case NILSXP:
+	  break;
+	case REALSXP:
+	  if(len > 1)
+	    RVectorToNP(val, inst, funcs, ret);
+	  else	  
+	    DOUBLE_TO_NPVARIANT(REAL(val)[0], *ret);
+	  break;
+	case INTSXP:
+	  if(len > 1)
+	    RVectorToNP(val, inst, funcs, ret);
+	  else
+	    INT32_TO_NPVARIANT(INTEGER(val)[0], *ret);
+	  break;
+	case LGLSXP:
+	  if(len > 1)
+	    RVectorToNP(val, inst, funcs, ret);
+	  else
+	    BOOLEAN_TO_NPVARIANT( (bool) LOGICAL(val)[0], *ret);
+	  break;
+	case VECSXP:
+	  RVectorToNP(val, inst, funcs, ret);
+	  break;
+	case STRSXP:
+	  if(len > 1)
+	    RVectorToNP(val, inst, funcs, ret);
+	  else
+	    {
+	      //We need to use funcs->memalloc so that we can 
+	      //safely call funcs->releasevariantvalue later...
+	      const char *fromR = CHAR(STRING_ELT(val, 0));
+	      //+1 for the null termination char
+	      int len = strlen(fromR) + 1;
+	      char *dat = (char *) funcs->memalloc(len*sizeof(char));
+	      memcpy(dat, fromR, len);
+	      STRINGZ_TO_NPVARIANT(dat, *ret);
+	    }
+	  break;
+	case CHARSXP:
+	  {
+
+	      const char *fromR = CHAR(val);
+	      fprintf(stderr, "\nProcessing CHARSXP: %s\n", fromR);fflush(stderr);
+	      //+1 for the null termination char
+	      int len = strlen(fromR) + 1;
+	      char *dat = (char *) funcs->memalloc(len*sizeof(char));
+	      memcpy(dat, fromR, len);
+	      STRINGZ_TO_NPVARIANT(dat, *ret);
+	  }
+	case CLOSXP:
+	  {
+	    fprintf(stderr, "\nConverting R function to JavaScript function.");fflush(stderr);
+	    NPObject *domwin = NULL;
+	    NPError res;
+	    res = funcs->getvalue(inst, NPNVWindowNPObject , &domwin);
+	    NPVariant *vartmp = (NPVariant *) funcs->memalloc(sizeof(NPVariant));;
+	    
+	    MakeRRefForNP(val, inst, funcs,vartmp);
+	    funcs->invoke(inst, domwin, funcs->getstringidentifier("makeFun"), vartmp, 1, ret);
+	  }
+	  break;
+	default:
+	  {
+	    fprintf(stderr, "\nUnable to copy R value of type: %d. Creating reference.\n", TYPEOF(val));fflush(stderr); 
+	    MakeRRefForNP(val, inst, funcs,ret);
+	  }
+	  break;
+	}
+    }
+  return;
+}
+
+
+void CopyS4ToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret)
+{
+}
+
+/*
 bool ConvertRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret, convert_t convertRes)
 {
 
@@ -15,13 +156,6 @@ bool ConvertRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret, co
       *ret = *(NPVariant *) R_ExternalPtrAddr(GET_SLOT( val , Rf_install( "ref" ) ) );
       return true;
 	}
-  /*
-  if(!convertRes)
-    {
-      MakeRRefForNP(val, inst, funcs, ret);
-      return true;
-    }
-  */
 
  if(convertRes == CONV_REF || (convertRes == CONV_DEFAULT && (IS_S4_OBJECT(val) || TYPEOF(val) == CLOSXP) ) ) 
     {
@@ -96,6 +230,8 @@ bool ConvertRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret, co
     }
   return true;
 }
+
+*/
 
 bool RVectorToNP(SEXP vec, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret)
 {
