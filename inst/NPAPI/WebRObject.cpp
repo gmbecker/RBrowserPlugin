@@ -935,6 +935,14 @@ RVector::RVector (NPP instance)
   this->converter = NULL;
 }
 
+NPObject *RVector::Allocate(NPP npp, NPClass *aClass)
+{
+	NPObject *pObj = (NPObject *)new RVector(npp);
+	return pObj;
+}
+
+
+/*
 void RVector::Deallocate()
 {
   if(this->object)
@@ -1121,12 +1129,6 @@ bool RVector::Construct(const NPVariant *args, uint32_t argCount, NPVariant *res
 	return true;
 }
 
-NPObject *RVector::Allocate(NPP npp, NPClass *aClass)
-{
-	NPObject *pObj = (NPObject *)new RVector(npp);
-	return pObj;
-}
-
 void RVector::Detatch (void)
 {
 	m_Instance = NULL;
@@ -1193,7 +1195,7 @@ bool RVector::_Construct(NPObject *npobj, const NPVariant *args, uint32_t argCou
 	return ((RVector*)npobj)->Construct (args, argCount, result);
 }
 
-
+*/
 NPClass RVector::_npclass = {                              
   NP_CLASS_STRUCT_VERSION,								                          
   RVector::Allocate,                                       
@@ -1209,3 +1211,297 @@ NPClass RVector::_npclass = {
   RVector::_Enumerate,                                     
   RVector::_Construct                                      
 };
+
+
+//RList is the same as RVector...
+
+NPObject *RList::Allocate(NPP npp, NPClass *aClass)
+{
+	NPObject *pObj = (NPObject *)new RList(npp);
+	return pObj;
+}
+
+
+RList::RList (NPP instance) 
+{
+  this->instance = instance;
+  this->object = NULL;
+  this->converter = NULL;
+}
+
+
+
+NPClass RList::_npclass = {
+ NP_CLASS_STRUCT_VERSION,								                          
+  RList::Allocate,                                       
+  RSubsettableObject::_Deallocate,                                    
+  RSubsettableObject::_Invalidate,                                    
+  RSubsettableObject::_HasMethod,                                     
+  RSubsettableObject::_Invoke,                                        
+  RSubsettableObject::_InvokeDefault,                                 
+  RSubsettableObject::_HasProperty,                                   
+  RSubsettableObject::_GetProperty,                                   
+  RSubsettableObject::_SetProperty,                                   
+  RSubsettableObject::_RemoveProperty,                                
+  RSubsettableObject::_Enumerate,                                     
+  RSubsettableObject::_Construct                                      
+};
+
+
+void RSubsettableObject::Deallocate()
+{
+  if(this->object)
+    {
+      R_ReleaseObject(this->object);
+      this->object=NULL;
+    }
+}
+
+void RSubsettableObject::Invalidate()
+{
+}
+
+bool RSubsettableObject::HasMethod(NPIdentifier name)
+{
+  int ret = 0;
+  if(name == this->funcs->getstringidentifier("convert"))
+    ret = 1;
+  else if(name == this->funcs->getstringidentifier("toString"))
+    ret = 1;
+  else if(name == this->funcs->getstringidentifier("length"))
+    ret = 1;
+  
+  return (bool) ret;
+}
+
+
+bool RSubsettableObject::Invoke(NPIdentifier name, const NPVariant *args, uint32_t argCount, NPVariant *result)
+{
+  if(name == this->funcs->getstringidentifier("convert"))
+    {
+      if(this->converter != NULL)
+	{
+	  funcs->setexception(this, "User assigned JavaScript converters are not supported at this time. If you need this functionality please contact the maintainer");
+	  fprintf(stderr, "\nUser assigned JavaScript converters are not supported at this time. If you need this functionality please contact the maintainer.\n");fflush(stderr);
+	  return false;
+	}
+      //try to force conversion (copying)
+      ConvertRToNP(this->object, this->instance, this->funcs, result, CONV_COPY); 
+      return true;
+    } else if (name == this->funcs->getstringidentifier("toString")) 
+    {
+      fprintf(stderr, "\nIn tostring method of an RSubsettableObject\n");fflush(stderr);
+      //From NPN_ReleaseVariantValue docs: NPN_ReleaseVariantValue() will call NPN_ReleaseObject() on NPVariants of type NPVARIANTTYPE_OBJECT, and NPN_FreeMem() on NPVariants of type NPVARIANTTYPE_STRING. 
+      NPUTF8 *strdat = (NPUTF8*) this->funcs->memalloc(19+1);
+      //strdat = (NPUTF8*)"[Internal R Object]";
+      memcpy(strdat, "[Internal R Vector]", 19+1);
+      NPString str ={ strdat, 19};
+      result->type = NPVariantType_String;
+      result->value.stringValue = str;     
+      return true;
+    }
+  else if (name == this->funcs->getstringidentifier("length")) 
+    {
+      result->type = NPVariantType_Int32;
+      result->value.intValue = LENGTH(this->object);
+      return true;
+    }
+  return false;
+}
+
+bool RSubsettableObject::InvokeDefault(const NPVariant *args, uint32_t argCount, NPVariant *result)
+{
+  return false;
+}
+
+bool RSubsettableObject::HasProperty(NPIdentifier name)
+{
+  bool ret= true;
+  fprintf(stderr, "\nIn RSubsettableObject::HasProperty");fflush(stderr);
+  //we need to return false for things that need to be methods.
+  if(name == this->funcs->getstringidentifier("convert"))
+    ret = 0;
+  else if(name == this->funcs->getstringidentifier("toString"))
+    ret = 0;
+  else if(name == this->funcs->getstringidentifier("valueOf"))
+    ret = 0;
+  else if(name == this->funcs->getstringidentifier("isRObject"))
+    ret = 1;
+  else if(name == this->funcs->getstringidentifier("length"))
+    ret = 0;
+  else
+    {
+
+      SEXP call, ans, ptr;
+      int error=0;
+      PROTECT(ptr = call = allocVector(LANGSXP, 3));
+      SETCAR(ptr, Rf_install("CheckForProperty"));
+      ptr = CDR(ptr);
+      SETCAR(ptr, this-> object);
+      ptr = CDR(ptr);
+      if(this->funcs->identifierisstring(name))
+	SETCAR(ptr, ScalarString(mkChar(this->funcs->utf8fromidentifier(name))));
+      else
+	SETCAR(ptr, ScalarInteger(this->funcs->intfromidentifier(name)));
+      PROTECT(ans = rQueue.requestRCall(call, R_GlobalEnv, &error, this->instance));
+
+      if(!error)
+	ret = LOGICAL(ans)[0];
+      else
+	ret = false;
+      UNPROTECT(2);
+    }
+  return ret;
+}
+
+bool RSubsettableObject::GetProperty(NPIdentifier name, NPVariant *result)
+{
+  if(name == this->funcs->getstringidentifier("isRObject"))
+    {
+      BOOLEAN_TO_NPVARIANT(true, *result); 
+      return true;
+    }
+  //Emulate object[[name]], object$name, object@name in that order
+  fprintf(stderr, "\nIn RSubsettableObject::GetProperty");fflush(stderr);
+  SEXP call, ptr, ans;
+  int error;
+  PROTECT(ptr = call = allocVector(LANGSXP, 3));
+  SETCAR(ptr, Rf_install("[["));
+  ptr = CDR(ptr);
+  SETCAR(ptr, this->object);
+  ptr = CDR(ptr);
+  if(this->funcs->identifierisstring(name))
+    SETCAR(ptr, ScalarString(mkChar(this->funcs->utf8fromidentifier(name))));
+  else
+    SETCAR(ptr, ScalarInteger(this->funcs->intfromidentifier(name)));
+  
+  PROTECT(ans = rQueue.requestRCall(call, R_GlobalEnv, &error, this->instance));
+  bool ret = ConvertRToNP(ans, this->instance, this->funcs, result, CONV_DEFAULT);
+  UNPROTECT(2);
+  //ConvertRToNP(ans, Robj->instance, funcs, result, false);
+  return ret;
+}
+
+bool RSubsettableObject::SetProperty(NPIdentifier name, const NPVariant *value)
+{
+  //Emulate object[[name]]<-value
+  bool ret = false;
+  fprintf(stderr, "\nIn RSubsettableObject::SetProperty");fflush(stderr);
+  SEXP call, ptr, ans, tmp;
+  int error = 0;
+  //[[<- doesn't work because a lot of times these objects are not assigned to any symbols.
+  PROTECT(ptr = call = allocVector(LANGSXP, 4));
+  SETCAR(ptr, Rf_install("[[<-"));
+  ptr = CDR(ptr);
+  SETCAR(ptr, this->object);
+  ptr = CDR(ptr);
+  if(this->funcs->identifierisstring(name))
+    SETCAR(ptr, ScalarString(mkChar(this->funcs->utf8fromidentifier(name))));
+  else
+    SETCAR(ptr, ScalarInteger(this->funcs->intfromidentifier(name)));
+
+  ConvertNPToR((NPVariant *)value, this->instance, this->funcs, CONV_DEFAULT, &tmp);
+  ptr = CDR(ptr);
+  SETCAR(ptr, tmp);
+  //XXX This is getting garbage collected... and causing crashes
+   PROTECT(ans = rQueue.requestRCall(call, R_GlobalEnv, &error, this->instance));
+  //ans = rQueue.requestRCall(call, R_GlobalEnv, &error, this->instance);
+
+  if(!error)
+    {
+      this->object = ans;
+
+    }
+  ret = (bool) !error;
+
+  UNPROTECT(2);
+  return ret;
+}
+
+bool RSubsettableObject::RemoveProperty(NPIdentifier name)
+{
+	return false;
+}
+
+bool RSubsettableObject::Enumerate(NPIdentifier **identifier, uint32_t *count)
+{
+    fprintf(stderr, "\nIn RSubsettableObject::Enumerate");fflush(stderr);
+	return false;
+}
+
+bool RSubsettableObject::Construct(const NPVariant *args, uint32_t argCount, NPVariant *result)
+{
+	return true;
+}
+/*
+NPObject *RSubsettableObject::Allocate(NPP npp, NPClass *aClass)
+{
+	NPObject *pObj = (NPObject *)new RVector(npp);
+	return pObj;
+}
+*/
+void RSubsettableObject::Detatch (void)
+{
+	m_Instance = NULL;
+}
+
+
+
+void RSubsettableObject::_Deallocate(NPObject *npobj)
+{
+	RSubsettableObject *pObj = ((RSubsettableObject *) npobj);
+
+  // Call the virtual destructor.
+	pObj->Deallocate ();
+	delete pObj;
+}
+
+void RSubsettableObject::_Invalidate(NPObject *npobj)
+{
+	((RSubsettableObject*)npobj)->Invalidate();
+}
+
+bool RSubsettableObject::_HasMethod(NPObject *npobj, NPIdentifier name)
+{
+	return ((RSubsettableObject*)npobj)->HasMethod (name);
+}
+
+bool RSubsettableObject::_Invoke(NPObject *npobj, NPIdentifier name, const NPVariant *args, uint32_t argCount, NPVariant *result)
+{
+	return ((RSubsettableObject*)npobj)->Invoke (name, args, argCount, result);
+}
+
+bool RSubsettableObject::_InvokeDefault(NPObject *npobj, const NPVariant *args, uint32_t argCount, NPVariant *result)
+{
+	return ((RSubsettableObject*)npobj)->InvokeDefault (args, argCount, result);
+}
+
+bool RSubsettableObject::_HasProperty(NPObject * npobj, NPIdentifier name)
+{
+	return ((RSubsettableObject*)npobj)->HasProperty (name);
+}
+
+bool RSubsettableObject::_GetProperty(NPObject *npobj, NPIdentifier name, NPVariant *result)
+{
+	return ((RSubsettableObject*)npobj)->GetProperty (name, result);
+}
+
+bool RSubsettableObject::_SetProperty(NPObject *npobj, NPIdentifier name, const NPVariant *value)
+{
+	return ((RSubsettableObject*)npobj)->SetProperty (name, value);
+}
+
+bool RSubsettableObject::_RemoveProperty(NPObject *npobj, NPIdentifier name)
+{
+	return ((RSubsettableObject*)npobj)->RemoveProperty (name);
+}
+
+bool RSubsettableObject::_Enumerate(NPObject *npobj, NPIdentifier **identifier, uint32_t *count)
+{
+	return ((RSubsettableObject*)npobj)->Enumerate (identifier, count);
+}
+
+bool RSubsettableObject::_Construct(NPObject *npobj, const NPVariant *args, uint32_t argCount, NPVariant *result)
+{
+	return ((RSubsettableObject*)npobj)->Construct (args, argCount, result);
+}

@@ -32,7 +32,7 @@ bool ConvertRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret, co
     case NILSXP:
       break;
     case CHARSXP:
-    case VECSXP:
+
       MakeCopyRToNP(val, inst, funcs, ret);
       break;
     case REALSXP:
@@ -46,6 +46,7 @@ bool ConvertRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret, co
       break;
     case CLOSXP:
     case S4SXP:
+    case VECSXP:
     default:
       MakeRRefForNP(val, inst, funcs, ret);
       break;
@@ -606,10 +607,25 @@ void MakeRRefForNP(SEXP obj, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret)
 	retobj->object = ans;
 	retobj->funcs = funcs;
 	R_PreserveObject(retobj->object);
+	//retobj->vecType = TYPEOF(ans);
 	OBJECT_TO_NPVARIANT(retobj, *ret);
+	
 	break;
       }
-
+      
+    case VECSXP:
+      {
+	RList *retobj;
+	retobj = (RList *) funcs->createobject(inst, &RList::_npclass);
+	funcs->retainobject(retobj);
+	retobj->object = ans;
+	retobj->funcs = funcs;
+	R_PreserveObject(retobj->object);
+	OBJECT_TO_NPVARIANT(retobj, *ret);
+	
+	break;
+      }
+      
     default:
       {
 	RObject *retobj;
