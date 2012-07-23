@@ -1,0 +1,52 @@
+<html>
+  <head>
+    <script type="text/javascript" src="../../../RFirefox/inst/javascript/Rhelpers.js"></script>  
+    <script type="text/R">
+      x = 1:5
+    </script>
+    <script type="text/javascript">
+      function dotest()
+{
+
+      var x = R.getRef("x");
+      var y = x;
+      x[3] = 5;
+      var res = "not copied (x[3] = y[3])";  
+    if(x[3] != y[3])
+        res = "copied (x[3] != y[3])";
+      document.getElementById("outcome").innerHTML = "result: " + res;
+      var obj = {a:5, b:"hi there"};
+      var obj2 = obj;
+      obj.b = "goodbye";
+      var res2 = "not copied (obj.b == obj2.b)";  
+      if(obj.b != obj2.b)
+        res2 = "copied (obj.b != obj2.b)";
+      
+      document.getElementById("outcome2").innerHTML = "result: " + res2;
+      }
+2
+    </script>
+</head>
+<body>    
+  <embed id="REngine" type="application/test-r" height="0" width="0"></embed>
+  <div>
+  <input type="button" onclick="dotest();"/>
+  </div>
+<div id="txt" style="float:left;width:500px;margin-right:20px;">
+  Testing internal (JS-side) copy mechanics of R-based Reference style objects <br/>
+  var x = R.getRef("x"); <br/>
+  var y = x; <br/>
+  Press the button to alter x[3] via JavaScript and check y[3]<br/>
+<br/>
+  <div id="outcome"></div>  
+</div>
+<div style="float:right;margin-left:20px;">
+ Testing internal (JS-side) copy mechanics of standard JS objects <br/>
+  var obj = {a:5, b:"hello there"}; <br/>
+  var y = obj; <br/>
+  After altering obj.b and checking obj2.b we get <br/>
+<br/>
+<div id="outcome2"></div>  
+</div>
+  </body>
+</html>  

@@ -1,0 +1,36 @@
+<html>
+  <head>
+    <script type="text/javascript" src="../../../RFirefox/inst/javascript/Rhelpers.js"></script>  
+    <script type="text/R">
+      x = 1:5
+      y = x
+    </script>
+    <script type="text/javascript">
+      function dotest()
+{
+      var x = R.getRef("x");
+      var y = R.getRef("y");
+      x[3] = 5;
+      var res = "not copied (x[3] = y[3])";
+      if(x[3] != y[3])
+        res = "copied (x[3] != y[3])";
+
+      document.getElementById("outcome").innerHTML = "result: " + res;
+      }
+2
+    </script>
+</head>
+<body>    
+  <embed id="REngine" type="application/test-r" height="0" width="0"></embed>
+  <input type="button" onclick="dotest();"/>
+  <div id="txt" style="visible:hidden">
+<br/>
+  Testing internal (R-side) copy mechanics of R-based Reference style objects <br/>
+  x = 1:5 <br/>
+  y = x <br/>
+  Press the button to alter x[3] via JavaScript and check y[3]
+</div>
+  <div id="outcome"></div>  
+
+  </body>
+</html>  

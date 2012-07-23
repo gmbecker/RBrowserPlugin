@@ -31,13 +31,18 @@ bool ConvertRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret, co
     {
     case NILSXP:
       break;
+    case CHARSXP:
+    case VECSXP:
+      MakeCopyRToNP(val, inst, funcs, ret);
+      break;
     case REALSXP:
     case INTSXP:
     case LGLSXP:
     case STRSXP:
-    case CHARSXP:
-    case VECSXP:
-      MakeCopyRToNP(val, inst, funcs, ret);
+      if(LENGTH(val) <= 1)
+	MakeCopyRToNP(val, inst, funcs, ret);
+      else
+	MakeRRefForNP(val, inst, funcs, ret);
       break;
     case CLOSXP:
     case S4SXP:
@@ -551,17 +556,8 @@ void MakeRRefForNP(SEXP obj, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret)
       fprintf(stderr, "\nPromise detected when creating R Reference"); fflush(stderr);//	  ans = PRVALUE(ans);
       ans = rQueue.requestRCall(ans, R_GlobalEnv, &err, inst);
     }
-  if (TYPEOF(ans) == CLOSXP)
-    {
-      RFunction *retobj;
-      retobj = (RFunction *) funcs->createobject(inst, &RFunction::_npclass);
-      funcs->retainobject(retobj);
-      retobj->object = ans;
-      retobj->funcs = funcs;
-      R_PreserveObject(retobj->object);
-      OBJECT_TO_NPVARIANT(retobj, *ret);
-    }
-  else if (IS_S4_OBJECT(ans))
+  //some comments in Rinternals.h vaguely hint at checking for TYPEOF==S4SXP may be insufficient, probably when setOldClass is being used!
+  if (IS_S4_OBJECT(ans))
     {
       if(checkForRefClass(ans))
 	{
@@ -585,15 +581,45 @@ void MakeRRefForNP(SEXP obj, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret)
 	OBJECT_TO_NPVARIANT(retobj, *ret);
       }
     } 
-  else
+  switch(TYPEOF(ans))
     {
-      RObject *retobj;
-      retobj = (RObject *) funcs->createobject(inst, &RObject::_npclass);
+    case CLOSXP:
+      // if (TYPEOF(ans) == CLOSXP)
+    {
+      RFunction *retobj;
+      retobj = (RFunction *) funcs->createobject(inst, &RFunction::_npclass);
       funcs->retainobject(retobj);
       retobj->object = ans;
       retobj->funcs = funcs;
       R_PreserveObject(retobj->object);
       OBJECT_TO_NPVARIANT(retobj, *ret);
+      break;
+    }
+    case LGLSXP:
+    case INTSXP:
+    case REALSXP:
+    case STRSXP:
+      {
+	RVector *retobj;
+	retobj = (RVector *) funcs->createobject(inst, &RVector::_npclass);
+	funcs->retainobject(retobj);
+	retobj->object = ans;
+	retobj->funcs = funcs;
+	R_PreserveObject(retobj->object);
+	OBJECT_TO_NPVARIANT(retobj, *ret);
+	break;
+      }
+
+    default:
+      {
+	RObject *retobj;
+	retobj = (RObject *) funcs->createobject(inst, &RObject::_npclass);
+	funcs->retainobject(retobj);
+	retobj->object = ans;
+	retobj->funcs = funcs;
+	R_PreserveObject(retobj->object);
+	OBJECT_TO_NPVARIANT(retobj, *ret);
+      }
     }
   return;
 }

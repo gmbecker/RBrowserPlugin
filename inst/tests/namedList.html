@@ -1,0 +1,28 @@
+<html>
+  <head>
+    <script type="text/javascript" src = "../javascript/Rhelpers.js"></script>
+<script type="text/javascript" src="../javascript/raphael.js"> </script>
+<script type="text/R">
+  myfun = function()
+    { 
+  list(a = 5, b = 7, c= "well hello")
+    }
+</script>
+<script type="text/javascript">
+  function dotest()
+  {
+  var res = R.myfun();
+  
+  document.getElementById("divout").innerHTML =  "res: " + res;
+  document.getElementById("divout2").innerHTML =  "res.b: " + res.b;
+  }
+</script>
+</head>
+<body>
+    <embed id="REngine" type="application/test-r" width="0" height="0"></embed>
+<input type="button"  onclick="dotest();"/>
+Press the button to create an RList
+<div id="divout"></div>
+<div id="divout2"></div>
+</body>
+</html>

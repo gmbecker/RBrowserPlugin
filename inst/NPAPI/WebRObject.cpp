@@ -923,3 +923,289 @@ NPClass RRefClassObject::_npclass = {
   RRefClassObject::_Enumerate,                                     
   RRefClassObject::_Construct                                      
 };
+
+
+
+
+
+RVector::RVector (NPP instance) 
+{
+  this->instance = instance;
+  this->object = NULL;
+  this->converter = NULL;
+}
+
+void RVector::Deallocate()
+{
+  if(this->object)
+    {
+      R_ReleaseObject(this->object);
+      this->object=NULL;
+    }
+}
+
+void RVector::Invalidate()
+{
+}
+
+bool RVector::HasMethod(NPIdentifier name)
+{
+  int ret = 0;
+  if(name == this->funcs->getstringidentifier("convert"))
+    ret = 1;
+  else if(name == this->funcs->getstringidentifier("toString"))
+    ret = 1;
+  else if(name == this->funcs->getstringidentifier("length"))
+    ret = 1;
+  
+  return (bool) ret;
+}
+
+
+bool RVector::Invoke(NPIdentifier name, const NPVariant *args, uint32_t argCount, NPVariant *result)
+{
+  if(name == this->funcs->getstringidentifier("convert"))
+    {
+      if(this->converter != NULL)
+	{
+	  funcs->setexception(this, "User assigned JavaScript converters are not supported at this time. If you need this functionality please contact the maintainer");
+	  fprintf(stderr, "\nUser assigned JavaScript converters are not supported at this time. If you need this functionality please contact the maintainer.\n");fflush(stderr);
+	  return false;
+	}
+      //try to force conversion (copying)
+      ConvertRToNP(this->object, this->instance, this->funcs, result, CONV_COPY); 
+      return true;
+    } else if (name == this->funcs->getstringidentifier("toString")) 
+    {
+      fprintf(stderr, "\nIn tostring method of an RVector\n");fflush(stderr);
+      //From NPN_ReleaseVariantValue docs: NPN_ReleaseVariantValue() will call NPN_ReleaseObject() on NPVariants of type NPVARIANTTYPE_OBJECT, and NPN_FreeMem() on NPVariants of type NPVARIANTTYPE_STRING. 
+      NPUTF8 *strdat = (NPUTF8*) this->funcs->memalloc(19+1);
+      //strdat = (NPUTF8*)"[Internal R Object]";
+      memcpy(strdat, "[Internal R Vector]", 19+1);
+      NPString str ={ strdat, 19};
+      result->type = NPVariantType_String;
+      result->value.stringValue = str;     
+      return true;
+    }
+  else if (name == this->funcs->getstringidentifier("length")) 
+    {
+      result->type = NPVariantType_Int32;
+      result->value.intValue = LENGTH(this->object);
+      return true;
+    }
+  return false;
+}
+
+bool RVector::InvokeDefault(const NPVariant *args, uint32_t argCount, NPVariant *result)
+{
+  return false;
+}
+
+bool RVector::HasProperty(NPIdentifier name)
+{
+  bool ret= true;
+  fprintf(stderr, "\nIn RVector::HasProperty");fflush(stderr);
+  //we need to return false for things that need to be methods.
+  if(name == this->funcs->getstringidentifier("convert"))
+    ret = 0;
+  else if(name == this->funcs->getstringidentifier("toString"))
+    ret = 0;
+  else if(name == this->funcs->getstringidentifier("valueOf"))
+    ret = 0;
+  else if(name == this->funcs->getstringidentifier("isRObject"))
+    ret = 1;
+  else if(name == this->funcs->getstringidentifier("length"))
+    ret = 0;
+  else
+    {
+
+      SEXP call, ans, ptr;
+      int error=0;
+      PROTECT(ptr = call = allocVector(LANGSXP, 3));
+      SETCAR(ptr, Rf_install("CheckForProperty"));
+      ptr = CDR(ptr);
+      SETCAR(ptr, this-> object);
+      ptr = CDR(ptr);
+      if(this->funcs->identifierisstring(name))
+	SETCAR(ptr, ScalarString(mkChar(this->funcs->utf8fromidentifier(name))));
+      else
+	SETCAR(ptr, ScalarInteger(this->funcs->intfromidentifier(name)));
+      PROTECT(ans = rQueue.requestRCall(call, R_GlobalEnv, &error, this->instance));
+
+      if(!error)
+	ret = LOGICAL(ans)[0];
+      else
+	ret = false;
+      UNPROTECT(2);
+    }
+  return ret;
+}
+
+bool RVector::GetProperty(NPIdentifier name, NPVariant *result)
+{
+  if(name == this->funcs->getstringidentifier("isRObject"))
+    {
+      BOOLEAN_TO_NPVARIANT(true, *result); 
+      return true;
+    }
+  //Emulate object[[name]], object$name, object@name in that order
+  fprintf(stderr, "\nIn RVector::GetProperty");fflush(stderr);
+  SEXP call, ptr, ans;
+  int error;
+  PROTECT(ptr = call = allocVector(LANGSXP, 3));
+  SETCAR(ptr, Rf_install("[["));
+  ptr = CDR(ptr);
+  SETCAR(ptr, this->object);
+  ptr = CDR(ptr);
+  if(this->funcs->identifierisstring(name))
+    SETCAR(ptr, ScalarString(mkChar(this->funcs->utf8fromidentifier(name))));
+  else
+    SETCAR(ptr, ScalarInteger(this->funcs->intfromidentifier(name)));
+  
+  PROTECT(ans = rQueue.requestRCall(call, R_GlobalEnv, &error, this->instance));
+  bool ret = ConvertRToNP(ans, this->instance, this->funcs, result, CONV_DEFAULT);
+  UNPROTECT(2);
+  //ConvertRToNP(ans, Robj->instance, funcs, result, false);
+  return ret;
+}
+
+bool RVector::SetProperty(NPIdentifier name, const NPVariant *value)
+{
+  //Emulate object[[name]]<-value
+  bool ret = false;
+  fprintf(stderr, "\nIn RVector::SetProperty");fflush(stderr);
+  SEXP call, ptr, ans, tmp;
+  int error = 0;
+  //[[<- doesn't work because a lot of times these objects are not assigned to any symbols.
+  PROTECT(ptr = call = allocVector(LANGSXP, 4));
+  SETCAR(ptr, Rf_install("[[<-"));
+  ptr = CDR(ptr);
+  SETCAR(ptr, this->object);
+  ptr = CDR(ptr);
+  if(this->funcs->identifierisstring(name))
+    SETCAR(ptr, ScalarString(mkChar(this->funcs->utf8fromidentifier(name))));
+  else
+    SETCAR(ptr, ScalarInteger(this->funcs->intfromidentifier(name)));
+
+  ConvertNPToR((NPVariant *)value, this->instance, this->funcs, CONV_DEFAULT, &tmp);
+  ptr = CDR(ptr);
+  SETCAR(ptr, tmp);
+  //XXX This is getting garbage collected... and causing crashes
+   PROTECT(ans = rQueue.requestRCall(call, R_GlobalEnv, &error, this->instance));
+  //ans = rQueue.requestRCall(call, R_GlobalEnv, &error, this->instance);
+
+  if(!error)
+    {
+      this->object = ans;
+
+    }
+  ret = (bool) !error;
+
+  UNPROTECT(2);
+  return ret;
+}
+
+bool RVector::RemoveProperty(NPIdentifier name)
+{
+	return false;
+}
+
+bool RVector::Enumerate(NPIdentifier **identifier, uint32_t *count)
+{
+    fprintf(stderr, "\nIn RVector::Enumerate");fflush(stderr);
+	return false;
+}
+
+bool RVector::Construct(const NPVariant *args, uint32_t argCount, NPVariant *result)
+{
+	return true;
+}
+
+NPObject *RVector::Allocate(NPP npp, NPClass *aClass)
+{
+	NPObject *pObj = (NPObject *)new RVector(npp);
+	return pObj;
+}
+
+void RVector::Detatch (void)
+{
+	m_Instance = NULL;
+}
+
+
+
+void RVector::_Deallocate(NPObject *npobj)
+{
+	RVector *pObj = ((RVector *) npobj);
+
+  // Call the virtual destructor.
+	pObj->Deallocate ();
+	delete pObj;
+}
+
+void RVector::_Invalidate(NPObject *npobj)
+{
+	((RVector*)npobj)->Invalidate();
+}
+
+bool RVector::_HasMethod(NPObject *npobj, NPIdentifier name)
+{
+	return ((RVector*)npobj)->HasMethod (name);
+}
+
+bool RVector::_Invoke(NPObject *npobj, NPIdentifier name, const NPVariant *args, uint32_t argCount, NPVariant *result)
+{
+	return ((RVector*)npobj)->Invoke (name, args, argCount, result);
+}
+
+bool RVector::_InvokeDefault(NPObject *npobj, const NPVariant *args, uint32_t argCount, NPVariant *result)
+{
+	return ((RVector*)npobj)->InvokeDefault (args, argCount, result);
+}
+
+bool RVector::_HasProperty(NPObject * npobj, NPIdentifier name)
+{
+	return ((RVector*)npobj)->HasProperty (name);
+}
+
+bool RVector::_GetProperty(NPObject *npobj, NPIdentifier name, NPVariant *result)
+{
+	return ((RVector*)npobj)->GetProperty (name, result);
+}
+
+bool RVector::_SetProperty(NPObject *npobj, NPIdentifier name, const NPVariant *value)
+{
+	return ((RVector*)npobj)->SetProperty (name, value);
+}
+
+bool RVector::_RemoveProperty(NPObject *npobj, NPIdentifier name)
+{
+	return ((RVector*)npobj)->RemoveProperty (name);
+}
+
+bool RVector::_Enumerate(NPObject *npobj, NPIdentifier **identifier, uint32_t *count)
+{
+	return ((RVector*)npobj)->Enumerate (identifier, count);
+}
+
+bool RVector::_Construct(NPObject *npobj, const NPVariant *args, uint32_t argCount, NPVariant *result)
+{
+	return ((RVector*)npobj)->Construct (args, argCount, result);
+}
+
+
+NPClass RVector::_npclass = {                              
+  NP_CLASS_STRUCT_VERSION,								                          
+  RVector::Allocate,                                       
+  RVector::_Deallocate,                                    
+  RVector::_Invalidate,                                    
+  RVector::_HasMethod,                                     
+  RVector::_Invoke,                                        
+  RVector::_InvokeDefault,                                 
+  RVector::_HasProperty,                                   
+  RVector::_GetProperty,                                   
+  RVector::_SetProperty,                                   
+  RVector::_RemoveProperty,                                
+  RVector::_Enumerate,                                     
+  RVector::_Construct                                      
+};

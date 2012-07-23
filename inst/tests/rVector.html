@@ -1,0 +1,51 @@
+<html>
+  <head>
+    <script type="text/javascript" src="../../../RFirefox/inst/javascript/Rhelpers.js"></script>  
+    <script type="text/R">
+      doVectest = function()
+      {
+        x = 1:3
+        names(x) = c("a", "b", "c")
+        x
+      }
+    </script>
+    <script type="text/javascript">
+      function dotest()
+{
+      var vec = R.doVectest()
+      document.getElementById("obj").innerHTML = "vec: " + vec;
+      
+      document.getElementById("b").innerHTML = "vec.b: " + vec.b;
+      document.getElementById("pos").innerHTML = "vec[3]: " + vec[3];     
+      document.getElementById("len").innerHTML = "vec.length(): " + vec.length();
+      vec.a = 5;
+      var result;
+      if (vec.a == 5)
+        result = "success";
+      else
+        result = "failure";
+      document.getElementById("set").innerHTML = "testing element setting by name: " +  result; 
+     vec[3] = 7;
+
+      if (vec[3] == 7)
+        result = "success";
+      else
+        result = "failure";
+      document.getElementById("set2").innerHTML = "testing element setting by position: " +  result; 
+
+      }
+
+    </script>
+</head>
+<body>    
+  <embed id="REngine" type="application/test-r" height="0" width="0"></embed>
+  <input type="button" onclick="dotest();"/>
+  <div id="obj"></div>
+  
+  <div id="b"></div>
+  <div id="pos"></div>
+  <div id="len"></div>  
+  <div id="set"></div>
+  <div id="set2"></div>
+  </body>
+</html>  
