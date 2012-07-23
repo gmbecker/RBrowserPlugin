@@ -1443,8 +1443,10 @@ bool RSubsettableObject::GetProperty(NPIdentifier name, NPVariant *result)
   if(this->funcs->identifierisstring(name))
     SETCAR(ptr, ScalarString(mkChar(this->funcs->utf8fromidentifier(name))));
   else
-    SETCAR(ptr, ScalarInteger(this->funcs->intfromidentifier(name)));
-  
+    {
+      //+1 so that on the javascript side vectors are 0-indexed
+      SETCAR(ptr, ScalarInteger(this->funcs->intfromidentifier(name) + 1));
+    }
   PROTECT(ans = rQueue.requestRCall(call, R_GlobalEnv, &error, this->instance));
   bool ret = ConvertRToNP(ans, this->instance, this->funcs, result, CONV_DEFAULT);
   UNPROTECT(2);
