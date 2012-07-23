@@ -942,6 +942,42 @@ NPObject *RVector::Allocate(NPP npp, NPClass *aClass)
 }
 
 
+bool RVector::Invoke(NPIdentifier name, const NPVariant *args, uint32_t argCount, NPVariant *result)
+{
+  if(name == this->funcs->getstringidentifier("convert"))
+    {
+      if(this->converter != NULL)
+	{
+	  funcs->setexception(this, "User assigned JavaScript converters are not supported at this time. If you need this functionality please contact the maintainer");
+	  fprintf(stderr, "\nUser assigned JavaScript converters are not supported at this time. If you need this functionality please contact the maintainer.\n");fflush(stderr);
+	  return false;
+	}
+      //try to force conversion (copying)
+      ConvertRToNP(this->object, this->instance, this->funcs, result, CONV_COPY); 
+      return true;
+    } else if (name == this->funcs->getstringidentifier("toString")) 
+    {
+      fprintf(stderr, "\nIn tostring method of an RVector\n");fflush(stderr);
+      //From NPN_ReleaseVariantValue docs: NPN_ReleaseVariantValue() will call NPN_ReleaseObject() on NPVariants of type NPVARIANTTYPE_OBJECT, and NPN_FreeMem() on NPVariants of type NPVARIANTTYPE_STRING. 
+      NPUTF8 *strdat = (NPUTF8*) this->funcs->memalloc(19+1);
+      //strdat = (NPUTF8*)"[Internal R Object]";
+      memcpy(strdat, "[Internal R Vector]", 19+1);
+      NPString str ={ strdat, 19};
+      result->type = NPVariantType_String;
+      result->value.stringValue = str;     
+      return true;
+    }
+  else if (name == this->funcs->getstringidentifier("length")) 
+    {
+      result->type = NPVariantType_Int32;
+      result->value.intValue = LENGTH(this->object);
+      return true;
+    }
+  return false;
+}
+
+
+
 /*
 void RVector::Deallocate()
 {
@@ -1213,7 +1249,6 @@ NPClass RVector::_npclass = {
 };
 
 
-//RList is the same as RVector...
 
 NPObject *RList::Allocate(NPP npp, NPClass *aClass)
 {
@@ -1227,6 +1262,41 @@ RList::RList (NPP instance)
   this->instance = instance;
   this->object = NULL;
   this->converter = NULL;
+}
+
+
+bool RList::Invoke(NPIdentifier name, const NPVariant *args, uint32_t argCount, NPVariant *result)
+{
+  if(name == this->funcs->getstringidentifier("convert"))
+    {
+      if(this->converter != NULL)
+	{
+	  funcs->setexception(this, "User assigned JavaScript converters are not supported at this time. If you need this functionality please contact the maintainer");
+	  fprintf(stderr, "\nUser assigned JavaScript converters are not supported at this time. If you need this functionality please contact the maintainer.\n");fflush(stderr);
+	  return false;
+	}
+      //try to force conversion (copying)
+      ConvertRToNP(this->object, this->instance, this->funcs, result, CONV_COPY); 
+      return true;
+    } else if (name == this->funcs->getstringidentifier("toString")) 
+    {
+      fprintf(stderr, "\nIn tostring method of an RVector\n");fflush(stderr);
+      //From NPN_ReleaseVariantValue docs: NPN_ReleaseVariantValue() will call NPN_ReleaseObject() on NPVariants of type NPVARIANTTYPE_OBJECT, and NPN_FreeMem() on NPVariants of type NPVARIANTTYPE_STRING. 
+      NPUTF8 *strdat = (NPUTF8*) this->funcs->memalloc(17+1);
+      //strdat = (NPUTF8*)"[Internal R Object]";
+      memcpy(strdat, "[Internal R List]", 17+1);
+      NPString str ={ strdat, 17};
+      result->type = NPVariantType_String;
+      result->value.stringValue = str;     
+      return true;
+    }
+  else if (name == this->funcs->getstringidentifier("length")) 
+    {
+      result->type = NPVariantType_Int32;
+      result->value.intValue = LENGTH(this->object);
+      return true;
+    }
+  return false;
 }
 
 
