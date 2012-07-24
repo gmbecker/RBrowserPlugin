@@ -1,19 +1,24 @@
 <html>
+<head>
+  <script type="text/javascript" src = "../javascript/Rhelpers.js"></script>
+    <script type="text/javascript">
+      function dotypeoftest()
+{
+      var res = R.rnorm;
+      var res2 = R.getRef("pi");
+      var div  = document.getElementById("mydiv");
+      div.innerHTML = "typeof(R.rnorm) : " + typeof(res); 
+      var div2  = document.getElementById("mydiv2");
+      div2.innerHTML = "typeof(R.getRef('pi')) : " + typeof(res2); 
+}
+  </script>
+
+</head>
 <body>
   <embed type="application/test-r" width="0" height="0" ></embed>
- 
+ <input type="button" onclick="dotypeoftest();"/>
  <div id="mydiv" ></div> 
  <div id="mydiv2" ></div> 
  
-    <script type="text/javascript">
-      var Reng = document.embeds[0]; 
-       
-      var res = Reng.rnorm;
-      var res2 = Reng.pi;
-      var div  = document.getElementById("mydiv");
-      div.innerHTML = "typeof(Reng.rnorm) : " + typeof(res); 
-      var div2  = document.getElementById("mydiv2");
-      div2.innerHTML = "typeof(Reng.pi) : " + typeof(res2); 
-  </script>
   </body>
 </html>

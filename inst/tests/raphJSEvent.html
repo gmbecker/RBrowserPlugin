@@ -18,10 +18,9 @@
     {
     var paper = new Raphael("raphcont", 500, 500);
     var myc = paper.circle(70, 70, 10);
-    var Reng = document.getElementById("REngine");
-    var rprint = Reng.print;
-     Reng.print("print test non-eventhandler");
-    var worked = Reng.itworked;
+    var rprint = R.print;
+     R.print("print test non-eventhandler");
+    var worked = R.itworked;
     //hover doesn't work in chrome because RFunction objects are not of type "function" in chrome
 //    myc.hover(worked, worked);
     myc.node.onmouseover = worked;
