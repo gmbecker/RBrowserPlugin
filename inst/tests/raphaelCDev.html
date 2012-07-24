@@ -3,13 +3,30 @@
     <script type="text/javascript" src = "../javascript/Rhelpers.js"></script>
     <script type="text/javascript" src="../javascript/raphael.js"> </script>
     <script type="text/R">
+      dodump = function() dump.frames(dumpto="cdev.dump", to.file=TRUE)
+      options(error=dodump)
       rdev = raphaelCDev("imagecont")
       plot(1:10)
+      x = rnorm(1000)
+      y = rnorm(1000)
+      tim = system.time(plot(x, y))
+      div = JS[["document"]]$getElementById("timediv")
+      div[["innerHTML"]] = paste("C device times: ",paste(as.character(tim), collapse=" "))
+      rdev2 = raphaelDev("imagecont2")
+      tim2 = system.time(plot(x,y))
+      div2 = JS[["document"]]$getElementById("timediv2")
+      div2[["innerHTML"]] = paste("R device times:", paste(as.character(tim2), collapse=" "))
     </script>
   </head>
   <body>
     <embed id="REngine" type="application/test-r" width="0" height="0"></embed>
-    
-    <div id="imagecont"></div>
+    <div>
+    <div id="imagecont" style="width:400px; height:400px;float:left" ></div>
+   <div id="imagecont2" style="width:400px; height:400px;float:right" ></div>
+</div>
+    <div style="clear:both;">
+    <div id="timediv"></div>
+    <div id="timediv2"></div>
+</div>
   </body>
 </html>

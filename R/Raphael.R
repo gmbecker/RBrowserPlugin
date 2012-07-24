@@ -32,7 +32,7 @@ setAs("DevDescPtr", "QueryableDevDescPtr",
 
 
 
-raphaelCDev = function(id = "raph_content", dim = c(600, 400), storage = new.env())
+raphaelCDev = function(id = "raph_content", dim = c(400, 400), storage = new.env())
   {
     assign("points", list(), envir=storage)
     assign("lines", list(), envir=storage)
