@@ -60,7 +60,7 @@ int initR( const char **args, int nargs)
     {
       fprintf(stderr, "\nR_HOME was not set. using /usr/lib64/R\n");fflush(stderr);
       //putenv("R_HOME=/usr/lib64/R");
-      putenv("R_HOME=c:/R-2.15.1");
+      putenv("R_HOME=c:/R64");
     }
   Rf_initEmbeddedR(nargs, rargs);
   fprintf(stderr, "R initialization done.\n"); fflush(stderr);
