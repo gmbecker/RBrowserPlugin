@@ -1,3 +1,5 @@
+if(FALSE)
+{
 setClass("RJavaScriptCanvasMethods", contains = "RDevDescMethods")
 
 setClass("QueryableDevDesc", contains = "DevDesc",
@@ -28,7 +30,7 @@ setAs("DevDescPtr", "QueryableDevDescPtr",
                slot(toRet, nm) <- slot(from, nm))
         toRet
       })
-        
+
 
 
 
@@ -39,9 +41,9 @@ raphaelCDev = function(id = "raph_content", dim = c(600, 400), storage = new.env
     assign("rects", list(), envir=storage)
     assign("polylines", list(), envir=storage)
     assign("texts", list(), envir=storage)
-    
+
     script = paste("Raphael('", id, "',", dim[1], " , ", dim[2], ");", sep="")
-   
+
     tmp = evalJavaScript(script = script, keepResult = TRUE)
     assign("paper", tmp, env = storage)
 
@@ -70,7 +72,7 @@ raphaelDev = function(id = "raph_content", dim = c(600, 400),
        assign("texts", list(), envir=storage)
 
     funs = as(dummyDevice(), "RJavaScriptCanvasMethods")
-    
+
                                         # circle, line, rect
                                         # text
                                         # polygon, polyline
@@ -78,9 +80,9 @@ raphaelDev = function(id = "raph_content", dim = c(600, 400),
 
                                         # size
                                         # newPage
-    
 
-                                      
+
+
     funs@circle = function(x, y, r, context, dev) {
       retval = storage$paper$circle(x,y,r)
       doColors(retval, context)
@@ -137,20 +139,20 @@ raphaelDev = function(id = "raph_content", dim = c(600, 400),
     dev$startcol = as("black", "RGBInt")
 
     script = paste("Raphael('", id, "',", dim[1], " , ", dim[2], ");", sep="")
-   
+
     tmp = evalJavaScript(script = script, keepResult = TRUE)
     assign("paper", tmp, env = storage)
     return(TRUE)
   }
-   
+
     funs@polyline = function(n, x, y, context, dev)
       {
-        
+
         x = x[1:n]
         y = y[1:n]
                                         #more storage but much faster
         diffsx = x[ 2 : n ] - x[ -n ]
-        diffsy = y[ 2 : n ] - y[ -n ] 
+        diffsy = y[ 2 : n ] - y[ -n ]
 
         path = paste( paste( "M" , x[1], y[1]),
           paste( "l" , diffsx , diffsy , collapse = " "),
@@ -163,7 +165,7 @@ raphaelDev = function(id = "raph_content", dim = c(600, 400),
         return(TRUE)
       }
   #}
-    
+
     funs@newPage = function(context, devdesc)
       {
         print("In raphaelDev::newPage")
@@ -182,7 +184,7 @@ raphaelDev = function(id = "raph_content", dim = c(600, 400),
     funs@deactivate = NULL
     funs@locator = NULL
     funs@onExit = NULL
-    
+
     dev = graphicsDevice(funs, dim, col, fill, ps)
 
     dev$ipr = rep(1/72.27, 2)
@@ -225,7 +227,7 @@ clearRaphPlot = function(dev)
 doColors = function(jsvar, context)
   {
     stroke = as(context$col, "RGB")
-    fill = as(context$fill, "RGB")   
+    fill = as(context$fill, "RGB")
     if(!isTransparent(stroke))
       jsvar$attr("stroke", stroke)
     if(!isTransparent(fill))
@@ -236,7 +238,7 @@ doColors = function(jsvar, context)
 getContextColors = function(context)
   {
     col = as(context$col, "RGB")
-    fill = as(context$fill, "RGB")   
+    fill = as(context$fill, "RGB")
     ret = list(stroke = NULL, fill = NULL)
     if(!isTransparent(col))
       ret$stroke = col
@@ -271,4 +273,5 @@ raphRemoveElements = function(type="points", indexes, dev)
   #remove chosen elements from the list of currently drawn elements
   assign(type, get(type, dev$storage)[-indexes], dev$storage)
 
+}
 }

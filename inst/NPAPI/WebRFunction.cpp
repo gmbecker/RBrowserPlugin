@@ -7,7 +7,7 @@ RFunction::RFunction (NPP instance)
 
   //this->m_getVersion_id = NPN_GetStringIdentifier("getVersion");
   //  this->m_getVersion_id = myNPNFuncs->getstringidentifier("getVersion");
-  fprintf(stderr, "\nCreating RFunction object. Instance:%lx", (unsigned long int) instance);fflush(stderr);
+  //fprintf(stderr, "\nCreating RFunction object. Instance:%lx", (unsigned long long int) instance);fflush(stderr);
   this->instance = instance;
   this->object = NULL;
   this->converter = NULL;
@@ -269,6 +269,7 @@ NPClass RFunction::_npclass = {
 };
 
  
+/*
 bool RFunction_GetProp(RFunction *Robj, NPIdentifier name, NPNetscapeFuncs *funcs, NPVariant *result, bool check, NPP inst)
 {
   SEXP obj, call, ptr, ans;
@@ -322,3 +323,4 @@ bool RFunction_GetProp(RFunction *Robj, NPIdentifier name, NPNetscapeFuncs *func
   else
     return toret;
 }
+*/

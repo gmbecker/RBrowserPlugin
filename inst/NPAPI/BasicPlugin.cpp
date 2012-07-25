@@ -55,18 +55,20 @@ int initR( const char **args, int nargs)
   for(int i = 0 ; i < nargs; i++)
     rargs[i] = strdup(args[i]);
   fprintf(stderr, "Attempting to start embedded R.\n");fflush(stderr);
-  R_SignalHandlers = 0;
-  if(!getenv("R_HOME"))
+   if(!getenv("R_HOME"))
     {
       fprintf(stderr, "\nR_HOME was not set. using /usr/lib64/R\n");fflush(stderr);
-      putenv("R_HOME=/usr/lib64/R");
+      //putenv("R_HOME=/usr/lib64/R");
+      putenv("R_HOME=c:/R-2.15.1");
     }
   Rf_initEmbeddedR(nargs, rargs);
   fprintf(stderr, "R initialization done.\n"); fflush(stderr);
   
+#ifndef _WIN32
   R_CStackLimit = (uintptr_t)-1;
   
   R_SignalHandlers = 0;
+#endif
   /*
   pthread_mutex_init(&rMutex, NULL);
   pthread_mutex_init(&queueMutex, NULL);
@@ -89,7 +91,7 @@ int initR( const char **args, int nargs)
 
 
 
-NPError OSCALL NP_Initialize(NPNetscapeFuncs* bFuncs
+NPError MYCALL NP_Initialize(NPNetscapeFuncs* bFuncs
 #ifdef XP_UNIX
                              , NPPluginFuncs* pFuncs
 #endif
@@ -131,7 +133,7 @@ void SetNPPFuncs(NPPluginFuncs *pFuncs)
   pFuncs->setvalue = NPP_SetValue;
 }
 
-NPError NP_GetEntryPoints(NPPluginFuncs* pluginFuncs)
+NPError MYCALL NP_GetEntryPoints(NPPluginFuncs* pluginFuncs)
 {
   //fprintf(logfile, "in NP_GetEntryPoints");fflush(logfile);
   SetNPPFuncs(pluginFuncs);
@@ -203,22 +205,19 @@ void CopyNPNFunctions(NPNetscapeFuncs *dstFuncs, NPNetscapeFuncs *srcFuncs)
 
 
 
-char*
-NP_GetPluginVersion()
+char*  NP_GetPluginVersion()
 {
   return (char *) PLUGIN_VERSION;
 }
 
 
-const char*
-NP_GetMIMEDescription()
+const char*  NP_GetMIMEDescription()
 {
   return "application/test-r:R:Test R Plugin";
 }
 
 
-NPError
-NP_GetValue(void* future, NPPVariable aVariable, void* aValue) {
+NPError  NP_GetValue(void* future, NPPVariable aVariable, void* aValue) {
   switch (aVariable) {
     case NPPVpluginNameString:
       *((char**)aValue) = (char *) PLUGIN_NAME;
@@ -241,7 +240,7 @@ NP_GetValue(void* future, NPPVariable aVariable, void* aValue) {
 //void drawPlugin(NPP instance, NPCocoaEvent* event);
 
 /* Function called once by the browser to shut down the plugin. */
-NPError NP_Shutdown(void)
+NPError OSCALL  NP_Shutdown(void)
 {
   //CFRelease(browserUAString);
   //browserUAString = NULL;
@@ -249,7 +248,7 @@ NPError NP_Shutdown(void)
 }
 
 /* Called to create a new instance of the plugin. */
-NPError NPP_New(NPMIMEType pluginType, NPP instance, uint16_t mode, int16_t argc, char* argn[], char* argv[], NPSavedData* saved)
+NPError  NPP_New(NPMIMEType pluginType, NPP instance, uint16_t mode, int16_t argc, char* argn[], char* argv[], NPSavedData* saved)
 {
 
  // Make sure we can render this plugin
@@ -330,7 +329,7 @@ NPError NPP_New(NPMIMEType pluginType, NPP instance, uint16_t mode, int16_t argc
 }
 
 /* Called to destroy an instance of the plugin. */
-NPError NPP_Destroy(NPP instance, NPSavedData** save)
+NPError  NPP_Destroy(NPP instance, NPSavedData** save)
 {
   free(instance->pdata);
 
@@ -338,7 +337,7 @@ NPError NPP_Destroy(NPP instance, NPSavedData** save)
 }
 
 /* Called to update a plugin instances's NPWindow. */
-NPError NPP_SetWindow(NPP instance, NPWindow* window)
+NPError  NPP_SetWindow(NPP instance, NPWindow* window)
 {
   InstanceData* currentInstance = (InstanceData*)(instance->pdata);
 
@@ -347,37 +346,37 @@ NPError NPP_SetWindow(NPP instance, NPWindow* window)
   return NPERR_NO_ERROR;
 }
 
-NPError NPP_NewStream(NPP instance, NPMIMEType type, NPStream* stream, NPBool seekable, uint16_t* stype)
+NPError  NPP_NewStream(NPP instance, NPMIMEType type, NPStream* stream, NPBool seekable, uint16_t* stype)
 {
   *stype = NP_ASFILEONLY;
   return NPERR_NO_ERROR;
 }
 
-NPError NPP_DestroyStream(NPP instance, NPStream* stream, NPReason reason)
+NPError  NPP_DestroyStream(NPP instance, NPStream* stream, NPReason reason)
 {
   return NPERR_NO_ERROR;
 }
 
-int32_t NPP_WriteReady(NPP instance, NPStream* stream)
+int32_t  NPP_WriteReady(NPP instance, NPStream* stream)
 {
   return 0;
 }
 
-int32_t NPP_Write(NPP instance, NPStream* stream, int32_t offset, int32_t len, void* buffer)
+int32_t  NPP_Write(NPP instance, NPStream* stream, int32_t offset, int32_t len, void* buffer)
 {
   return 0;
 }
 
-void NPP_StreamAsFile(NPP instance, NPStream* stream, const char* fname)
+void  NPP_StreamAsFile(NPP instance, NPStream* stream, const char* fname)
 {
 }
 
-void NPP_Print(NPP instance, NPPrint* platformPrint)
+void  NPP_Print(NPP instance, NPPrint* platformPrint)
 {
   
 }
 
-int16_t NPP_HandleEvent(NPP instance, void* event)
+int16_t  NPP_HandleEvent(NPP instance, void* event)
 {
   /*
   NPCocoaEvent* cocoaEvent = (NPCocoaEvent*)event;
@@ -391,13 +390,13 @@ int16_t NPP_HandleEvent(NPP instance, void* event)
   return 1;
 }
 
-void NPP_URLNotify(NPP instance, const char* url, NPReason reason, void* notifyData)
+void  NPP_URLNotify(NPP instance, const char* url, NPReason reason, void* notifyData)
 {
 
 }
 
 
-NPError
+NPError 
 NPP_GetValue(NPP instance, NPPVariable variable, void *value) {
   fprintf(stderr, "In NPP_GetValue\n");fflush(stderr);
   if(instance == NULL)
@@ -453,7 +452,7 @@ NPP_GetValue(NPP instance, NPPVariable variable, void *value) {
 
 
 
-NPError NPP_SetValue(NPP instance, NPNVariable variable, void *value)
+NPError  NPP_SetValue(NPP instance, NPNVariable variable, void *value)
 {
   return NPERR_GENERIC_ERROR;
 }

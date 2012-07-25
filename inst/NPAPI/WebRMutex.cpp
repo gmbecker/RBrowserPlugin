@@ -28,7 +28,7 @@ void RCallQueue::unlock()
 
 SEXP RCallQueue::requestRCall(SEXP toeval, SEXP env, int *err, NPP inst)
 {
-  pthread_t thr;
+  //  pthread_t thr;
   rcall_t *argsin = (rcall_t *) malloc(sizeof(rcall_t));
   argsin->queue = this;
   argsin->toeval = toeval;
@@ -90,7 +90,7 @@ void* doRCall(void * in)
 
 SEXP RCallQueue::requestRLookup(const char *name)
 {
-  pthread_t thr;
+  //pthread_t thr;
 
   rlookup_t *argsin = (rlookup_t *) malloc(sizeof(rlookup_t));
 

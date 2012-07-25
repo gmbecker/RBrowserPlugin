@@ -46,13 +46,17 @@
 #include <stdio.h>
 //#include "pthread.h"
 
+#ifndef _WIN32
 #define CSTACK_DEFNS 1
+#endif
 
 #ifndef XP_MACOSX
 #include <R.h>
 #include <Rdefines.h>
 #include <Rembedded.h>
+#ifdef XP_UNIX
 #include <Rinterface.h>
+#endif
 #else
 #include <R/R.h>
 #include <R/Rdefines.h>
@@ -64,17 +68,25 @@
 void SetNPPFuncs(NPPluginFuncs *pFuncs);
 int initR( const char **args, int nargs);
 
+
+#ifdef _WIN32
+#define MYCALL WINAPI
+#else
+#define MYCALL
+#endif
+
+
 extern "C" {
-NPError NP_Initialize(NPNetscapeFuncs* bFuncs
+NPError MYCALL NP_Initialize(NPNetscapeFuncs* bFuncs
 #ifdef XP_UNIX
                       ,NPPluginFuncs* pFuncs
 #endif
 );
 
-NPError OSCALL NP_GetEntryPoints(NPPluginFuncs* pFuncs);
+NPError MYCALL NP_GetEntryPoints(NPPluginFuncs* pFuncs);
 
 
-NPError NP_Shutdown();
+NPError OSCALL NP_Shutdown();
 
 NPError NPP_New(NPMIMEType pluginType, NPP instance, uint16_t mode, int16_t argc, char* argn[], char* argv[], NPSavedData* saved);
 
@@ -138,13 +150,13 @@ public:
     static bool _RemoveProperty(NPObject *npobj, NPIdentifier name);
     static bool _Enumerate(NPObject *npobj, NPIdentifier **identifier, uint32_t *count);
     static bool _Construct(NPObject *npobj, const NPVariant *args, uint32_t argCount, NPVariant *result);
- 
+
     static NPClass _npclass;
- 
+
   NPP instance; //need this accessable for R<->NP conversions
 protected:
     NPP m_Instance;
-	
+
 private:
 
 };
@@ -189,9 +201,9 @@ public:
     static bool _RemoveProperty(NPObject *npobj, NPIdentifier name);
     static bool _Enumerate(NPObject *npobj, NPIdentifier **identifier, uint32_t *count);
     static bool _Construct(NPObject *npobj, const NPVariant *args, uint32_t argCount, NPVariant *result);
- 
+
   static NPClass _npclass;
-    
+
   SEXP object;
   NPObject *converter;
   NPP instance;
@@ -199,8 +211,8 @@ public:
   NPNetscapeFuncs *funcs;
 protected:
   NPP m_Instance;
-	
-    
+
+
 };
 
 
@@ -243,9 +255,9 @@ public:
     static bool _RemoveProperty(NPObject *npobj, NPIdentifier name);
     static bool _Enumerate(NPObject *npobj, NPIdentifier **identifier, uint32_t *count);
     static bool _Construct(NPObject *npobj, const NPVariant *args, uint32_t argCount, NPVariant *result);
- 
+
   static NPClass _npclass;
-    
+
   SEXP object;
   NPObject *converter;
   NPP instance;
@@ -253,7 +265,7 @@ public:
   NPNetscapeFuncs *funcs;
 protected:
   NPP m_Instance;
-	
+
 
 };
 
@@ -297,9 +309,9 @@ public:
     static bool _RemoveProperty(NPObject *npobj, NPIdentifier name);
     static bool _Enumerate(NPObject *npobj, NPIdentifier **identifier, uint32_t *count);
     static bool _Construct(NPObject *npobj, const NPVariant *args, uint32_t argCount, NPVariant *result);
- 
+
   static NPClass _npclass;
-    
+
   SEXP object;
   NPObject *converter;
   NPP instance;
@@ -349,9 +361,9 @@ public:
     static bool _RemoveProperty(NPObject *npobj, NPIdentifier name);
     static bool _Enumerate(NPObject *npobj, NPIdentifier **identifier, uint32_t *count);
     static bool _Construct(NPObject *npobj, const NPVariant *args, uint32_t argCount, NPVariant *result);
- 
+
   static NPClass _npclass;
-    
+
   SEXP object;
   NPObject *converter;
   NPP instance;
@@ -378,23 +390,23 @@ void makeRGlobals(NPP inst);
 bool checkForRefClass(SEXP obj);
 
 
- 
+
 class RCallQueue
-{ 
+{
  public:
   SEXP requestRCall(SEXP toEval, SEXP env, int *err, NPP inst);
   SEXP requestRLookup(const char *name);
   void waitInQueue(int32_t spot);
   void advanceQueue(int32_t spot);
-  int32_t enterQueue(); 
+  int32_t enterQueue();
   void init();
   int32_t serving;
 private:
-  
+
   void lock();
   void unlock();
 
- 
+
  private:
   int isLocked;
 
