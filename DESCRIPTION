@@ -3,8 +3,9 @@ Version: 0.1-5
 Title: R bindings to NPAPI Browser Plugin
 Description: The RBrowserPlugin package provides functionality for interacting with the RBrowserPlugin NPAPI Web Browser plugin to provide two way communcation between the Javascript engine and an embedded R session.
 Author: Gabriel Becker, Duncan Temple Lang
-Depends: methods, RAutoGenRunTime, RGraphicsDevice
+Depends: methods, RAutoGenRunTime
+Suggests: RGraphicsDevice
 Maintainer: Gabriel Becker <gmbecker@ucdavis.edu>
 License: GPL
-  
+
 Packaged: 2011-07-20 22:31:46 UTC; gmbecker
