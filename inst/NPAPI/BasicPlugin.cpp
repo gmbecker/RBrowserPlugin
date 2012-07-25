@@ -2,7 +2,7 @@
  *
  * THIS FILE IS PART OF THE MOZILLA NPAPI SDK BASIC PLUGIN SAMPLE
  * SOURCE CODE. USE, DISTRIBUTION AND REPRODUCTION OF THIS SOURCE
- * IS GOVERNED BY A BSD-STYLE SOURCE LICENSE INCLUDED WITH THIS 
+ * IS GOVERNED BY A BSD-STYLE SOURCE LICENSE INCLUDED WITH THIS
  * SOURCE IN 'COPYING'. PLEASE READ THESE TERMS BEFORE DISTRIBUTING.
  *
  * THE MOZILLA NPAPI SDK BASIC PLUGIN SAMPLE SOURCE CODE IS
@@ -50,16 +50,13 @@ int initR( const char **args, int nargs)
   char **rargs;
   if(isInitialized)
     return 0;
-  
+
   rargs = (char **) malloc(nargs * sizeof(char *));
   for(int i = 0 ; i < nargs; i++)
     rargs[i] = strdup(args[i]);
   fprintf(stderr, "Attempting to start embedded R.\n");fflush(stderr);
-<<<<<<< HEAD
+
   if(!getenv("R_HOME"))
-=======
-   if(!getenv("R_HOME"))
->>>>>>> windows
     {
       fprintf(stderr, "\nR_HOME was not set. using /usr/lib64/R\n");fflush(stderr);
       //putenv("R_HOME=/usr/lib64/R");
@@ -67,22 +64,7 @@ int initR( const char **args, int nargs)
     }
   Rf_initEmbeddedR(nargs, rargs);
   fprintf(stderr, "R initialization done.\n"); fflush(stderr);
-  
-<<<<<<< HEAD
 
-=======
-#ifndef _WIN32
-  R_CStackLimit = (uintptr_t)-1;
-  
-  R_SignalHandlers = 0;
-#endif
-  /*
-  pthread_mutex_init(&rMutex, NULL);
-  pthread_mutex_init(&queueMutex, NULL);
-  pthread_attr_init(&rThreadAttrs);
-  pthread_attr_setschedpolicy(&rThreadAttrs, SCHED_FIFO);
-  */
->>>>>>> windows
   rQueue.init();
   int error=0;
   SEXP call;
@@ -90,8 +72,8 @@ int initR( const char **args, int nargs)
   SETCAR(call, Rf_install("library"));
   SETCAR(CDR(call), Rf_install("RBrowserPlugin"));
   R_tryEval(call, R_GlobalEnv, &error);
-  
-  
+
+
   UNPROTECT(1);
   return error;
 }
@@ -115,7 +97,7 @@ NPError MYCALL NP_Initialize(NPNetscapeFuncs* bFuncs
 #ifdef XP_UNIX
   if (pFuncs->size < (offsetof(NPPluginFuncs, setvalue) + sizeof(void*)))
     return NPERR_INVALID_FUNCTABLE_ERROR;
-  
+
   SetNPPFuncs(pFuncs);
 #endif
   myNPNFuncs = (NPNetscapeFuncs *)malloc(sizeof(NPNetscapeFuncs));
@@ -195,9 +177,9 @@ void CopyNPNFunctions(NPNetscapeFuncs *dstFuncs, NPNetscapeFuncs *srcFuncs)
 
   //This was missing for some reason?!?!
   dstFuncs->enumerate = srcFuncs->enumerate;
-  
-  if (srcFuncs->version >= NPVERS_MACOSX_HAS_COCOA_EVENTS) { // 23 
-    dstFuncs->scheduletimer = srcFuncs->scheduletimer;  
+
+  if (srcFuncs->version >= NPVERS_MACOSX_HAS_COCOA_EVENTS) { // 23
+    dstFuncs->scheduletimer = srcFuncs->scheduletimer;
     dstFuncs->unscheduletimer = srcFuncs->unscheduletimer;
   }
 
@@ -206,8 +188,8 @@ void CopyNPNFunctions(NPNetscapeFuncs *dstFuncs, NPNetscapeFuncs *srcFuncs)
     dstFuncs->setvalueforurl = srcFuncs->setvalueforurl;
     dstFuncs->getauthenticationinfo = srcFuncs->getauthenticationinfo;
   }
-  
- 
+
+
 }
 
 
@@ -269,7 +251,7 @@ NPError  NPP_New(NPMIMEType pluginType, NPP instance, uint16_t mode, int16_t arg
 
   myNPNFuncs->setvalue(instance, NPPVpluginWindowBool, (void*)false);
 
-  
+
   // set up our our instance data
   InstanceData* instanceData = (InstanceData*)malloc(sizeof(InstanceData));
   if (!instanceData)
@@ -279,7 +261,7 @@ NPError  NPP_New(NPMIMEType pluginType, NPP instance, uint16_t mode, int16_t arg
   instanceData->scriptable = NULL;
   instanceData->funcs = myNPNFuncs;
   instance->pdata = instanceData;
- 
+
  #ifdef XP_MACOSX
   /* Select the Core Graphics drawing model. */
   NPBool supportsCoreGraphics = false;
@@ -310,7 +292,7 @@ NPError  NPP_New(NPMIMEType pluginType, NPP instance, uint16_t mode, int16_t arg
   /*
   SEXP klass, ans, ptr;
   SEXP klass2, ans2, ptr2;
-	
+
   PROTECT( klass = MAKE_CLASS( "PluginInstance" ) );
   PROTECT( ans = NEW( klass ) );
   PROTECT( ptr = R_MakeExternalPtr( instance,
@@ -326,7 +308,7 @@ NPError  NPP_New(NPMIMEType pluginType, NPP instance, uint16_t mode, int16_t arg
   SET_SLOT( ans2, Rf_install("ref"), ptr2);
   SET_SLOT( ans, Rf_install("funcs"), ans2);
   //finalizer here if needed
-  
+
   SET_SLOT(ans, Rf_install("ref"), ptr);
   Rf_defineVar(Rf_install("PluginInstance"), ans, R_GlobalEnv);
   UNPROTECT(6);
@@ -350,7 +332,7 @@ NPError  NPP_SetWindow(NPP instance, NPWindow* window)
   InstanceData* currentInstance = (InstanceData*)(instance->pdata);
 
   currentInstance->window = *window;
-  
+
   return NPERR_NO_ERROR;
 }
 
@@ -381,7 +363,7 @@ void  NPP_StreamAsFile(NPP instance, NPStream* stream, const char* fname)
 
 void  NPP_Print(NPP instance, NPPrint* platformPrint)
 {
-  
+
 }
 
 int16_t  NPP_HandleEvent(NPP instance, void* event)
@@ -404,7 +386,7 @@ void  NPP_URLNotify(NPP instance, const char* url, NPReason reason, void* notify
 }
 
 
-NPError 
+NPError
 NPP_GetValue(NPP instance, NPPVariable variable, void *value) {
   fprintf(stderr, "In NPP_GetValue\n");fflush(stderr);
   if(instance == NULL)
@@ -412,20 +394,20 @@ NPP_GetValue(NPP instance, NPPVariable variable, void *value) {
 
   NPError rv = NPERR_NO_ERROR;
 
-  switch (variable) 
+  switch (variable)
     {
     case NPPVpluginWindowBool:
       *((bool *)value) = true;
       break;
-      
+
     case NPPVpluginNameString:
       *((char **)value) = (char *) "WebR Plugin";
       break;
-      
+
     case NPPVpluginDescriptionString:
       *((char **)value) = (char *) "WebR plugin";
       break;
-      
+
     case NPPVpluginScriptableNPObject:
       {
 	fprintf(stderr, "case NPPVpluginScriptableNPObject");fflush(stderr);
@@ -442,14 +424,14 @@ NPP_GetValue(NPP instance, NPPVariable variable, void *value) {
       fprintf(stderr, "Scriptable object created %lx", (unsigned long int) ((InstanceData*)instance->pdata)->scriptable);fflush(stderr);
       myNPNFuncs->retainobject((NPObject *)((InstanceData*)instance->pdata)->scriptable);
       //myNPNFuncs->retainobject(scriptable);
-      
+
       }
-	
+
 	*(NPObject **)value = (NPObject *)((InstanceData*)instance->pdata)->scriptable;
 
       }
       break;
-      
+
     default:
       rv = NPERR_GENERIC_ERROR;
       break;
@@ -467,7 +449,7 @@ NPError  NPP_SetValue(NPP instance, NPNVariable variable, void *value)
 #if 0
 void drawPlugin(NPP instance, NPCocoaEvent* event)
 {
-  
+
   if (!browserUAString) {
     return;
   }
@@ -533,7 +515,7 @@ void drawPlugin(NPP instance, NPCocoaEvent* event)
                     sizeof(ATSUTextMeasurement),
                     &lineDescent,
                     &byteSize);
-  float lineHeight = FixedToFloat(lineAscent) + FixedToFloat(lineDescent);  
+  float lineHeight = FixedToFloat(lineAscent) + FixedToFloat(lineDescent);
   ItemCount softBreakCount;
   ATSUBatchBreakLines(atsuLayout,
                       kATSUFromTextBeginning,
