@@ -166,14 +166,7 @@ raphaelDev = function(id = "raph_content", dim = c(600, 400),
     
     funs@newPage = function(context, devdesc)
       {
-        print("In raphaelDev::newPage")
-        storage$paper$clear()
-        storage$lines = list()
-        storage$points = list()
-        storage$polylines = list()
-        storage$text = list()
-        storage$rects = list()
-        print("leaving newPage")
+        raphNewPage(storage)
       }
 
     # No implementations for
@@ -200,28 +193,16 @@ raphaelDev = function(id = "raph_content", dim = c(600, 400),
   }
 
 
-if(FALSE)
+raphNewPage = function(env)
   {
-clearRaphPlot = function(dev)
-  {
-    rem = function(x)
-      {
-        call_JS_Method(ScriptCon, x, "remove", list(), addRoot = FALSE)
-        #JS_RemoveRoot(ScriptCon, tmp)
-        #JS_RemoveRoot(ScriptCon, x) Finalizer should take care of this.
-      }
-
-    sapply(dev$getPoints(), rem)
-    sapply(dev$getLines(), rem)
-    sapply(dev$getPolyLines(), rem)
-    sapply(dev$getTexts(), rem)
-    assign("points", list(), env = dev$storage)
-    assign("lines", list(), env = dev$storage)
-    assign("polylines", list(), env = dev$storage)
-    assign("texts", list(), env = dev$storage)
+    pap = env$paper
+    pap$clear()
+    env$points = list()
+    env$lines = list()
+    env$polylines = list()
+    env$texts = list()
+    TRUE
   }
-
-}
 
 doColors = function(jsvar, context)
   {
