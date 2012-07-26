@@ -335,6 +335,8 @@ bool RVectorToNP(SEXP vec, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret)
   
 }
 
+extern "C"{
+
 bool ConvertNPToR(NPVariant *var, NPP inst, NPNetscapeFuncs *funcs, convert_t convRet,  SEXP *_ret) 
 //Returns a bool indicating whether the variant passed in is safe to free (ie if we did NOT create new references to it within R)
 {
@@ -422,6 +424,8 @@ bool ConvertNPToR(NPVariant *var, NPP inst, NPNetscapeFuncs *funcs, convert_t co
 	}
     }
   return canfree;
+}
+
 }
 
 static int depth = 0;

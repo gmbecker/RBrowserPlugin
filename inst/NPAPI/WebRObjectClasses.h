@@ -12,14 +12,15 @@
 #include <R.h>
 #include <Rdefines.h>
 #include <Rembedded.h>
+#ifdef XP_UNIX
 #include <Rinterface.h>
+#endif
 #else
 #include <R/R.h>
 #include <R/Rdefines.h>
 #include <R/Rembedded.h>
 #include <R/Rinterface.h>
 #endif
-
 
 class RObject : public NPObject
 {

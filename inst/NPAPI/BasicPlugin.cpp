@@ -32,6 +32,11 @@ pthread_cond_t queueAdvance;
 RCallQueue rQueue;
 
 
+//testing it
+//VS_VERSION_INFO VERSIONINFO;
+
+
+
 #define PLUGIN_NAME        "Test R Plugin"
 #define PLUGIN_DESCRIPTION PLUGIN_NAME " Working up to WebR"
 #define PLUGIN_VERSION     "1.0.0.0"
