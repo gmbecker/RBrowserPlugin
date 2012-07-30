@@ -47,9 +47,9 @@ void DoColors(NPVariant *el, const pGEcontext gc, NPP inst, NPNetscapeFuncs *fun
 
 extern "C"{
 
-  static Rboolean raphaelDeviceDriver(pDevDesc dev, SEXP env, SEXP plug);
+  static Rboolean raphaelDeviceDriver(pDevDesc dev, SEXP env, SEXP plug, SEXP dim);
 
-  void GEraphaelDevice(SEXP env, SEXP plug)
+  void GEraphaelDevice(SEXP env, SEXP plug, SEXP dim)
   {
     pDevDesc dev = NULL;
     pGEDevDesc dd;
@@ -57,13 +57,13 @@ extern "C"{
     R_GE_checkVersionOrDie(R_GE_version);
     R_CheckDeviceAvailable();
     
-    // XXX BEGIN_SUSPECT_INTERRUPTS was causing compiler error of invalid cast between int and Rboolean. I'm pretty sure it has to do with the values of TRUE and or FALSE, which are probably getting defined in one of the headers included in WebR.h?
+    // XXX BEGIN_SUSPEND_INTERRUPTS was causing compiler error of invalid cast between int and Rboolean. I'm pretty sure it has to do with the values of TRUE and or FALSE, which are probably getting defined in one of the headers included in WebR.h?
     // BEGIN_SUSPEND_INTERRUPTS {
       
 	if (!(dev = (pDevDesc ) calloc(1, sizeof(DevDesc))))
 	  //error(_("unable to start Raphael device"));
 	  Rf_error("unable to start Raphael device");
-	if (!raphaelDeviceDriver(dev, env, plug)) {
+	if (!raphaelDeviceDriver(dev, env, plug, dim)) {
 	    free(dev);
 	    //error(_("unable to start Raphael device"));
 	    Rf_error("unable to start Raphael device");
@@ -104,14 +104,28 @@ static void Raphael_Circle(double x, double y, double r,
   funcs->invoke(inst, paper->value.objectValue, funcs->getstringidentifier("circle"), (const NPVariant *) args, 3, ret);
   //XXX color code here
   DoColors(ret, gc, inst, funcs);
-  SEXP val, list;
+  SEXP val, list, call, ptr, ans;
   PROTECT(val = R_NilValue);
   ConvertNPToR(ret, inst, funcs, CONV_REF, &val);
   PROTECT(list = Rf_findVarInFrame(env, Rf_install("points")));
   SET_LENGTH(list, LENGTH(list) + 1);
   SET_VECTOR_ELT(list, LENGTH(list) - 1, val);
+  defineVar(Rf_install("points"), list, env);
+  /*
+  PROTECT(call = ptr = allocVector(LANGSXP, 4));
+  SETCAR(call, Rf_install("assign"));
+  ptr = CDR(ptr);
+  SETCAR(ptr, ScalarString(mkChar("points")));
+  ptr = CDR(ptr);
+  SETCAR(ptr,list);
+  ptr = CDR(ptr);
+  SETCAR(ptr, env);
+  SET_TAG(ptr, Rf_install("envir"));
+  int error=0;
+  ans = R_tryEval(call, R_GlobalEnv, &error);
+  UNPROTECT(6);
+  */  
   UNPROTECT(5);
-  //UNPROTECT(3);
   return;
 
 }
@@ -150,6 +164,7 @@ static void Raphael_Line(double x1, double y1, double x2, double y2,
   PROTECT(list = Rf_findVarInFrame(env, Rf_install("lines")));
   SET_LENGTH(list, LENGTH(list) + 1);
   SET_VECTOR_ELT(list, LENGTH(list) - 1, val);
+  defineVar(Rf_install("lines"), list, env);
   UNPROTECT(5);
   return;
 }
@@ -204,6 +219,7 @@ static void Raphael_Polyline(int n, double *x, double *y,
   PROTECT(list = Rf_findVarInFrame(env, Rf_install("polylines")));
   SET_LENGTH(list, LENGTH(list) + 1);
   SET_VECTOR_ELT(list, LENGTH(list) - 1, val);
+  defineVar(Rf_install("polylines"), list, env);
   UNPROTECT(5);
   funcs->memfree(dat);
   
@@ -256,6 +272,7 @@ static void Raphael_Rect(double x0, double y0, double x1, double y1,
   PROTECT(list = Rf_findVarInFrame(env, Rf_install("rects")));
   SET_LENGTH(list, LENGTH(list) + 1);
   SET_VECTOR_ELT(list, LENGTH(list) - 1, val);
+  defineVar(Rf_install("rects"), list, env);
   UNPROTECT(5);
   return;
  
@@ -316,6 +333,7 @@ static void Raphael_Text(double x, double y, const char *str,
   PROTECT(list = Rf_findVarInFrame(env, Rf_install("texts")));
   SET_LENGTH(list, LENGTH(list) + 1);
   SET_VECTOR_ELT(list, LENGTH(list) - 1, val);
+  defineVar(Rf_install("texts"), list, env);
   UNPROTECT(5);
   funcs->memfree(dat);
   
@@ -384,7 +402,7 @@ static double Raphael_StrWidth(const char *str,
     return 0.0;
 }
 
-  static Rboolean raphaelDeviceDriver(pDevDesc dev, SEXP env, SEXP plug) {
+  static Rboolean raphaelDeviceDriver(pDevDesc dev, SEXP env, SEXP plug, SEXP dim) {
 
     dev->deviceSpecific = Calloc(3, SEXP);
   ((SEXP*)dev->deviceSpecific)[0] = env;
@@ -433,8 +451,8 @@ static double Raphael_StrWidth(const char *str,
      * Device physical characteristics
      */
     dev->left = 0;
-    dev->right = 400;
-    dev->bottom = 400;
+    dev->right = INTEGER(dim)[0];
+    dev->bottom = INTEGER(dim)[1];
     dev->top = 0;
     dev->cra[0] = 9;
     dev->cra[1] = 12;
@@ -457,9 +475,9 @@ static double Raphael_StrWidth(const char *str,
 }
 
 
-SEXP R_GD_raphaelDevice(SEXP env, SEXP plug)
+  SEXP R_GD_raphaelDevice(SEXP env, SEXP plug, SEXP dim)
 {
-  GEraphaelDevice(env, plug);
+  GEraphaelDevice(env, plug, dim);
   return R_NilValue;
 }
 

@@ -47,12 +47,13 @@ raphaelCDev = function(id = "raph_content", dim = c(400, 400), storage = new.env
     tmp = evalJavaScript(script = script, keepResult = TRUE)
     assign("paper", tmp, env = storage)
 
-    .Call("R_GD_raphaelDevice", storage, PluginInstance)
+    .Call("R_GD_raphaelDevice", storage, PluginInstance, as.integer(dim))
 
     list(getPoints = function() get("points", storage),
          getLines = function() get("lines", storage),
          getPolyLines = function() get("polylines", storage),
          getTexts = function() get("texts", storage),
+         getRects = function() get("rects", storage),
          storage = storage
          )
   }
