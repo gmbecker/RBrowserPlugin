@@ -1,0 +1,147 @@
+<html>
+  <head>
+    <!--CSS file (default YUI Sam Skin) -->
+    <link type="text/css" rel="stylesheet" href="http://yui.yahooapis.com/2.9.0/build/datatable/assets/skins/sam/datatable.css">
+    
+    <!-- Dependencies -->
+    <script src="http://yui.yahooapis.com/2.9.0/build/yahoo-dom-event/yahoo-dom-event.js"></script>
+    <script src="http://yui.yahooapis.com/2.9.0/build/element/element-min.js"></script>
+    <script src="http://yui.yahooapis.com/2.9.0/build/datasource/datasource-min.js"></script>
+    
+    <!-- OPTIONAL: JSON Utility (for DataSource) -->
+    <script src="http://yui.yahooapis.com/2.9.0/build/json/json-min.js"></script>
+    
+    <!-- OPTIONAL: Connection Manager (enables XHR for DataSource) -->
+    <script src="http://yui.yahooapis.com/2.9.0/build/connection/connection-min.js"></script>
+    
+    <!-- OPTIONAL: Get Utility (enables dynamic script nodes for DataSource) -->
+    <script src="http://yui.yahooapis.com/2.9.0/build/get/get-min.js"></script>
+    
+    <!-- OPTIONAL: Drag Drop (enables resizeable or reorderable columns) -->
+    <script src="http://yui.yahooapis.com/2.9.0/build/dragdrop/dragdrop-min.js"></script>
+    
+    <!-- OPTIONAL: Calendar (enables calendar editors) -->
+    <script src="http://yui.yahooapis.com/2.9.0/build/calendar/calendar-min.js"></script>
+    
+    <!-- Source files -->
+    <script src="http://yui.yahooapis.com/2.9.0/build/datatable/datatable-min.js"></script>
+    <script type="text/javascript" src="../javascript/Rhelpers.js"> </script>
+    <script type="text/R">
+      library(RJSONIO)
+      cardatenv =  new.env()
+      cardatenv$mtcars = mtcars
+      getCarDat = function(args)
+      {
+      if(missing(args) || all(sapply(args, is.null)))
+      {
+        args = list(cardatenv$mtcars)
+      } else {
+        args = c(cardatenv$mtcars, args)
+      }
+       toJSON(do.call(subset, args))
+      }
+      editCarDat = function(row, col, newval)
+      {
+        cardatenv$mtcars[row, col] = newval
+      }
+    </script>
+    <script type="text/javascript" src="datagrid.js"> 
+    </script>
+    <script type="text/R" src="iDataAnalysis.R">
+    </script>
+    <script type="text/javascript">
+      function selectVars(evt)
+      {
+        var sels = []; 
+
+      var form = document.getElementById("varchkboxes");
+      for(var i = 0; i < form.varSelect.length; i++){
+			 if(form.varSelect[i].checked) {
+			 sels[sels.length] = form.varSelect[i].value;
+			 }
+			 }
+			 //callRFunction("setVars", [sels], "true");
+			 R.setVars(sels);
+			 return sels;
+			 }
+      function doShow(show)
+{
+	var lincont = document.getElementById("linregcontainer");
+	var gamcont = document.getElementById("gamcontainer");
+	if(show == 1)
+	{
+		lincont.style.display = "block";
+		gamcont.style.display = "none";
+	} else if (show == 2) {
+		lincont.style.display = "none";
+		gamcont.style.display = "block";
+		
+	} else {
+		lincont.style.display = "block";
+		gamcont.style.display = "block;"
+	}
+
+}
+    </script>
+    <link rel="stylesheet" type="text/css" href="iDataAnalysis.css">
+      </link>
+  </head>
+  <body class"yui-skin-sam">
+
+    <h2> A Toy Analysis of MTCars</h2>
+     <br />
+    When viewing a dynamic document interactively, we have a number of capabilities which are either not available or non-sensical for static viewings.
+    <br />
+    <br />
+    For example, we can view the data being analyzed in a way that does not take up an inordinant amount of space. For very large datasets, this is still unlikely to be particularly enlightening, but for moderately sized ones it can be useful.
+    <br />
+    <br />
+
+    <div id="table" height="100"></div>
+    <br />
+    <br />
+    Much more interesting, however is the control we can gain over the computations being performed on the data. For example, we can choose from a set of predictor variables.
+    <br />
+    <form id="varchkboxes">
+    <input type="checkbox" name="varSelect" label="cyl" checked="true" value="1"   onchange="selectVars();" >cyl</input>
+<input type="checkbox" name="varSelect" label="disp" checked="true" value="2" onchange="selectVars();">disp</input>
+<input type="checkbox" name="varSelect" label="hp" checked="true" value="3" onchange="selectVars();">hp</input>
+<input type="checkbox" name="varSelect" label="drat" checked="true" value="4" onchange="selectVars();">drat</input>
+<input type="checkbox" name="varSelect" label="wt" checked="true" value="5" onchange="selectVars();">wt</input>
+<input type="checkbox" name="varSelect" label="qsec" checked="true" value="6" onchange="selectVars();">qsec</input>
+<input type="checkbox" name="varSelect" label="vs" checked="true" value="7" onchange="selectVars();">vs</input>
+<input type="checkbox" name="varSelect" label="am" checked="true" value="8" onchange="selectVars();">am</input>
+<input type="checkbox" name="varSelect" label="gear" checked="true" value="9" onchange="selectVars();">gear</input>
+<input type="checkbox" name="varSelect" label="carb" checked="true" value="10" onchange="selectVars();">carb</input>
+</form>
+    <br />
+    Or we can choose the modeling method being used.
+    <br />
+    <br />
+      <input type="radio" name="method" value="1" onclick="R.showHideModel( this.value);" />
+      <label for="1">Linear Regression</label>
+      <input type="radio" name="method" value="2" onclick="R.showHideModel( this.value);" />
+      <label for="2">General Additive Modeling</label>
+      <input type="radio" name="method" value="3"onclick="R.showHideModel( this.value);" />
+      <label for="3">Both Methods </label>
+      <br />
+    <div>
+      
+      <div id="linregcontainer" style="float:left" class="container">
+	
+	<h2>Linear Regression</h2> 
+	
+	
+	<div id="linregtable" style="font-size:50%" > </div>
+	<div id="linregplot" > </div>
+      </div>
+      <div id="gamcontainer" style="float:left" class="container">
+	
+ 	<h2>Generalized Additive Model</h2> 
+	<div id="gamtable" > </div>
+	<div id="gamplot" > </div>
+      </div>
+    </div>
+    <embed type="application/test-r" width="0" height="0"></embed>
+  </body>
+</html>

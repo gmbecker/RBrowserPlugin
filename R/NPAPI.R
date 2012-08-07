@@ -61,8 +61,10 @@ NP_GetGlobal = function(plug = PluginInstance)
 
 getConvEnum = function(x, several.ok = FALSE)
   {
-    if(!length(x))
-      x = "default"
+    if(!length(x)||!is.character(x))
+      {
+        x = "default"
+      }
     x = match.arg(x, c("default", "reference", "copy"), several.ok = several.ok)
     sapply(x, function(y)
            {

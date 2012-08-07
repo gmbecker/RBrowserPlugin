@@ -143,6 +143,8 @@ bool WebREngine::HasMethod(NPIdentifier name)
     ret = 1;
   else if (name == myNPNFuncs->getstringidentifier("getRef"))
     ret = 1;
+  else if (name == myNPNFuncs->getstringidentifier("getCopy"))
+    ret = 1;
   else
    {
       //direct access API
@@ -157,12 +159,6 @@ bool WebREngine::Invoke(NPIdentifier name, const NPVariant *args, uint32_t argCo
   fprintf(stderr, "\nIn WebREngine::Invoke - %s", myNPNFuncs->utf8fromidentifier(name));fflush(stderr);
   SEXP Rargs[argCount];
   convert_t convert = CONV_DEFAULT;
-  /*
-  if(argCount && args[0].type == NPVariantType_Object && myNPNFuncs->hasproperty(this->instance, args[0].value.objectValue, myNPNFuncs->getstringidentifier("namedArrayForR")))
-    {
-      return doNamedCall(this->instance, name, args, argCount, result);
-    }
-  */
 
     for(uint32_t i=0; i<argCount; i++)
       {
@@ -187,55 +183,48 @@ bool WebREngine::Invoke(NPIdentifier name, const NPVariant *args, uint32_t argCo
       {
 	PROTECT(ptr = call = allocVector(LANGSXP, 3));
 	SETCAR(call, Rf_install("do.call"));
-      ptr = CDR(call);
-      SETCAR(ptr, Rargs[0]); //The function
-      ptr = CDR(ptr);
-      SETCAR(ptr, Rargs[1]); //the args list
-      PROTECT(ans = rQueue.requestRCall(call, R_GlobalEnv, &error, this->instance));
-      addProt = 2;	
-    }
-  else if (name == myNPNFuncs->getstringidentifier("C_doTest"))
-    C_doTest(this->instance, myNPNFuncs);
-  else if (name == myNPNFuncs->getstringidentifier("getRef"))
-    {/*
-      SEXP  call, ptr;
-      int error;  
-      PROTECT(ptr = call = allocVector(LANGSXP, 2));
-      SETCAR(ptr, Rf_install("get"));
-      ptr = CDR(ptr);
-      SETCAR(ptr, Rargs[0]);
-      PROTECT(ans = rQueue.requestRCall(call, R_GlobalEnv, &error, this->instance));
-      //error =  ConvertRToNP(val, this->instance, myNPNFuncs, result, false);
-      addProt = 2;
-     */
-      PROTECT(ans = innerGetVar(CHAR(STRING_ELT(Rargs[0], 0)),this->instance));
-      convert = CONV_REF;
-      addProt = 1;
-    }    
-  else
-    {
-      
-      SEXP ptr;
-      //NPString strname = myNPNFuncs->utf8fromidentifier(name);
-      //const char *ccharname =  NPStringToConstChar(strname);
-      char *charname = (char* )myNPNFuncs->utf8fromidentifier(name);
-      PROTECT(ptr = call = allocVector(LANGSXP, argCount  + 1));
-      SETCAR(ptr, Rf_install( (const char *) charname) );
-      myNPNFuncs->memfree(charname);
-      for(uint32_t i=0; i < argCount; i++)
-	{
-	  ptr = CDR( ptr );
-	  SETCAR(ptr, Rargs[i]);
-	}
-
-      fprintf(stderr, "\nDirect API call: ");fflush(stderr);
-      Rf_PrintValue(call);
-      PROTECT(ans = rQueue.requestRCall( call, R_GlobalEnv, &error, this->instance));
-      
-      addProt = 2;
-      
-
-    }
+	ptr = CDR(call);
+	SETCAR(ptr, Rargs[0]); //The function
+	ptr = CDR(ptr);
+	SETCAR(ptr, Rargs[1]); //the args list
+	PROTECT(ans = rQueue.requestRCall(call, R_GlobalEnv, &error, this->instance));
+	addProt = 2;	
+      }
+    else if (name == myNPNFuncs->getstringidentifier("getRef"))
+      {
+	PROTECT(ans = innerGetVar(CHAR(STRING_ELT(Rargs[0], 0)),this->instance));
+	convert = CONV_REF;
+	addProt = 1;
+      }
+    else if (name == myNPNFuncs->getstringidentifier("getCopy"))
+      {
+	PROTECT(ans = innerGetVar(CHAR(STRING_ELT(Rargs[0], 0)),this->instance));
+	convert = CONV_COPY;
+	addProt = 1;
+      }
+    
+    else
+      {
+	
+	SEXP ptr;
+	//NPString strname = myNPNFuncs->utf8fromidentifier(name);
+	//const char *ccharname =  NPStringToConstChar(strname);
+	char *charname = (char* )myNPNFuncs->utf8fromidentifier(name);
+	PROTECT(ptr = call = allocVector(LANGSXP, argCount  + 1));
+	SETCAR(ptr, Rf_install( (const char *) charname) );
+	myNPNFuncs->memfree(charname);
+	for(uint32_t i=0; i < argCount; i++)
+	  {
+	    ptr = CDR( ptr );
+	    SETCAR(ptr, Rargs[i]);
+	  }
+	
+	fprintf(stderr, "\nDirect API call: ");fflush(stderr);
+	Rf_PrintValue(call);
+	PROTECT(ans = rQueue.requestRCall( call, R_GlobalEnv, &error, this->instance));
+	
+	addProt = 2;
+      }
    /*
   else if (name == myNPNFuncs->getstringidentifier("exists"))
     ret = 1;

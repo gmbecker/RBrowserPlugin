@@ -5,7 +5,7 @@
     <script type="text/R">
       library(lattice)
       lattice.options(panel.error=NULL)
-      rdev = raphaelDev("imagecont")
+      rdev = raphaelCDev("imagecont")
       trel = xyplot(mpg~qsec|gear, data=mtcars)
       print(trel)
     </script>

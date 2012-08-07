@@ -9,7 +9,7 @@
 	    library(plyr)
 	    ds <- ddply(df, .(gp), summarise, mean = mean(y), sd = sd(y))
   
-      rdev = raphaelDev("imagecont")
+      rdev = raphaelCDev("imagecont")
       myplot = ggplot() +
        geom_point(data = df, aes(x = gp, y = y)) +
        geom_point(data = ds, aes(x = gp, y = mean),

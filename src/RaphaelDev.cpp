@@ -157,6 +157,7 @@ static void Raphael_Line(double x1, double y1, double x2, double y2,
   
   funcs->invoke(inst, paper->value.objectValue, funcs->getstringidentifier("path"), (const NPVariant *) arg, 1, ret);
   //XXX color code here
+  DoColors(ret, gc, inst, funcs);
   SEXP val, list;
   PROTECT(val = R_NilValue);
   ConvertNPToR(ret, inst, funcs, CONV_DEFAULT, &val);
@@ -171,18 +172,20 @@ static void Raphael_Line(double x1, double y1, double x2, double y2,
 static void Raphael_Polygon(int n, double *x, double *y,
                          const pGEcontext gc,
                          pDevDesc dev) {
+  fprintf(stderr, "\nIn Raphael_Polygon\n");fflush(stderr);
 }
 static void Raphael_Path(double *x, double *y,
                       int npoly, int *nper,
                       Rboolean winding,
                       const pGEcontext gc,
                       pDevDesc dev) {
+  fprintf(stderr, "\nIn Raphael_Path\n");fflush(stderr);
 }
 static void Raphael_Polyline(int n, double *x, double *y,
                           const pGEcontext gc,
                           pDevDesc dev) {
 
-
+fprintf(stderr, "\nIn Raphael_Polyline\n");fflush(stderr);
   SEXP pap, env, plug;
   SEXP *spec = (SEXP *)dev->deviceSpecific;
   PROTECT(env = (SEXP) spec[0]);
@@ -212,6 +215,7 @@ static void Raphael_Polyline(int n, double *x, double *y,
   
   funcs->invoke(inst, paper->value.objectValue, funcs->getstringidentifier("path"), (const NPVariant *) arg, 1, ret);
   //XXX color code here
+  DoColors(ret, gc, inst, funcs);
   SEXP val, list;
   PROTECT(val = R_NilValue);
   ConvertNPToR(ret, inst, funcs, CONV_DEFAULT, &val);
@@ -230,7 +234,7 @@ static void Raphael_Polyline(int n, double *x, double *y,
 static void Raphael_Rect(double x0, double y0, double x1, double y1,
                       const pGEcontext gc,
                       pDevDesc dev) {
-
+fprintf(stderr, "\nIn Raphael_Rect\n");fflush(stderr);
   SEXP pap, env, plug;
   SEXP *spec = (SEXP *)dev->deviceSpecific;
   PROTECT(env = (SEXP) spec[0]);
@@ -248,13 +252,13 @@ static void Raphael_Rect(double x0, double y0, double x1, double y1,
   double tmp;
   if(x0 > x1)
     {
-      x0 = tmp;
+      tmp = x0;
       x0 = x1;
       x1 = tmp;
     }
   if(y0 > y1)
     {
-      y0 = tmp;
+      tmp = y0;
       y0 = y1;
       y1 = tmp;
     }
@@ -262,9 +266,10 @@ static void Raphael_Rect(double x0, double y0, double x1, double y1,
   DOUBLE_TO_NPVARIANT(x0, args[0]);
   DOUBLE_TO_NPVARIANT(y0, args[1]);
   DOUBLE_TO_NPVARIANT(x1 - x0, args[2]);
-  DOUBLE_TO_NPVARIANT(y1 - y0, args[2]);
-  funcs->invoke(inst, paper->value.objectValue, funcs->getstringidentifier("rect"), (const NPVariant *) args, 4, ret);
+  DOUBLE_TO_NPVARIANT(y1 - y0, args[3]);
+  bool success = funcs->invoke(inst, paper->value.objectValue, funcs->getstringidentifier("rect"), (const NPVariant *) args, 4, ret);
   //XXX color code here
+  DoColors(ret, gc, inst, funcs);
   SEXP val, list;
   PROTECT(val = R_NilValue);
   ConvertNPToR(ret, inst, funcs, CONV_DEFAULT, &val);
@@ -317,10 +322,20 @@ static void Raphael_Text(double x, double y, const char *str,
   //10 = "font-size\0"
   char *dat2 = (char*) funcs->memalloc(10*sizeof(char));
   NPVariant tmp;
-  memcpy(dat2, "font-size\0", 10);
+  
+memcpy(dat2, "font-size\0", 10);
   STRINGZ_TO_NPVARIANT(dat2, args2[0]);
-  INT32_TO_NPVARIANT(size, args[1]);
+  INT32_TO_NPVARIANT(size, args2[1]);
   funcs->invoke(inst, ret->value.objectValue, funcs->getstringidentifier("attr"), (const NPVariant *) args2, 2, &tmp);
+  /*
+  char *dat3 = (char *) funcs->memalloc(11*sizeof(char));
+  sprintf(dat3, "R%4.4f\0", rot);
+  STRINGZ_TO_NPVARIANT(dat3, args2[0]);
+  bool success = funcs->invoke(inst, ret->value.objectValue, funcs->getstringidentifier("transform"), (const NPVariant *) args2, 1, &tmp);
+  */
+  //rotation seems to be opposite of what R expects...
+  DOUBLE_TO_NPVARIANT(-1.0*rot, args2[0]);
+  bool success = funcs->invoke(inst, ret->value.objectValue, funcs->getstringidentifier("rotate"), (const NPVariant *) args2, 1, &tmp);
   //XXX color code here
 
 
@@ -336,6 +351,8 @@ static void Raphael_Text(double x, double y, const char *str,
   defineVar(Rf_install("texts"), list, env);
   UNPROTECT(5);
   funcs->memfree(dat);
+  funcs->memfree(dat2);
+  //  funcs->memfree(dat3);
   
 
 }
@@ -367,6 +384,7 @@ static Rboolean Raphael_Open(pDevDesc dev) {
 }
 static void Raphael_Clip(double x0, double x1, double y0, double y1,
                       pDevDesc dev) {
+  fprintf(stderr, "\nIn Raphael_Clip\n");fflush(stderr);
 }
 static void Raphael_MetricInfo(int c, const pGEcontext gc,
                             double* ascent, double* descent,
