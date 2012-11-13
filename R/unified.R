@@ -175,3 +175,27 @@ setMethod("$", "NPVariantRef",
             fun
           }
           )
+
+setGeneric("newJSObject", function(obj, ...) standardGeneric("newJSObject"))
+
+setMethod("newJSObject", "character",
+          function(obj, ...)
+          {
+            obj = evalJavaScript(obj)
+            newJSObject(obj, ...)
+          })
+
+setMethod("newJSObject", "NPVariantRef",
+          function(obj, ...)
+          {
+            paramlist = c(obj, list(...))
+            fun = switch(length(paramlist),
+                   JS$create0,
+                   JS$create1,
+                   JS$create2,
+                   JS$create3,
+                   JS$create4,
+                   default=stop("Creation of JS objects whose constructors require more than 4 arguments via newJSObject is not currently supported."))
+            do.call(fun, paramlist)
+          })
+            

@@ -303,11 +303,13 @@ bool RVectorToNP(SEXP vec, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret)
   funcs->retainobject(domwin);
   NPIdentifier arrid;
   SEXP names;
+  int protstack = 0;
   if(named)
     {
       fprintf(stderr, "\nVector has non-NULL names. Creating associative array\n");fflush(stderr);
       arrid = funcs->getstringidentifier("Object");
       PROTECT(names = GET_NAMES(vec));
+      protstack++;
     }
   else
     arrid = funcs->getstringidentifier("Array");
@@ -317,6 +319,7 @@ bool RVectorToNP(SEXP vec, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret)
   //fprintf(stderr, "\nJS array object created.");fflush(stderr);
   SEXP el;
   PROTECT(el = R_NilValue);
+  protstack++;
   for (int i = 0; i< len; i++)
     {
       switch(TYPEOF(vec))
@@ -353,7 +356,7 @@ bool RVectorToNP(SEXP vec, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret)
       vartmp2->type=NPVariantType_Bool;
       vartmp2->value.boolValue = true;
       funcs->setproperty(inst, ret->value.objectValue, funcs->getstringidentifier("__CopiedFromR__"), vartmp2);
-      UNPROTECT(1);
+      //UNPROTECT(1);
     }
 
   funcs->releaseobject(domwin);
@@ -363,7 +366,7 @@ bool RVectorToNP(SEXP vec, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret)
   */  
   funcs->releasevariantvalue(vartmp3);
   funcs->releasevariantvalue(vartmp2);
-  
+  UNPROTECT(protstack);
   return true;
   
 }

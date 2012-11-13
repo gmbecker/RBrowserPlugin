@@ -162,3 +162,35 @@ function args(obj)
 	throw "Unrecognized value for convertRet argument:" + obj.convertRet;
     return obj;
 }
+
+window.emptyArg = {emptyRArg:true};
+
+function create0(obj)
+{
+   var ret =  new obj();
+   return ret;
+}
+
+function create1(obj, param)
+{
+   var ret =  new obj(param);
+   return ret;
+}
+
+function create2(obj, param1, param2)
+{
+    var ret = new obj(param1, param2);
+    return ret;
+}
+
+function create3(obj, param1, param2, param3)
+{
+    var ret = new obj(param1, param2, param3);
+    return ret;
+}
+
+function create4(obj, param1, param2, param3, param4)
+{
+    var ret = new obj(param1, param2, param3, param4);
+    return ret;
+}

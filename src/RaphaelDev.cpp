@@ -169,11 +169,6 @@ static void Raphael_Line(double x1, double y1, double x2, double y2,
   UNPROTECT(5);
   return;
 }
-static void Raphael_Polygon(int n, double *x, double *y,
-                         const pGEcontext gc,
-                         pDevDesc dev) {
-  fprintf(stderr, "\nIn Raphael_Polygon\n");fflush(stderr);
-}
 static void Raphael_Path(double *x, double *y,
                       int npoly, int *nper,
                       Rboolean winding,
@@ -230,6 +225,12 @@ fprintf(stderr, "\nIn Raphael_Polyline\n");fflush(stderr);
   return;
 }
 
+static void Raphael_Polygon(int n, double *x, double *y,
+                         const pGEcontext gc,
+                         pDevDesc dev) {
+  fprintf(stderr, "\nIn Raphael_Polygon\n");fflush(stderr);
+  Raphael_Polyline(n, x, y, gc, dev);
+}
 
 static void Raphael_Rect(double x0, double y0, double x1, double y1,
                       const pGEcontext gc,
@@ -384,7 +385,7 @@ static Rboolean Raphael_Open(pDevDesc dev) {
 }
 static void Raphael_Clip(double x0, double x1, double y0, double y1,
                       pDevDesc dev) {
-  fprintf(stderr, "\nIn Raphael_Clip\n");fflush(stderr);
+  //fprintf(stderr, "\nIn Raphael_Clip\n");fflush(stderr);
 }
 static void Raphael_MetricInfo(int c, const pGEcontext gc,
                             double* ascent, double* descent,
@@ -417,19 +418,25 @@ static void Raphael_Size(double *left, double *right,
 static double Raphael_StrWidth(const char *str,
                             const pGEcontext gc,
                             pDevDesc dev) {
-    return 0.0;
+  /*
+  fprintf(stderr, "strlen(str): %u\n", strlen(str));fflush(stderr);
+  double tmp = (gc->ps >= 10) ? (double) gc->ps : 10.0;
+  //-1 because strlen counts the null char;
+  return (strlen(str) - 1) * tmp * gc->cex;
+  */
+   return 0.0;
 }
 
   static Rboolean raphaelDeviceDriver(pDevDesc dev, SEXP env, SEXP plug, SEXP dim) {
 
     dev->deviceSpecific = Calloc(3, SEXP);
-  ((SEXP*)dev->deviceSpecific)[0] = env;
-  ((SEXP*)dev->deviceSpecific)[1] = plug;
-  R_PreserveObject(( (SEXP*)dev->deviceSpecific )[0]);
-  R_PreserveObject(( (SEXP*)dev->deviceSpecific )[1]);
-  ((SEXP*)dev->deviceSpecific)[2] = Rf_findVarInFrame(env, Rf_install("paper"));
-  R_PreserveObject(( (SEXP*)dev->deviceSpecific )[2]);
-
+    ((SEXP*)dev->deviceSpecific)[0] = env;
+    ((SEXP*)dev->deviceSpecific)[1] = plug;
+    R_PreserveObject(( (SEXP*)dev->deviceSpecific )[0]);
+    R_PreserveObject(( (SEXP*)dev->deviceSpecific )[1]);
+    ((SEXP*)dev->deviceSpecific)[2] = Rf_findVarInFrame(env, Rf_install("paper"));
+    R_PreserveObject(( (SEXP*)dev->deviceSpecific )[2]);
+    
  
     //
     //  Device functions

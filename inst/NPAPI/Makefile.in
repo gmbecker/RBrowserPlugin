@@ -44,7 +44,7 @@ IS_MAC=@IS_MAC@
 CPPFLAGS = -Wall -O0 -DXP_UNIX=1 -DMOZ_X11=1 -fPIC -g -I ../npapi-sdk-headers -I$ /usr/share/R/include
 
 R_LD_FLAGS=-L$(R_HOME)/lib -lR
-#LD_FLAGS=-lpthread
+#LD_FLAGS=-h INTEGER
 #OBJ_FILES =  WebRPlugin.o WebREngine.o NPConversions.o WebRObject.o
 OBJ_FILES =  BasicPlugin.o WebREngine.o NPConversions.o WebRObject.o WebRFunction.o WebRMutex.o
 npbasicplugin : $(OBJ_FILES)
@@ -67,6 +67,7 @@ else
 	touch WebREngine.o
 	touch NPConversions.o
 	touch WebRObject.o
+	touch WebRFunction.o
 endif
 
 clean :

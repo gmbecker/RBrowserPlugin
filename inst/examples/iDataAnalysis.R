@@ -152,16 +152,14 @@ showDiagnostics = function(e = storage)
   print("in showDiagnostics")
   if(e$currentShow %in% c(1, 3))
     {
-  #    dev.set(e$linDevNum)
-      #clearRaphPlot(e$linDev)
-      #plot(e$linFit$fitted, e$data[["mpg"]])
-   #   plot(1:10)
+      print(paste("lindevnum:", e$linDev$devnum))
+      dev.set(e$linDev$devnum)
+      plot(e$linFit$fitted, e$data[["mpg"]])
     }
   if(e$currentShow %in% c(2, 3))
     {
-    #  dev.set(e$gamDevNum)
-      #clearRaphPlot(e$gamDev)
-      #plot(e$gamFit$fitted, e$data[["mpg"]])
+      dev.set(e$gamDev$devnum)
+      plot(e$gamFit$fitted, e$data[["mpg"]])
     }
      
 TRUE
@@ -186,12 +184,8 @@ print("lindivstyle:")
 print(storage$lindivstyle)
 storage$currentShow = 1
 storage$data = mtcars
-if(FALSE)
-  {
-storage$linDev = raphaelDev("linregplot")
-storage$linDevNum = dev.cur()
-storage$gamDev = raphaelDev("gamplot")
-storage$gamDevNum = dev.cur()
-}
+storage$linDev = raphaelCDev("linregplot")
+storage$gamDev = raphaelCDev("gamplot")
+
 setVars(1:10)
 showHideModel(1)

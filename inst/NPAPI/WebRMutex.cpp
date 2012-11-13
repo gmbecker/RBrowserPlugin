@@ -119,7 +119,6 @@ void* doRLookup(void *in)
   
   queue->waitInQueue(spot);
 
-  fprintf(stderr, "\nDone waiting spot: %d serving %d", spot, queue->serving);fflush(stderr);
   SEXP ans;
   int err = 0;
   ans = Rf_findVar( Rf_install(name), R_GlobalEnv);
@@ -135,7 +134,6 @@ void* doRLookup(void *in)
 void RCallQueue::waitInQueue(int32_t spot)
 {
       //http://www.gnu.org/software/libc/manual/html_node/Sigsuspend.html#Sigsuspend
-  fprintf(stderr, "\nIn Queue spot %ld, currently serving spot %ld", spot, this->serving);fflush(stderr);
   if(this->serving == spot)
     return;
 

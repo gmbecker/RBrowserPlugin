@@ -275,6 +275,93 @@ bool ConvertRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret, co
 
 */
 
+
+bool RVectorToNP(SEXP vec, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret)
+{
+  int len = LENGTH(vec);
+  fprintf(stderr, "\n R vector or list of length: %d detected", len); fflush(stderr);
+ 
+  NPObject *domwin = NULL;
+  NPVariant *vartmp2 = (NPVariant *) funcs->memalloc(sizeof(NPVariant));
+  NPVariant *vartmp3 = (NPVariant *) funcs->memalloc(sizeof(NPVariant));
+  //NPVariant vartmp2;
+
+  NPError res;
+  bool named = !isNull(GET_NAMES(vec));
+  res = funcs->getvalue(inst, NPNVWindowNPObject , &domwin);
+  funcs->retainobject(domwin);
+  NPIdentifier arrid;
+  SEXP names;
+  int protstack = 0;
+  if(named)
+    {
+      fprintf(stderr, "\nVector has non-NULL names. Creating associative array\n");fflush(stderr);
+      arrid = funcs->getstringidentifier("Object");
+      PROTECT(names = GET_NAMES(vec));
+      protstack++;
+    }
+  else
+    arrid = funcs->getstringidentifier("Array");
+  
+   
+  funcs->invoke(inst, domwin, arrid, NULL, 0, ret);
+  //fprintf(stderr, "\nJS array object created.");fflush(stderr);
+  SEXP el;
+  PROTECT(el = R_NilValue);
+  protstack++;
+  for (int i = 0; i< len; i++)
+    {
+      switch(TYPEOF(vec))
+	{
+	case REALSXP:
+	  vartmp2->type=NPVariantType_Double;
+	  vartmp2->value.doubleValue = REAL(vec)[i];
+	  break;
+	case INTSXP:
+	  vartmp2->type=NPVariantType_Int32;
+	  vartmp2->value.intValue = INTEGER(vec)[i];
+	  break;
+	case LGLSXP:
+	  vartmp2->type=NPVariantType_Bool;
+	  vartmp2->value.boolValue = (bool) LOGICAL(vec)[i];
+	  break;
+	case VECSXP:
+	  ConvertRToNP(VECTOR_ELT(vec, i), inst, funcs, vartmp2, CONV_DEFAULT);
+	  break;
+	case STRSXP:
+	  ConvertRToNP(STRING_ELT(vec, i), inst, funcs, vartmp2, CONV_DEFAULT);
+	  break;
+	}
+
+      if(named)
+	funcs->setproperty(inst, ret->value.objectValue, funcs->getstringidentifier(CHAR(STRING_ELT(names, i))), vartmp2);
+      else
+	funcs->invoke(inst, ret->value.objectValue, funcs->getstringidentifier("push"), vartmp2, 1, vartmp3);
+    }
+  fprintf(stderr, "\nConversion loop complete.");fflush(stderr);
+
+  if(named)
+    {
+      vartmp2->type=NPVariantType_Bool;
+      vartmp2->value.boolValue = true;
+      funcs->setproperty(inst, ret->value.objectValue, funcs->getstringidentifier("__CopiedFromR__"), vartmp2);
+      //UNPROTECT(1);
+    }
+
+  funcs->releaseobject(domwin);
+  /*
+  funcs->memfree(vartmp3);
+  funcs->memfree(vartmp2);
+  */  
+  funcs->releasevariantvalue(vartmp3);
+  funcs->releasevariantvalue(vartmp2);
+  UNPROTECT(protstack);
+  return true;
+  
+}
+/*
+
+
 bool RVectorToNP(SEXP vec, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret)
 {
   int len = LENGTH(vec);
@@ -325,16 +412,13 @@ bool RVectorToNP(SEXP vec, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret)
   fprintf(stderr, "\nConversion loop complete.");fflush(stderr);
 
   funcs->releaseobject(domwin);
-  /*
-  funcs->memfree(vartmp3);
-  funcs->memfree(vartmp2);
-  */  
+  
   funcs->releasevariantvalue(vartmp3);
   funcs->releasevariantvalue(vartmp2);
   return true;
   
 }
-
+*/
 extern "C"{
 
 bool ConvertNPToR(NPVariant *var, NPP inst, NPNetscapeFuncs *funcs, convert_t convRet,  SEXP *_ret) 

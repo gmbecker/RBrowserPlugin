@@ -77,11 +77,11 @@ bool RFunction::Invoke(NPIdentifier name, const NPVariant *args, uint32_t argCou
       fprintf(stderr, "\nIn handleEvent method of an RFunction\n");fflush(stderr);
       return this->InvokeDefault(args, argCount, result);
     }
-      if (name == this->funcs->getstringidentifier("call"))
-	{
-	  fprintf(stderr, "\nIn call method of an RFunction\n");fflush(stderr);
-	  return this->InvokeDefault(args, argCount, result);
-	}
+  if (name == this->funcs->getstringidentifier("call"))
+    {
+      fprintf(stderr, "\nIn call method of an RFunction\n");fflush(stderr);
+      return this->InvokeDefault(args, argCount, result);
+    }
   return false;
 }
 
@@ -96,8 +96,11 @@ bool RFunction::InvokeDefault(const NPVariant *args, uint32_t argCount, NPVarian
   for(uint32_t i=0; i<argCount; i++)
     {
       PROTECT(Rargs[i] = R_NilValue);
-      //when calling R functions directly we DO want arguments to be converted.
-      ConvertNPToR((NPVariant *) &(args[i]), this->instance, this->funcs, CONV_DEFAULT, &Rargs[i]);
+      //If the argument is not an "emptyArg" object, indicating, eg, foo(a, , c), convert as normal
+      if(args[i].type != NPVariantType_Object || !this->funcs->hasproperty(this->instance, args[i].value.objectValue, this->funcs->getstringidentifier("emptyRArg")))
+	ConvertNPToR((NPVariant *) &(args[i]), this->instance, this->funcs, CONV_DEFAULT, &Rargs[i]);
+      else
+	Rargs[i] = R_MissingArg;
     }
   SEXP ans;
   SEXP call;
@@ -110,7 +113,10 @@ bool RFunction::InvokeDefault(const NPVariant *args, uint32_t argCount, NPVarian
   for(uint32_t i=0; i < argCount; i++)
     {
       ptr = CDR( ptr );
-      SETCAR(ptr, Rargs[i]);
+      //If its not the special empty argument object, add it to the call.
+      //if(args[i].type != NPVariantType_Object || !this->funcs->hasproperty(this->instance, args[i].value.objectValue, this->funcs->getstringidentifier("emptyRArg")))
+	SETCAR(ptr, Rargs[i]);
+
     }
 
   fprintf(stderr, "\nDirect API call: ");fflush(stderr);
@@ -343,23 +349,31 @@ bool doNamedCall(NPP inst, SEXP fun, const NPVariant *argsIn, uint32_t count, NP
 
   for(int i =0; i < idcount; i++)
     {
+      funcs->getproperty(inst, obj, ids[i], &curprop);
       if(ids[i] == funcs->getstringidentifier("convertRet"))
 	{
 	  //switched between 3 options on Javascript side and converted to number
-	  funcs->getproperty(inst, obj, ids[i], &curprop);
+	  
 	  if(NPVARIANT_IS_INT32(curprop))
 	    conv = (convert_t) curprop.value.intValue;
 	  else
 	    conv = (convert_t) curprop.value.doubleValue;
 	}
+      else if(curprop.type == NPVariantType_Object && !funcs->hasproperty(inst, curprop.value.objectValue, funcs->getstringidentifier("emptyRArg")))
+	{
+	  ptr = CDR(ptr);
+	  //empty argument, ie 2nd "argument" in foo(a, , c)
+	  SETCAR(ptr,  R_MissingArg);
+	  
+	}
       else if(ids[i] != funcs->getstringidentifier("namedArgsForR"))
 	{
-      fprintf(stderr, "\nAccessing property %s\n", funcs->utf8fromidentifier(ids[i]));fflush(stderr);
-      ptr = CDR(ptr);
-      funcs->getproperty(inst, obj, ids[i], &curprop);
-      ConvertNPToR(&curprop, inst, funcs, CONV_DEFAULT, &tmp);
-      SETCAR(ptr, tmp);
-      SET_TAG(ptr, Rf_install((const char *) funcs->utf8fromidentifier(ids[i])));
+	  fprintf(stderr, "\nAccessing property %s\n", funcs->utf8fromidentifier(ids[i]));fflush(stderr);
+	  ptr = CDR(ptr);
+	  //funcs->getproperty(inst, obj, ids[i], &curprop);
+	  ConvertNPToR(&curprop, inst, funcs, CONV_DEFAULT, &tmp);
+	  SETCAR(ptr, tmp);
+	  SET_TAG(ptr, Rf_install((const char *) funcs->utf8fromidentifier(ids[i])));
 	}
     }
 

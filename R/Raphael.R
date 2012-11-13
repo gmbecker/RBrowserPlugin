@@ -43,10 +43,10 @@ raphaelCDev = function(id = "raph_content", dim = c(400, 400), storage = new.env
     assign("texts", list(), envir=storage)
 
     script = paste("Raphael('", id, "',", dim[1], " , ", dim[2], ");", sep="")
-
+    print("Raphael C device attempting to create paper")
     tmp = evalJavaScript(script = script, keepResult = TRUE)
     assign("paper", tmp, env = storage)
-
+    print("Raphael C device paper created")
     .Call("R_GD_raphaelDevice", storage, PluginInstance, as.integer(dim))
         assign("devnum", dev.cur(), storage)
     list(getPoints = function() get("points", storage),

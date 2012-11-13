@@ -3,7 +3,7 @@
     <script type="text/R">
       eqdat = read.csv("/home/gmbecker/gabe/checkedout/GabeResearch/RFirefoxPaper/Examples/usEQuakes07to11.csv", header=TRUE)
       library(maps)
-      raph = raphaelDev("imagecont", allocSize = 5000)
+      raph = raphaelCDev("imagecont")
       createPlot = function(year, min)
       {
         dat = eqdat[eqdat$Year==as.numeric(year) & eqdat$Magnitude >=as.numeric(min),]

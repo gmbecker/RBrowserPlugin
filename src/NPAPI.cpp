@@ -16,6 +16,8 @@ extern "C" {
   SEXP R_NP_GetGlobal(SEXP Rplug);
   SEXP R_NPAPI_GetProperty(SEXP plug, SEXP Robj, SEXP Rname, SEXP RconvRet);
   SEXP R_NPAPI_SetProperty(SEXP plug, SEXP Robj, SEXP Rname, SEXP Rval, SEXP RconvValue);
+  SEXP R_ConvertRToNP(SEXP Robj, SEXP plug);
+  SEXP R_ConvertNPToR(SEXP NPObj, SEXP plug);
 }
 
 SEXP R_doRefClasWsTest()
@@ -67,7 +69,7 @@ SEXP R_NPAPI_Invoke(SEXP plug, SEXP Robj, SEXP Rname, SEXP Rargs, SEXP RconvArgs
   bool success = funcs->invoke(inst, obj->value.objectValue, funcs->getstringidentifier(ccname), args, nargs, ret);
   if(!success)
     {
-      fprintf(stderr, "\nInvocation of JS method failed.");fflush(stderr);
+      fprintf(stderr, "\nInvocation of JS method %s failed.", ccname);fflush(stderr);
     }
   for(int j=0; j<nargs; j++)
     {
@@ -241,3 +243,35 @@ SEXP R_NP_GetGlobal(SEXP Rplug)
   return ans;
 }
 
+SEXP R_ConvertRToNP(SEXP Robj, SEXP plug)
+{
+
+  NPP inst = (NPP) R_ExternalPtrAddr(GET_SLOT( plug , Rf_install( "ref" ) ) );
+  NPNetscapeFuncs *funcs = (NPNetscapeFuncs *) R_ExternalPtrAddr(GET_SLOT( GET_SLOT(plug, Rf_install("funcs")), Rf_install("ref") ) ) ;
+
+  NPVariant *var = (NPVariant *) funcs->memalloc(sizeof(NPVariant));
+
+  SEXP ans;
+  PROTECT(ans = R_NilValue);
+  ConvertRToNP(Robj, inst, funcs, var, CONV_COPY);
+  ConvertNPToR(var, inst, funcs, CONV_REF, &ans);
+  UNPROTECT(1);
+  return ans;
+  
+}
+
+SEXP R_ConvertNPToR(SEXP Robj, SEXP plug)
+{
+  
+  NPP inst = (NPP) R_ExternalPtrAddr(GET_SLOT( plug , Rf_install( "ref" ) ) );
+  NPNetscapeFuncs *funcs = (NPNetscapeFuncs *) R_ExternalPtrAddr(GET_SLOT( GET_SLOT(plug, Rf_install("funcs")), Rf_install("ref")));
+
+  NPVariant *obj = (NPVariant *) R_ExternalPtrAddr(GET_SLOT( Robj , Rf_install( "ref" ) ) );  
+
+  SEXP ans;
+  PROTECT(ans = R_NilValue);
+  ConvertNPToR(obj, inst, funcs, CONV_COPY, &ans);
+  UNPROTECT(1);
+  return ans;
+  
+}
