@@ -114,6 +114,7 @@ addEventListener = function(target, event, rfun)
   {
     if(length(event) > 1)
       return(mapply(function(e, f) addEventListener(target, e, f), event, rfun))
+    target$addEventListener(event, rfun)
     TRUE
   }
 

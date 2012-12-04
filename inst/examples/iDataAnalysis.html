@@ -27,6 +27,7 @@
     <script src="http://yui.yahooapis.com/2.9.0/build/datatable/datatable-min.js"></script>
     <script type="text/javascript" src="../javascript/Rhelpers.js"> </script>
     <script type="text/javascript" src="../javascript/raphael.js"> </script>
+    <script type="text/javascript" src="../javascript/floating-1.12.js"> </script>
     <script type="text/R">
       library(RJSONIO)
       cardatenv =  new.env()
@@ -49,6 +50,54 @@
     <script type="text/javascript" src="datagrid.js"> 
     </script>
     <script type="text/R" src="iDataAnalysis.R">
+    </script>
+    <script type="text/R">
+      #Do network graph stuff!!!
+      library(Rgraphviz)
+      fldev = raphaelCDev("floatcanvas", c(200, 200))
+      gr = new("graphNEL", edgemode="directed")
+      gr = addNode("data", gr)
+      gr = addNode("vars", gr)
+      gr = addEdge("data", "vars", gr)
+      gr = addNode("model", gr)
+      gr = addEdge("vars", "model", gr)
+      gr = addNode("lm", gr)
+      gr = addNode("gam", gr)
+      gr = addEdge("model", "lm", gr)
+      gr = addEdge("model", "gam", gr)
+      gr = addNode("plot", gr)
+      gr = addEdge("lm", "plot", gr)
+      gr = addEdge("gam", "plot", gr)
+      gr = addNode("fity", gr)
+      gr = addNode("fitres", gr)
+      gr = addNode("qq", gr)
+      gr = addEdge("plot", "fity", gr)
+      gr = addEdge("plot", "fitres", gr)
+      gr = addEdge("plot", "qq", gr)
+      gr = addNode("end", gr)
+      gr = addEdge("fity", "end", gr)
+      gr = addEdge("fitres", "end", gr)
+      gr = addEdge("qq", "end", gr)
+      attrs = list(node=list(label="", height=".2", width=".2", fillcolor="blue", fontcolor="white", fontsize="5"),
+        edge = list(arrowhead = "diamond"))
+      nodeAttrs = list(fontsize = rep(3, length(nodes(gr))))
+      names(nodeAttrs$fontsize) = nodes(gr)
+
+      x = layoutGraph(gr, nodeAttrs = nodeAttrs)
+      renderGraph(x)
+      #plot(gr, attrs = attrs, nodeAttrs = nodeAttrs)
+      pts = fldev$getPoints()
+      nd = pts[[4]][["node"]]
+      nd$addEventListener("click", function(e) showHideModel(1))
+      nd = pts[[5]][["node"]]
+      nd$addEventListener("click", function(e) showHideModel(2))
+     nd = pts[[7]][["node"]]
+      nd$addEventListener("click", function(e) showDiagnostics(1))
+      nd = pts[[8]][["node"]]
+      nd$addEventListener("click", function(e) showDiagnostics(2))
+     nd = pts[[9]][["node"]]
+      nd$addEventListener("click", function(e) showDiagnostics(3))
+   
     </script>
     <script type="text/javascript">
       function selectVars(evt)
@@ -126,7 +175,17 @@
       <input type="radio" name="method" value="3"onclick="R.showHideModel( this.value);" />
       <label for="3">Both Methods </label>
       <br />
+    <br />
+    Or the diagnostic plot to display
+      <input type="radio" name="plot" value="1" onclick="R.showDiagnostics( this.value);" />
+      <label for="1">Fitted vs True</label>
+      <input type="radio" name="plot" value="2" onclick="R.showDiagnostics( this.value);" />
+      <label for="2">Fitted vs Residual</label>
+      <input type="radio" name="plot" value="3"onclick="R.showDiagnostics( this.value);" />
+      <label for="3">Residual QQ-Plot </label>
+
     <div>
+      
       
       <div id="linregcontainer" style="float:left" class="container">
 	
@@ -145,7 +204,39 @@
       </div>
     </div>
     
-
+    <div id="floatdiv" style="  
+        position:absolute;  
+        width:200px;height:200px;top:10px;right:10px;  
+        padding:16px;background:#FFFFFF;  
+        border:2px solid #2266AA;  
+        z-index:100">  
+      <div id="floatcanvas"></div>
+    </div>  
+      
+    <script type="text/javascript">  
+        floatingMenu.add('floatdiv',  
+            {  
+                // Represents distance from left or right browser window  
+                // border depending upon property used. Only one should be  
+                // specified.  
+                // targetLeft: 0,  
+                targetRight: 10,  
+      
+                // Represents distance from top or bottom browser window  
+                // border depending upon property used. Only one should be  
+                // specified.  
+                targetTop: 10,  
+                // targetBottom: 0,  
+      
+                // Uncomment one of those if you need centering on  
+                // X- or Y- axis.  
+                // centerX: true,  
+                // centerY: true,  
+      
+                // Remove this one if you don't want snap effect  
+                snap: true  
+            });  
+    </script>  
     <embed type="application/test-r" width="0" height="0"></embed>
   </body>
 </html>

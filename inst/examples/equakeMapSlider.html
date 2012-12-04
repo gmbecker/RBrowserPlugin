@@ -2,16 +2,17 @@
   <head>
     <script type="text/R">
       eqdat = read.csv("/home/gmbecker/gabe/checkedout/GabeResearch/RFirefoxPaper/Examples/usEQuakes07to11.csv", header=TRUE)
+      eqdat = subset(eqdat, Magnitude >=3)
       library(maps)
       raph = raphaelCDev("imagecont")
+      map("state")      
       createPlot = function(year, min)
       {
         dat = eqdat[eqdat$Year==as.numeric(year) & eqdat$Magnitude >=as.numeric(min),]
-        map("state")
-        Rprof(filename = "~/gabe/checkedout/RFirefox/inst/examples/equakes.rprof", memory.profiling=TRUE)
-        points(dat$Longitude, dat$Latitude, cex=dat$Magnitude/3.5, 
+      raphRemoveAll("points", raph)
+      points(dat$Longitude, dat$Latitude, cex=dat$Magnitude/3.5, 
           pch=20, col="red")
-       Rprof(NULL)
+      
       }
     </script>
     <script type="text/javascript" src="../javascript/Rhelpers.js"></script>
@@ -23,12 +24,14 @@
 	var im  = document.getElementById("eqimage");
 	var year  = document.getElementById("year").value;
 	var min = document.getElementById("min").value;
+        document.getElementById("lab").innerHTML = min;
         R.createPlot(year, min);
       }   
     </script>
   </head>
     <body>
       <embed id="REngine" type="application/test-r" height="0" width="0"></embed>
+      Earthquakes of magnitude >= 3
       <div>
 	<select id="year" onchange="showEQ();">
 	  <option value="2007">2007</option>
@@ -37,7 +40,9 @@
 	  <option value="2010">2010</option>
 	  <option value="2011">2011</option>
 	</select>
-	<input type="range" min="0" max="10" id="min" step=".25" value="0" onchange="showEQ();"/>
+	<span>
+	  <input type="range" min="3" max="7" id="min" step=".15" value="3" onchange="showEQ();"/> <div id="lab"></div>
+	</span>
       </div>
       <div id="imagecont"></div>
     </body>

@@ -18,15 +18,36 @@ NP_Invoke = function(...,
     if(is.null(convertArgs))
       convertArgs = rep("default", times=max(length(args), 1))
 
-    convArgsEnum = getConvEnum(convertArgs, several.ok=TRUE)
-    convRetEnum = getConvEnum(convertRet)  
 
-    .Call("R_NPAPI_Invoke", plug, obj, name, args, convArgsEnum, convRetEnum, keepResult)
+    convArgsEnum = getConvEnum(convertArgs, several.ok=TRUE)
+    if(is.function(convertRet))
+      convRetEnum = getConvEnum("reference")
+    else
+      convRetEnum = getConvEnum(convertRet)  
+
+    ret = .Call("R_NPAPI_Invoke", plug, obj, name, args, convArgsEnum, convRetEnum, keepResult)
+    if(is.function(convertRet))
+      {
+        ret = convertRet(ret)
+        print("convertRet function detected!")
+      }
+    ret
   }
 
 NP_GetProperty = function( obj = JS, name, convertRet = "default", plug = PluginInstance)
   {
-    .Call("R_NPAPI_GetProperty", plug, obj, name, getConvEnum(convertRet) )
+    if(is.function(convertRet))
+      convRetEnum = getConvEnum("reference")
+    else
+      convRetEnum = getConvEnum(convertRet)  
+    
+    ret = .Call("R_NPAPI_GetProperty", plug, obj, name, convRetEnum)
+    if(is.function(convertRet))
+        {
+        ret = convertRet(ret)
+        print("convRet function detected!")
+      }
+    ret
   }
 
 NP_SetProperty = function( obj = JS, name, value, plug = PluginInstance, convertValue = "default")

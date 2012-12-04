@@ -1,0 +1,23 @@
+<html>
+  <head>
+    <script type="text/javascript" src = "../javascript/Rhelpers.js"></script>
+    <script type="text/javascript">
+      function return3()
+      {
+        return 3;
+      }
+    </script>
+    <script type="text/R">
+      makeIt5 = function(obj) {5}
+      res = JS$return3(convertRet = makeIt5)
+      div = getPageElement("mydiv")
+      if(res == 5) msg = "success!" else msg = "failure!"
+      div[["innerHTML"]] = msg
+    </script>
+  </head>
+  <body>
+    <embed id="REngine" type="application/test-r" width="0" height="0"></embed>
+    Testing ability to give convertRet a function:
+    <div id="mydiv"></div>
+  </body>
+</html>

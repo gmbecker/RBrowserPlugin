@@ -138,33 +138,45 @@ displayModel = function(e = storage)
       {
         
         e$gamFit = gam(e$gamFormula, data=e$data)
-        print(summary(e$gamFit))
+        
         
         #e$gamtable[["innerHTML"]] = paste(glmSummaryToHTML(e$gamFit), collapse="\n")
         gamtable[["innerHTML"]] = paste(glmSummaryToHTML(e$gamFit), collapse="\n")
       }
 
-    showDiagnostics()
+    showDiagnostics(e$curPlot)
   }
 
-showDiagnostics = function(e = storage)
+showDiagnostics = function(plotval = 1, e = storage)
 {
   print("in showDiagnostics")
+    
   if(e$currentShow %in% c(1, 3))
     {
-      print(paste("lindevnum:", e$linDev$devnum))
       dev.set(e$linDev$devnum)
-      plot(e$linFit$fitted, e$data[["mpg"]])
+      #plot(e$linFit$fitted, e$data[["mpg"]], ylab = "mpg", xlab="fitted")
+      doplot(plotval, e$linFit, e$data[["mpg"]])
     }
   if(e$currentShow %in% c(2, 3))
     {
       dev.set(e$gamDev$devnum)
-      plot(e$gamFit$fitted, e$data[["mpg"]])
+      #plot(e$gamFit$fitted, e$data[["mpg"]], ylab="mpg", xlab="fitted")
+      doplot(plotval, e$gamFit, e$data[["mpg"]])
     }
-     
+  e$curPlot = plotval
 TRUE
 }
 
+doplot = function(type, fit, resp)
+  {
+    switch(as.numeric(type),
+           plot(fit$fitted, resp, xlab="fitted", ylab="mpg"),
+           plot(fit$fitted, fit$residuals, xlab="fitted", ylab="residuals"),
+           qqnorm(fit$residuals)
+           )
+  }
+      
+    
 
 
 storage$linTerms = names(mtcars)[-1]
@@ -186,6 +198,6 @@ storage$currentShow = 1
 storage$data = mtcars
 storage$linDev = raphaelCDev("linregplot")
 storage$gamDev = raphaelCDev("gamplot")
-
+storage$curPlot = 1
 setVars(1:10)
 showHideModel(1)
