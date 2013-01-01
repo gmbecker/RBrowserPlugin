@@ -12,37 +12,6 @@
 using namespace std;
 
 
-void C_doTest(NPP inst, NPNetscapeFuncs *funcs)
-{
-
- NPObject *domwin = NULL;
-  NPError res;
-  res = funcs->getvalue(inst, NPNVWindowNPObject , &domwin);
-  fprintf(stderr, "\nIn doTest. res: %d", res); fflush(stderr);
-  NPVariant *vartmp = (NPVariant *) funcs->memalloc(sizeof(NPVariant));;
-  NPVariant *ret = (NPVariant *) funcs->memalloc(sizeof(NPVariant));;
-  char *buf = (char *) funcs->memalloc(4*sizeof(char));;
-  sprintf(buf, "div5");
-  STRINGZ_TO_NPVARIANT((const char *) buf, *vartmp);
-
-  NPVariant *vartmp2 = (NPVariant *) funcs->memalloc(sizeof(NPVariant));;
-  
-  char *buf2 = (char *) funcs->memalloc(8*sizeof(char));;
-  sprintf(buf2, "Success!");
-  STRINGZ_TO_NPVARIANT((const char *) buf2, *vartmp2);
-  
-  bool set;
-  res = funcs->invoke(inst, domwin, funcs->getstringidentifier("getElementById"), vartmp, 1, ret);
-  fprintf(stderr, "\nIn doTest. res: %d", res); fflush(stderr);
-  set = funcs->setproperty(inst, ret->value.objectValue, funcs->getstringidentifier("innerHTML"), vartmp2);
-  fprintf(stderr, "\nIn doTest. set: %d", set); fflush(stderr);
-  funcs->releaseobject(domwin);
-  funcs->releasevariantvalue(vartmp);
-  funcs->releasevariantvalue(vartmp2);
-  funcs->releasevariantvalue(ret);
-}
-
-
 SEXP doGetVar(NPIdentifier name, NPP inst)
 {
 NPUTF8 *varName = (NPUTF8 *) myNPNFuncs->utf8fromidentifier(name);
@@ -139,7 +108,7 @@ bool WebREngine::HasMethod(NPIdentifier name)
     ret = 1;
   else if (name == myNPNFuncs->getstringidentifier("listCall"))
     ret = 1;
-  else if (name == myNPNFuncs->getstringidentifier("C_doTest"))
+  else if (name == myNPNFuncs->getstringidentifier("namedArgsCall"))
     ret = 1;
   else if (name == myNPNFuncs->getstringidentifier("getRef"))
     ret = 1;
@@ -178,6 +147,22 @@ bool WebREngine::Invoke(NPIdentifier name, const NPVariant *args, uint32_t argCo
 	SETCAR(CDR(call), Rargs[0]);
 	PROTECT(ans = rQueue.requestRCall(call, R_GlobalEnv, &error, this->instance));
 	addProt = 2;
+      }
+    else if (name == myNPNFuncs->getstringidentifier("namedArgsCall"))
+      {
+	NPString str = NPVARIANT_TO_STRING(args[0]);
+	NPUTF8 *tmpchr = (NPUTF8 *) malloc((str.UTF8Length +1)*sizeof(NPUTF8));
+	memcpy(tmpchr,str.UTF8Characters,  str.UTF8Length);
+	tmpchr[str.UTF8Length] = '\0';
+	const char *strval = (const char *) tmpchr;	
+	SEXP fun;
+	PROTECT(fun = innerGetVar(strval, this->instance));
+	free(tmpchr);
+	//We used the first argument to identify the function, the only remaining argument is the object with the named argument values in it.
+	bool res = doNamedCall(this->instance, fun, &args[1], 1, result, myNPNFuncs) ;
+	UNPROTECT(argCount + 1);
+	//We need to skip the conversion code below, because doNamedCall takes care of the conversion stuff. This is hacky :(
+	return res;
       }
     else if (name == myNPNFuncs->getstringidentifier("listCall"))
       {
@@ -238,7 +223,7 @@ bool WebREngine::Invoke(NPIdentifier name, const NPVariant *args, uint32_t argCo
   else
     {
       fprintf(stderr, "\n Error: R function call failed.");fflush(stderr);
-    ConvertRToNP(R_NilValue, this->instance, myNPNFuncs, result, CONV_DEFAULT);
+      ConvertRToNP(R_NilValue, this->instance, myNPNFuncs, result, CONV_DEFAULT);
     }
   UNPROTECT(argCount + addProt);
   return !error;
@@ -406,3 +391,11 @@ NPClass WebREngine::_npclass = {
   WebREngine::_Construct                                      
 };
 
+
+void getWindowVariant(NPP inst, NPVariant *win)
+{
+  NPObject *domwin = NULL;
+  NPError res;
+  res = myNPNFuncs->getvalue(inst, NPNVWindowNPObject , &domwin);
+  OBJECT_TO_NPVARIANT(domwin, *win);
+}

@@ -339,10 +339,16 @@ bool doNamedCall(NPP inst, SEXP fun, const NPVariant *argsIn, uint32_t count, NP
   bool success = funcs->enumerate(inst, obj, &ids, &idcount);
   SEXP call, ans, ptr, tmp;
   NPVariant curprop;
+  NPVariant *convFun = (NPVariant *) funcs->memalloc(sizeof(NPVariant)) ;
   convert_t conv= CONV_DEFAULT;
-  int len = 1 + idcount -1;
+  int len = 1 + idcount;
+
+  if(funcs->hasproperty(inst, obj, funcs->getstringidentifier("namedArgsForR")))
+    len = len -1; //the namedArgsForR property isn't going to be used as an argument in the function call
   if(funcs->hasproperty(inst, obj, funcs->getstringidentifier("convertRet")))
     len = len -1; //the convertRet property isn't going to be used as an argument in the function call
+  if(funcs->hasproperty(inst, obj, funcs->getstringidentifier("convertFun")))
+    len = len -1; //the convertFun property isn't going to be used as an argument in the function call
   PROTECT(ptr = call = allocVector(LANGSXP, len));
   SETCAR(ptr, fun);
   PROTECT(tmp = R_NilValue);
@@ -358,6 +364,12 @@ bool doNamedCall(NPP inst, SEXP fun, const NPVariant *argsIn, uint32_t count, NP
 	    conv = (convert_t) curprop.value.intValue;
 	  else
 	    conv = (convert_t) curprop.value.doubleValue;
+	}
+     else if (ids[i] == funcs->getstringidentifier("convertFun"))
+	{
+	  *convFun = curprop;
+	  //	  conv = CONV_REF;
+
 	}
       else if(curprop.type == NPVariantType_Object && !funcs->hasproperty(inst, curprop.value.objectValue, funcs->getstringidentifier("emptyRArg")))
 	{
@@ -381,8 +393,17 @@ bool doNamedCall(NPP inst, SEXP fun, const NPVariant *argsIn, uint32_t count, NP
   Rf_PrintValue(call);
   int err = 0;
   PROTECT(ans = rQueue.requestRCall(call, R_GlobalEnv, &err, inst));
+  //NPVariant *tmpres = 
+  
   ConvertRToNP(ans, inst, funcs, _res, conv);
-  // myNPNFuncs->memfree(*ids);
+  //ConvertRToNP(ans, inst, funcs, tmpres, conv);
+  //call custom conversion method if available
+  if(conv == 3)
+    {
+      funcs->invokeDefault(inst, convFun->value.objectValue, _res, 1, _res);
+    }
   funcs->memfree(ids);
+  funcs->releasevariantvalue(convFun);
+  
   return !err;
 }

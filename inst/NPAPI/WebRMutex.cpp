@@ -215,12 +215,15 @@ void makeRGlobals(NPP inst)
   
   SET_SLOT(ans, Rf_install("ref"), ptr);
   Rf_defineVar(Rf_install("PluginInstance"), ans, R_GlobalEnv);
-
+  /*
   NPObject *domwin = NULL;
   NPError res;
   res = myNPNFuncs->getvalue(inst, NPNVWindowNPObject , &domwin);
   NPVariant *winvar =  (NPVariant *) myNPNFuncs->memalloc(sizeof(NPVariant));
   OBJECT_TO_NPVARIANT(domwin, *winvar);
+  */
+  NPVariant *winvar =  (NPVariant *) myNPNFuncs->memalloc(sizeof(NPVariant));
+  getWindowVariant(inst, winvar);
   PROTECT( klass3 = MAKE_CLASS( "NPVariantRef" ) );
   PROTECT( ans3 = NEW( klass3 ) );
   PROTECT( ptr3 = R_MakeExternalPtr( winvar,
@@ -239,3 +242,4 @@ void RCallQueue::init()
   
 
 }
+

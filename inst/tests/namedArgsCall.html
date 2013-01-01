@@ -18,7 +18,9 @@
 <script type="text/javascript">
   function dotest()
 {
-  R.myfun(args({b: "success!", c:"success!"}))
+  //R.myfun(args({b: "success!", c:"success!"}));
+  R.namedArgsCall("myfun",{b: "success!", c:"success!"});
+  
   var pi1 = R.addpi( args( {a: 10} ) );
   var pi2 = R.addpi( args( {a: 10, convertRet: 'reference'} ) );
   document.getElementById("divout3").innerHTML = "R.addpi( args( {a: 10} ) ): " + pi1;

@@ -126,6 +126,11 @@ function doAttach()
 
 }
 
+function namedArgsCall(name, argvals)
+{
+    R[name](args(argvals));
+}
+
 function makeFun(obj)
 {
     //    var Reng;
@@ -156,8 +161,10 @@ function args(obj)
 	obj.convertRet = 1; //default
     else if (obj.convertRet == "reference" || obj.convertRet == 0)
 	obj.convertRet = 0; //force reference
-    else if (obj.convertRet == "copy" || object.convertRet == 2)
+    else if (obj.convertRet == "copy" || obj.convertRet == 2)
 	obj.convertRet = 2; //force copy
+    else if ((obj.convertRet == "custom" || obj.convertRet ==  3) && obj.convertFun != "undefined")
+	obj.convertRet = 3;
     else
 	throw "Unrecognized value for convertRet argument:" + obj.convertRet;
     return obj;

@@ -37,6 +37,8 @@
      doChange = function()
       {
        doSpline()
+       lab = JS[["document"]]$getElementById("curband")
+       lab[["innerHTML"]] = paste("Equivalent Degrees of Freedom: ", JS[["document"]]$getElementById("myslider")[["value"]])
       } 
      doSpline = function()
       {
@@ -81,6 +83,9 @@
     <div id="mainplot" style="float:left;"/>
     <div id="resplot" style="float:right;"/>
 </div>   
- <input type="range" min="2" max="24" id="myslider" onchange = "R.doChange();" size="500"/>
+<br/>
+
+<span id="curband"></span></br>
+  <input type="range" min="2" max="24" id="myslider" onchange = "R.doChange();" size="500"/>
   </body>
 </html>

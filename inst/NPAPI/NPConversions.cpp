@@ -20,7 +20,7 @@ bool ConvertRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret, co
       MakeCopyRToNP(val, inst, funcs, ret);
       return true;
     }
-  if(convRes == CONV_REF)
+  if(convRes == CONV_REF || convRes == CONV_CUSTOM)
     {
       MakeRRefForNP(val, inst, funcs, ret);
       return true;

@@ -69,7 +69,8 @@
 typedef enum convert_behavior {
   CONV_REF = 0,
   CONV_DEFAULT,
-  CONV_COPY
+  CONV_COPY,
+  CONV_CUSTOM
 } convert_t;
 
 
@@ -193,6 +194,7 @@ SEXP CopyNPObjForR(NPVariant *ref, NPP inst, NPNetscapeFuncs *funcs);
 bool RObject_GetProp( RObject *obj, NPIdentifier name, NPNetscapeFuncs *funcs, NPVariant *result, bool check);
 bool IsMissing(SEXP obj, bool nullAlso);
 bool CheckSEXPForJSRef(SEXP obj, NPP inst);
+void getWindowVariant(NPP inst, NPVariant *win);
 void makeRGlobals(NPP inst);
 bool checkForRefClass(SEXP obj);
 
