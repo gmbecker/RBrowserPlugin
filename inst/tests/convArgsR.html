@@ -1,0 +1,38 @@
+<html>
+  <head>
+    <script type="text/javascript" src = "../javascript/Rhelpers.js"></script>
+<script type="text/javascript" src="../javascript/raphael.js"> </script>
+<script type="text/R">
+  dotest = function()
+  {
+  convArgs = list("copy", "ref", JS$take2nd)
+    JS$testfun(1:5, "hi", 1:5, convertArgs = convArgs)
+  
+  }
+</script>
+  <script type="text/javascript">
+    function take2nd(robj)
+    {
+      return robj[1];
+    }
+    function testfun(a, b, c)
+    {
+      document.getElementById("divout").innerHTML = "Copied Arg from R: " + a;
+    document.getElementById("divout2").innerHTML = "Referenced Arg from R: " + b;
+    document.getElementById("divout3").innerHTML = "Custom converted Arg from R: " + c;
+    
+    }
+ 
+</script>
+</head>
+<body>
+    <embed id="REngine" type="application/test-r" width="0" height="0"></embed>
+
+<br/>
+<input type="button"  onclick="R.dotest();"/><br/>
+<div id="divout"></div>
+<div id="divout2"></div>
+<div id="divout3"></div>
+
+</body>
+</html>

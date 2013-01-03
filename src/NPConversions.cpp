@@ -359,68 +359,8 @@ bool RVectorToNP(SEXP vec, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret)
   return true;
   
 }
-/*
 
-
-bool RVectorToNP(SEXP vec, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret)
-{
-  int len = LENGTH(vec);
-  fprintf(stderr, "\n R vector or list of length: %d detected", len); fflush(stderr);
-  
-  NPObject *domwin = NULL;
-  NPVariant *vartmp2 = (NPVariant *) funcs->memalloc(sizeof(NPVariant));
-  NPVariant *vartmp3 = (NPVariant *) funcs->memalloc(sizeof(NPVariant));
-  //NPVariant vartmp2;
-
-  NPError res;
-    
-  res = funcs->getvalue(inst, NPNVWindowNPObject , &domwin);
- 
-  NPIdentifier arrid = funcs->getstringidentifier("Array");
-  funcs->retainobject(domwin);
-   
-  funcs->invoke(inst, domwin, arrid, NULL, 0, ret);
-  //fprintf(stderr, "\nJS array object created.");fflush(stderr);
-  SEXP el;
-  PROTECT(el = R_NilValue);
-  for (int i = 0; i< len; i++)
-    {
-      switch(TYPEOF(vec))
-	{
-	case REALSXP:
-	  vartmp2->type=NPVariantType_Double;
-	  vartmp2->value.doubleValue = REAL(vec)[i];
-	  break;
-	case INTSXP:
-	  vartmp2->type=NPVariantType_Int32;
-	  vartmp2->value.intValue = INTEGER(vec)[i];
-	  break;
-	case LGLSXP:
-	  vartmp2->type=NPVariantType_Int32;
-	  vartmp2->value.intValue = LOGICAL(vec)[i];
-	  break;
-	case VECSXP:
-	  ConvertRToNP(VECTOR_ELT(vec, i), inst, funcs, vartmp2, CONV_DEFAULT);
-	  break;
-	case STRSXP:
-	  ConvertRToNP(STRING_ELT(vec, i), inst, funcs, vartmp2, CONV_DEFAULT);
-	  break;
-	}
-
-      funcs->invoke(inst, ret->value.objectValue, funcs->getstringidentifier("push"), vartmp2, 1, vartmp3);
-    }
-  fprintf(stderr, "\nConversion loop complete.");fflush(stderr);
-
-  funcs->releaseobject(domwin);
-  
-  funcs->releasevariantvalue(vartmp3);
-  funcs->releasevariantvalue(vartmp2);
-  return true;
-  
-}
-*/
 extern "C"{
-
 bool ConvertNPToR(NPVariant *var, NPP inst, NPNetscapeFuncs *funcs, convert_t convRet,  SEXP *_ret) 
 //Returns a bool indicating whether the variant passed in is safe to free (ie if we did NOT create new references to it within R)
 {

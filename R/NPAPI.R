@@ -20,16 +20,23 @@ NP_Invoke = function(...,
 
 
     convArgsEnum = getConvEnum(convertArgs, several.ok=TRUE)
+    convArgsFuns = mapply(function(enum, obj)
+      {
+        if(enum == 3)
+          getJSMethodObj(obj)
+        else
+          NA
+      }, convArgsEnum, convertArgs)
     if(is.function(convertRet))
-      convRetEnum = getConvEnum("reference")
+      convRetEnum = getConvEnum("custom")
     else
       convRetEnum = getConvEnum(convertRet)  
 
-    ret = .Call("R_NPAPI_Invoke", plug, obj, name, args, convArgsEnum, convRetEnum, keepResult)
+    ret = .Call("R_NPAPI_Invoke", plug, obj, name, args, convArgsEnum, convArgsFuns, convRetEnum, keepResult)
     if(is.function(convertRet))
       {
-        ret = convertRet(ret)
         print("convertRet function detected!")
+        ret = convertRet(ret)
       }
     ret
   }
@@ -80,23 +87,57 @@ NP_GetGlobal = function(plug = PluginInstance)
   }
 
 
-getConvEnum = function(x, several.ok = FALSE)
+getConvEnumOld = function(x, several.ok = FALSE)
   {
+    
+
     if(!length(x)||!is.character(x))
       {
         x = "default"
       }
-    x = match.arg(x, c("default", "reference", "copy"), several.ok = several.ok)
+
+    x = match.arg(x, c("default", "reference", "copy", "custom"), several.ok = several.ok)
     sapply(x, function(y)
            {
-             if(y == "reference")
+             if (y == "default")
                0L
-             else if (y == "default")
+             else if(y == "reference")
                1L
              else if (y == "copy")
                2L
+             else if (y == "custom")
+               3L
              else
-               stop("invalid value for convertArgs")
+               stop("invalid value for convertArgs")               
            })
   }
 
+getConvEnum = function(x, several.ok = FALSE)
+  {
+    if(!length(x))
+      x = "default"
+    if(is.character(x))
+      {
+        x = match.arg(x, c("default", "reference", "copy", "custom"), several.ok = several.ok)
+        sapply(x, function(i) switch(i, default=0L, reference=1L, copy=2L, custom=3L))
+      }
+    else
+      {
+        sapply(x, function(y)
+               {
+                 if(is.character(y))
+                   {
+                     y = match.arg(y, c("default", "reference", "copy", "custom"), several.ok = FALSE)
+                   }
+                 else if (is.function(y))
+                   y = "custom"
+                 else
+                   stop("invalid value for convertArgs")
+                 switch(y, default=0L, reference=1L, copy=2L, custom=3L)
+               })
+      }
+  }
+      
+
+    
+    

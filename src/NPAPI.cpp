@@ -10,8 +10,7 @@ bool C_doTest(NPP inst, NPNetscapeFuncs *funcs);
 extern "C" {
   SEXP R_doTest(SEXP plug);
   //success = funcs->invoke(inst, domwin, arrid, NULL, 0, vartmp2);
-  SEXP R_NPAPI_Invoke(SEXP plug, SEXP Robj, SEXP Rname, SEXP Rargs, SEXP RconvArgs, SEXP RconvRet, SEXP RkeepRes );
-
+  SEXP R_NPAPI_Invoke(SEXP plug, SEXP Robj, SEXP Rname, SEXP Rargs, SEXP RconvArgsEnum, SEXP RconvArgsFuns, SEXP RconvRet, SEXP RkeepRes );
   SEXP R_doRefClassTest();
   SEXP R_NP_GetGlobal(SEXP Rplug);
   SEXP R_NPAPI_GetProperty(SEXP plug, SEXP Robj, SEXP Rname, SEXP RconvRet);
@@ -30,7 +29,7 @@ SEXP R_doRefClasWsTest()
   return ans;
 }
 
-SEXP R_NPAPI_Invoke(SEXP plug, SEXP Robj, SEXP Rname, SEXP Rargs, SEXP RconvArgs, SEXP RconvRet, SEXP RkeepRes )
+SEXP R_NPAPI_Invoke(SEXP plug, SEXP Robj, SEXP Rname, SEXP Rargs, SEXP RconvArgsEnum, SEXP RconvArgsFuns, SEXP RconvRet, SEXP RkeepRes )
 {
  
   NPP inst = (NPP) R_ExternalPtrAddr(GET_SLOT( plug , Rf_install( "ref" ) ) );
@@ -44,15 +43,23 @@ SEXP R_NPAPI_Invoke(SEXP plug, SEXP Robj, SEXP Rname, SEXP Rargs, SEXP RconvArgs
       Rf_error("Robj is not an NPVariant containing an NPObject.");
       return R_NilValue;
     }
+  //custom conversion functions are applied on R side for return value.
   convert_t convRet = (convert_t) INTEGER(RconvRet)[0];
-  
+  convert_t curConvArg;
  
   int nargs = LENGTH(Rargs);
   NPVariant *args = (NPVariant *) funcs->memalloc(nargs*sizeof(NPVariant));
   
   for(int i = 0; i < nargs; i++)
     {
-      ConvertRToNP(VECTOR_ELT(Rargs, i), inst, funcs, &(args[i]), (convert_t) INTEGER(RconvArgs)[i]);
+      curConvArg = (convert_t) INTEGER(RconvArgsEnum)[i];
+      ConvertRToNP(VECTOR_ELT(Rargs, i), inst, funcs, &(args[i]), curConvArg);
+      //If we have a custom converter we invoke it with here
+      if(curConvArg == CONV_CUSTOM)
+	{
+	  fprintf(stderr, "Custom argument converter detected. Attempting to call JS Conversion function.");fflush(stderr);
+	  funcs->invokeDefault(inst, ((NPVariant *) R_ExternalPtrAddr(GET_SLOT( VECTOR_ELT(RconvArgsFuns, i), Rf_install( "ref" ) ) ) ) -> value.objectValue, &args[i], 1, &args[i]) ;
+	}
     }
 
   NPVariant *ret = (NPVariant *) funcs->memalloc(sizeof(NPVariant)); 

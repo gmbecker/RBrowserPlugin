@@ -173,6 +173,7 @@ setMethod("$", "NPVariantRef",
 
                 callJavaScript(object = x,name =  name, ... , multipleArgs = multipleArgs, keepResult = keepResult, convertRet = convertRet, convertArgs = convertArgs)
               }
+            attr(fun, "NPRef") <- x[[name]]
             fun
           }
           )

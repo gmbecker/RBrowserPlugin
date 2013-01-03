@@ -67,8 +67,8 @@
 #endif
 
 typedef enum convert_behavior {
-  CONV_REF = 0,
-  CONV_DEFAULT,
+  CONV_DEFAULT = 0,
+  CONV_REF,
   CONV_COPY,
   CONV_CUSTOM
 } convert_t;

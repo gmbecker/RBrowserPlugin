@@ -35,3 +35,16 @@ checkForFieldorMethod = function(obj, name)
 
     return(checkForField(obj, name) || checkForMethod(obj, name))
   }
+
+getJSMethodObj = function(obj)
+  {
+    ret= NULL
+    if(is(obj, "function"))
+      ret = attr(obj, "NPRef")
+    
+    else if(is(obj, "NPVariantRef"))
+      ret = obj
+    else
+      stop("Unable to find a NPVariantRef associated with obj")
+    ret
+  }
