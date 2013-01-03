@@ -1,0 +1,47 @@
+<html>
+  <head>
+    <script type="text/javascript" src = "../javascript/Rhelpers.js"></script>
+<script type="text/javascript" src="../javascript/raphael.js"> </script>
+<script type="text/R">
+  use5 = function(ref)
+  {
+    5
+  }
+
+  dumbfun = function(obj) obj
+</script>
+  <script type="text/javascript">
+       
+    function dotest()
+    {
+    var x = 6;
+    var x2 = {lalal:6};
+    x._convert = R.use5;
+    x2._convert = R.use5;
+    ret = R.dumbfun(x2);
+    ret2 = R.dumbfun(x);
+    
+    if(ret == 5)
+    document.getElementById("divout").innerHTML = "success!";
+    else 
+    document.getElementById("divout").innerHTML = "conversion failed";
+    if(ret2 == 5)
+    document.getElementById("divout2").innerHTML = "success!";
+    else 
+    document.getElementById("divout2").innerHTML = "conversion failed";
+
+    }
+</script>
+</head>
+<body>
+    <embed id="REngine" type="application/test-r" width="0" height="0"></embed>
+Due to how JavaScript values are passed to the plugin, it seems impossible for my code to detect the _convert property on core types (Number, Integer, String, Boolean). In practice this seems ok since these are scalar values so passing them by reference would be somewhat silly and a custom converter seems like overkill.
+<br/>
+<input type="button"  onclick="dotest();"/><br/>
+Object with _convert property:
+<div id="divout"></div>
+Number with _convert property:
+<div id="divout2"></div>
+
+</body>
+</html>

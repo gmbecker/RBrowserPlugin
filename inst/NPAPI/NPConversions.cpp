@@ -375,14 +375,41 @@ bool ConvertNPToR(NPVariant *var, NPP inst, NPNetscapeFuncs *funcs, convert_t co
 //Returns a bool indicating whether the variant passed in is safe to free (ie if we did NOT create new references to it within R)
 {
   int canfree = 1;
-  
+  if (NPVARIANT_IS_OBJECT(*var) && funcs->hasproperty(inst, var->value.objectValue, funcs->getstringidentifier("_convert")))
+    {
+      fprintf(stderr, "Javascript argument conversion specified via _convert property.\n");fflush(stderr);
+      convRet = GetConvertBehavior(var, inst, funcs);
+    }
   if(convRet == CONV_REF)
     {
       *_ret = MakeNPRefForR(var);
       canfree = 0;
-    }
-  else
-    {
+    } else if (convRet == CONV_CUSTOM) {
+      *_ret = MakeNPRefForR(var);
+      NPVariant convFun;
+      funcs->getproperty(inst, var->value.objectValue, funcs->getstringidentifier("_convert"), &convFun);
+      canfree = 0;
+      NPVariant isRFun;
+      bool tmp = funcs->getproperty(inst, convFun.value.objectValue, funcs->getstringidentifier("isRObject"), &isRFun);
+      if(tmp && NPVARIANT_IS_BOOLEAN(isRFun) && isRFun.value.boolValue)
+	{
+	  SEXP call, p, fun ;
+	  int wasError;
+	  PROTECT(call = allocVector(LANGSXP, 2));
+	  PROTECT(p = call);
+	  PROTECT(fun = (SEXP) ((RObject *) convFun.value.objectValue)->object);
+	  SETCAR(p, fun);
+	  p = CDR(p);
+	  SETCAR(p, *_ret);
+	  *_ret = rQueue.requestRCall(call, R_GlobalEnv, &wasError, inst);
+	  UNPROTECT(3);
+	 }
+      else
+	{
+	  fprintf(stderr, "Invalid custom JavaScript argument converter specified. Custom converters must be RFunction objects");fflush(stderr);
+	  
+	}  
+  } else {
       switch(var->type)
 	{
 	case NPVariantType_Void:
@@ -418,52 +445,49 @@ bool ConvertNPToR(NPVariant *var, NPP inst, NPNetscapeFuncs *funcs, convert_t co
 	    NPObject *inObject = var->value.objectValue;
 	    NPVariant npvLength;
 	    
-	    //XXX Taking a shortcut here, assuming only arrays have a pop method. A better while performant way to check this would be good...
-	    if (funcs->hasmethod(inst, inObject, funcs->getstringidentifier("pop")))
+	    //check if it is an R object.
+	    NPVariant isRObject;
+	    bool tmp = funcs->getproperty(inst, inObject, funcs->getstringidentifier("isRObject"), &isRObject);
+	    if(tmp && NPVARIANT_IS_BOOLEAN(isRObject) && isRObject.value.boolValue)
 	      {
-		
+		fprintf(stderr, "\nRObject (or subclass) detected. Extracting original SEXP\n");fflush(stderr);
+		*_ret = ((RObject *) inObject)->object;
+		canfree = 1;
+	      } else if (funcs->hasmethod(inst, inObject, funcs->getstringidentifier("pop")) && convRet == CONV_COPY)
+	      {
+	//XXX Taking a shortcut here, assuming only arrays have a pop method. A better while performant way to check this would be good...	
 		funcs->getproperty(inst, inObject, funcs->getstringidentifier("length"), &npvLength);
 		//int len = npvLength.value.intValue;
 		int len = (int) npvLength.value.doubleValue;
-		fprintf(stderr, "\nNPArray of length %d detected. Converting to R list/vector", len);fflush(stderr);
+		fprintf(stderr, "\nNPArray of length %d detected. Copying to R list/vector", len);fflush(stderr);
 		canfree = NPArrayToR(var, len, 0, inst, funcs, _ret);
 	      }
 	    else
 	      {
-		//check if it is an R object.
-		NPVariant isRObject;
-		bool tmp = funcs->getproperty(inst, inObject, funcs->getstringidentifier("isRObject"), &isRObject);
-		if(tmp && NPVARIANT_IS_BOOLEAN(isRObject) && isRObject.value.boolValue)
+		tmp = funcs->getproperty(inst, inObject, funcs->getstringidentifier("__CopiedFromR__"), &isRObject);
+		if(convRet == CONV_COPY || (tmp && NPVARIANT_IS_BOOLEAN(isRObject) && isRObject.value.boolValue))
 		  {
-		    fprintf(stderr, "\nRObject detected. Extracting original SEXP\n");fflush(stderr);
-		    *_ret = ((RObject *) inObject)->object;
+		    //CONV_COPY - force (shallow) copy. Deep copy would drag over the entire JS scope because of parent/child properties
+		    *_ret = CopyNPObjForR(var, inst, myNPNFuncs);
 		    canfree = 1;
-		  } else
-		  {							   
-		    tmp = funcs->getproperty(inst, inObject, funcs->getstringidentifier("__CopiedFromR__"), &isRObject);
-		    if(convRet == CONV_COPY || (tmp && NPVARIANT_IS_BOOLEAN(isRObject) && isRObject.value.boolValue))
-		      {
-			//CONV_COPY - force (shallow) copy. Deep copy would drag over the entire JS scope because of parent/child properties
-		      *_ret = CopyNPObjForR(var, inst, myNPNFuncs);
-		      canfree = 1;
-		      }
-		    else
-		      //CONV_DEFAULT and object is not a copy of an R object (eg associative array created when copying named vector)
-		      {
-			//No specific conversion found so we return a reference
-			*_ret = MakeNPRefForR(var);
+		  }
+		else
+		  //CONV_DEFAULT and object is not a copy of an R object (eg associative array created when copying named vector)
+		  {
+		    //No specific conversion found so we return a reference
+		    *_ret = MakeNPRefForR(var);
 		    
-			canfree = 0;
-		      }
+		    canfree = 0;
 		  }
 	      }
 	  }
+	
 	  break;
 	}
-    }
+  }
   return canfree;
 }
-}
+} //extern "C"
 
 static int depth = 0;
 bool NPArrayToR(NPVariant *arr, int len, int simplify, NPP inst, NPNetscapeFuncs *funcs, SEXP *_ret)
@@ -701,5 +725,41 @@ bool checkForRefClass(SEXP obj)
   if(err || !LOGICAL(ans)[0])
     ret = false;
   
+  return ret;
+}
+
+convert_t GetConvertBehavior(NPVariant *var, NPP inst, NPNetscapeFuncs *funcs)
+{
+  NPVariant curprop;
+  funcs->getproperty(inst, var->value.objectValue, funcs->getstringidentifier("_convert"), &curprop);
+  convert_t ret; 
+  switch(curprop.type)
+    {
+    case NPVariantType_Int32:
+      ret = (convert_t) NPVARIANT_TO_INT32(curprop);
+      break;
+    case NPVariantType_Double:
+      ret = (convert_t) NPVARIANT_TO_DOUBLE(curprop);
+      break;
+    case NPVariantType_String:
+      {
+      NPString str = var->value.stringValue;
+      if(strncmp(str.UTF8Characters, "default", str.UTF8Length))
+	ret = CONV_DEFAULT;
+      else if (strncmp(str.UTF8Characters, "reference", str.UTF8Length))
+	ret = CONV_REF;
+      else if (strncmp(str.UTF8Characters, "copy", str.UTF8Length))
+	ret = CONV_COPY;
+      break;
+      }     
+    case NPVariantType_Object:
+      ret = CONV_CUSTOM;
+      break;
+		   
+    default:
+      fprintf(stderr, "Unable to understand _convert property. Default marshalling will be performed.");fflush(stderr);
+      ret  = CONV_DEFAULT;
+      break;
+    }
   return ret;
 }
