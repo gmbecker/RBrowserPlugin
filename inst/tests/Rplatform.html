@@ -1,0 +1,24 @@
+<html>
+<script type="text/javascript" src = "../javascript/Rhelpers.js"></script>
+<head>
+    <script type="text/R">
+      getplat = function() sessionInfo()$platform
+    </script>
+    <script type="text/javascript">
+      function getplatform()
+{
+      var res = R.getplat();
+      alert(res);
+      var div  = document.getElementById("mydiv");
+      div.innerHTML = res;
+      }
+  </script>
+
+</head>
+<body>
+  <embed type="application/test-r" width="0" height="0"></embed>
+ <input type="button" onclick="getplatform();"/>
+ <div id="mydiv" ></div> 
+  
+  </body>
+</html>

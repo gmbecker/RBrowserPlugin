@@ -2,7 +2,7 @@
   <head>
 <!--
     <script type="text/javascript" src="http://github.com/DmitryBaranovskiy/raphael/raw/master/raphael.js"> </script>
--->    
+-->
 <script type="text/javascript" src="../javascript/raphael.js"> </script>
 
 <script type="text/javascript" src="../javascript/Rhelpers.js"> </script>
@@ -12,7 +12,7 @@
  #     library(RFirefox)
       thing = raphaelCDev("raphcanvas")
       plot(mtcars$hp, mtcars$mpg, xlab = "HP", ylab="MPG", main = "MtCars Hp vs Mpg", cex=3)
-      
+
       thing2 = raphaelCDev("raphcanvas2")
       plot(mtcars$wt, mtcars$qsec, xlab = "WT", ylab ="QSEC", main = "MtCars Wt vs Qsec", cex=3)
       pts = thing$getPoints()
@@ -20,13 +20,16 @@
 
       addHandlers = function(pts)
       {
-        sapply(1:length(pts), function(i) 
+        sapply(1:length(pts), function(i)
         {
+          force(i)
           #pts[[i]]$hover(function() colorIt(i), function() unColorIt(i))
           nd = pts[[i]][["node"]]
-          nd$addEventListener("mouseover", function(e) colorIt(i), convertArgs = c(TRUE, FALSE))
-          nd$addEventListener("mouseout", function(e) unColorIt(i), convertArgs = c(TRUE, FALSE))
-        
+          #nd$addEventListener("mouseover", function(e) colorIt(i), convertArgs = c(TRUE, FALSE))
+          #nd$addEventListener("mouseout", function(e) unColorIt(i), convertArgs = c(TRUE, FALSE))
+          nd$addEventListener("mouseover", function(e) colorIt(i))
+          nd$addEventListener("mouseout", function(e) unColorIt(i))
+
           TRUE
         } )
         return(TRUE)
@@ -37,21 +40,21 @@
       {
       pts[[i]]$attr("fill", "ff0000")
         pts2[[i]]$attr("fill", "ff0000")
-      
+
       }
 
       unColorIt = function(i)
       {
         pts[[i]]$attr("fill", "#ffffff")
         pts2[[i]]$attr("fill", "#ffffff")
-                
+
       }
       addHandlers(pts)
       addHandlers(pts2)
     </script>
   </head>
   <body>
-    <embed id="REngine" type="application/test-r" height="0" width="0"></embed>    
+    <embed id="REngine" type="application/test-r" height="0" width="0"></embed>
     <div>
       <div id="raphcanvas" height="200" width="150"  />
       <div id="raphcanvas2" height="200" width="150" style="float:right;" />

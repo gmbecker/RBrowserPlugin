@@ -3,8 +3,12 @@ EXTRAFLAGS=$(RFIREFOX_DEF) -fPIC
 PKG_CPPFLAGS=-I ../inst/NPAPI/ -I ../inst/npapi-sdk-headers/
 PKG_LIBS=
 #SHLIBCMD= C:/R64/bin/x64/Rcmd SHLIB BasicPlugin.cpp WebREngine.cpp NPConversions.cpp WebRObject.cpp WebRFunction.cpp WebRMutex.cpp --output=npRBrowserPlugin.dll
-SHLIBCMD= C:/R64/bin/i386/Rcmd SHLIB defs.def BasicPlugin.cpp WebREngine.cpp NPConversions.cpp WebRObject.cpp WebRFunction.cpp WebRMutex.cpp resource.o  --output=npRBrowserPlugin.dll
-
+#SHLIBCMD= C:/R64/bin/i386/Rcmd SHLIB defs.def BasicPlugin.cpp WebREngine.cpp NPConversions.cpp WebRObject.cpp WebRFunction.cpp WebRMutex.cpp resource.o  --output=npRBrowserPlugin.dll
+ifeq "$(WIN)" "64"
+     SHLIBCMD=	
+else
+     SHLIBCMD=$(R_HOME)/bin$(R_ARCH_BIN)/Rcmd SHLIB defs.def BasicPlugin.cpp WebREngine.cpp NPConversions.cpp WebRObject.cpp WebRFunction.cpp WebRMutex.cpp resource.o  --output=npRBrowserPlugin.dll
+endif
 .PHONY: all
 
 all: $(SHLIB) extension
