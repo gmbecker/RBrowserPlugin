@@ -231,4 +231,5 @@ SEXP doGetVar(NPIdentifier name, NPP inst);
   void* doRLookup(void *in);
 bool doNamedCall(NPP inst, SEXP fun, const NPVariant *argsIn, uint32_t count, NPVariant *_res, NPNetscapeFuncs *funcs);
 convert_t GetConvertBehavior(NPVariant *var, NPP inst, NPNetscapeFuncs *funcs);
+void ThrowRError(NPObject *obj, NPNetscapeFuncs *funcs);
 #endif // WebR.h

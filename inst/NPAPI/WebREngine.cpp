@@ -146,6 +146,7 @@ bool WebREngine::Invoke(NPIdentifier name, const NPVariant *args, uint32_t argCo
 	SETCAR(call, Rf_install("parseEval"));
 	SETCAR(CDR(call), Rargs[0]);
 	PROTECT(ans = rQueue.requestRCall(call, R_GlobalEnv, &error, this->instance));
+
 	addProt = 2;
       }
     else if (name == myNPNFuncs->getstringidentifier("namedArgsCall"))
@@ -222,6 +223,7 @@ bool WebREngine::Invoke(NPIdentifier name, const NPVariant *args, uint32_t argCo
     ConvertRToNP(ans, this->instance, myNPNFuncs, result, convert);
   else
     {
+      ThrowRError(this, myNPNFuncs);
       fprintf(stderr, "\n Error: R function call failed.");fflush(stderr);
       ConvertRToNP(R_NilValue, this->instance, myNPNFuncs, result, CONV_DEFAULT);
     }

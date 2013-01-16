@@ -74,7 +74,10 @@ void* doRCall(void * in)
     
   PROTECT( ans = R_tryEval(toeval, env, err));
   if(*err)
-    ans = R_NilValue;
+    {
+      
+      ans = R_NilValue;
+    }
   else
     {
       if(TYPEOF(ans) == PROMSXP)
@@ -243,3 +246,18 @@ void RCallQueue::init()
 
 }
 
+void ThrowRError(NPObject *obj, NPNetscapeFuncs *funcs)
+{ 
+  int err;
+      SEXP errcall, errsxp;
+      PROTECT(errcall = allocVector(LANGSXP, 1));
+      SETCAR(errcall, Rf_install("geterrmessage"));
+      PROTECT(errsxp = R_tryEval(errcall, R_GlobalEnv, &err));
+      int len = strlen(CHAR(STRING_ELT(errsxp, 0)));
+      NPUTF8 *errmsg = malloc(len*sizeof(char));
+      strcpy(errmsg, CHAR(STRING_ELT(errsxp, 0)));
+      
+      funcs->setexception(obj, errmsg);
+      UNPROTECT(2);
+
+}
