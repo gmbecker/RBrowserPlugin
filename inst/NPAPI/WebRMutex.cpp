@@ -224,7 +224,7 @@ void makeRGlobals(NPP inst)
   */
   NPVariant *winvar =  (NPVariant *) myNPNFuncs->memalloc(sizeof(NPVariant));
   getWindowVariant(inst, winvar);
-  PROTECT( klass3 = MAKE_CLASS( "NPVariantRef" ) );
+  PROTECT( klass3 = MAKE_CLASS( "JSValueRef" ) );
   PROTECT( ans3 = NEW( klass3 ) );
   PROTECT( ptr3 = R_MakeExternalPtr( winvar,
                                      Rf_install("DomWindow"),

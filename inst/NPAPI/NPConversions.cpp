@@ -536,10 +536,10 @@ bool NPArrayToR(NPVariant *arr, int len, int simplify, NPP inst, NPNetscapeFuncs
 SEXP MakeNPRefForR(NPVariant *ref)
 {
   SEXP klass, ans, Rptr;
-  PROTECT( klass = MAKE_CLASS( "NPVariantRef" ) );
+  PROTECT( klass = MAKE_CLASS( "JSValueRef" ) );
   PROTECT( ans = NEW( klass ) );
   PROTECT( Rptr = R_MakeExternalPtr( ref ,
-				    Rf_install( "NPVariantRef" ),
+				    Rf_install( "JSValueRef" ),
 				    R_NilValue));
 
   //XXX need to add finalizer!!
@@ -692,7 +692,7 @@ bool CheckSEXPForJSRef(SEXP obj, NPP inst)
   SETCAR(ptr, obj);
   ptr = CDR(ptr);
   //  SETCAR(ptr, ScalarString(mkChar("JSValueRef")));
-  SETCAR(ptr, ScalarString(mkChar("NPVariantRef")));
+  SETCAR(ptr, ScalarString(mkChar("JSValueRef")));
   
   PROTECT(ans = rQueue.requestRCall(call, R_GlobalEnv, &err, inst));
   bool ret;

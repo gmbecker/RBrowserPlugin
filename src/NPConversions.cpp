@@ -187,7 +187,7 @@ bool ConvertRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret, co
 {
 
 
-  //PROTECT(klass = MAKE_CLASS("NPVariantRef"));
+  //PROTECT(klass = MAKE_CLASS("JSValueRef"));
 //XXX If it is a promise we need the actual value. Will this come back to bite us by violating lazy loading?  
   int err = 0;
   if(TYPEOF(val) == PROMSXP)
@@ -499,10 +499,10 @@ bool NPArrayToR(NPVariant *arr, int len, int simplify, NPP inst, NPNetscapeFuncs
 SEXP MakeNPRefForR(NPVariant *ref)
 {
   SEXP klass, ans, Rptr;
-  PROTECT( klass = MAKE_CLASS( "NPVariantRef" ) );
+  PROTECT( klass = MAKE_CLASS( "JSValueRef" ) );
   PROTECT( ans = NEW( klass ) );
   PROTECT( Rptr = R_MakeExternalPtr( ref ,
-				    Rf_install( "NPVariantRef" ),
+				    Rf_install( "JSValueRef" ),
 				    R_NilValue));
 
   //XXX need to add finalizer!!
@@ -590,7 +590,7 @@ bool CheckSEXPForJSRef(SEXP obj, NPP inst)
   ptr = CDR(ptr);
   SETCAR(ptr, obj);
   ptr = CDR(ptr);
-  SETCAR(ptr, ScalarString(mkChar("NPVariantRef")));
+  SETCAR(ptr, ScalarString(mkChar("JSValueRef")));
   
   PROTECT(ans = R_tryEval(call, R_GlobalEnv, &err));
   bool ret = LOGICAL(ans)[0];

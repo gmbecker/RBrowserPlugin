@@ -116,6 +116,8 @@ getConvEnum = function(x, several.ok = FALSE)
   {
     if(!length(x))
       x = "default"
+    nas = which(is.na(x))
+    x[nas] = "default"
     if(is.character(x))
       {
         x = match.arg(x, c("default", "reference", "copy", "custom"), several.ok = several.ok)

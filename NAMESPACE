@@ -2,7 +2,8 @@ useDynLib(RBrowserPlugin)
 
 #exportClasses("JavaScriptRef")
 #exportClasses("nsIDocument", "nsINode")
-exportClasses("NPObjectRef", "NPVariantRef", "NPNFunctionsRef", "PluginInstance")
+#exportClasses("NPObjectRef", "NPVariantRef", "NPNFunctionsRef", "PluginInstance")
+exportClasses("JSValueRef", "NPNFunctionsRef", "PluginInstance")
 exportPattern(".*")
 
 exportMethods("coerce")

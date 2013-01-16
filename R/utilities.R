@@ -42,9 +42,9 @@ getJSMethodObj = function(obj)
     if(is(obj, "function"))
       ret = attr(obj, "NPRef")
     
-    else if(is(obj, "NPVariantRef"))
+    else if(is(obj, "JSValueRef"))
       ret = obj
     else
-      stop("Unable to find a NPVariantRef associated with obj")
+      stop("Unable to find a JSValueRef associated with obj")
     ret
   }
