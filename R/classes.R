@@ -1,7 +1,8 @@
 
 setClass("JSValueRef", contains = "RCReference")
-setClass("PluginInstance", representation=representation(funcs = "NPNFunctionsRef"), contains="RCStructReference")
 setClass("NPNFunctionsRef", contains = "RCStructReference")
+setClass("PluginInstance", representation=representation(funcs = "NPNFunctionsRef"), contains="RCStructReference")
+
 if(FALSE)
 {
 setClass("NPObjectRef", contains = "RCStructReference")

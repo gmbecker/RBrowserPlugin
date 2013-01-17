@@ -228,7 +228,9 @@ bool WebREngine::Invoke(NPIdentifier name, const NPVariant *args, uint32_t argCo
       ConvertRToNP(R_NilValue, this->instance, myNPNFuncs, result, CONV_DEFAULT);
     }
   UNPROTECT(argCount + addProt);
-  return !error;
+  //There is a bug in chrome where if an NPObject method call returns false NPN_SetException doesn't work. I'm going to experiment with always returning true...
+  //return !error;
+  return true;
 }
 
 bool WebREngine::InvokeDefault(const NPVariant *args, uint32_t argCount, NPVariant *result)

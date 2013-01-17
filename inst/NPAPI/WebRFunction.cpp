@@ -129,12 +129,17 @@ bool RFunction::InvokeDefault(const NPVariant *args, uint32_t argCount, NPVarian
     ConvertRToNP(ans, this->instance, this->funcs, result, CONV_DEFAULT);
   //If it's an error, just throw an error for the browser.
   //else
-  //  ConvertRToNP(R_NilValue, this->instance, this->funcs, result, false);
+  //  
   else
-    ThrowRError(this, this->funcs);
+    {
+      ThrowRError(this, this->funcs);
+      ConvertRToNP(R_NilValue, this->instance, this->funcs, result, CONV_DEFAULT);
+    }
   UNPROTECT(argCount + addProt);
-
-  return !error;
+//There is a bug in chrome where if an NPObject method call returns false NPN_SetException doesn't work. I'm going to experiment with always returning true...
+  //return !error;
+  return true;
+  
 }
 
 bool RFunction::HasProperty(NPIdentifier name)

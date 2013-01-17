@@ -254,9 +254,9 @@ void ThrowRError(NPObject *obj, NPNetscapeFuncs *funcs)
       SETCAR(errcall, Rf_install("geterrmessage"));
       PROTECT(errsxp = R_tryEval(errcall, R_GlobalEnv, &err));
       int len = strlen(CHAR(STRING_ELT(errsxp, 0)));
-      NPUTF8 *errmsg = malloc(len*sizeof(char));
+      NPUTF8 *errmsg = (NPUTF8 *) malloc(len*sizeof(char));
       strcpy(errmsg, CHAR(STRING_ELT(errsxp, 0)));
-      
+      fprintf(stderr, "attemtping to throw JS exception. Err msg: %s", errmsg);fflush(stderr);
       funcs->setexception(obj, errmsg);
       UNPROTECT(2);
 

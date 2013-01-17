@@ -1,4 +1,0 @@
-
-resource.o:
-	windres resource.rc resource.o
-	
