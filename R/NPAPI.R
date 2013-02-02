@@ -1,5 +1,3 @@
-setClass("NPObjectRef", contains="RCStructReference")
-setClass("NPVariantRef", contains="RCStructReference")
 
 NP_Invoke = function(...,
   plug = PluginInstance,

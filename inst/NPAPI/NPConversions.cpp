@@ -5,8 +5,12 @@ bool ConvertRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret, co
 
 //If it is a promise we need the actual value.  
   int err = 0;
+  int numprot = 0;
   if(TYPEOF(val) == PROMSXP)
-    val = rQueue.requestRCall(val, R_GlobalEnv, &err, inst);
+    {
+      PROTECT(val = rQueue.requestRCall(val, R_GlobalEnv, &err, inst));
+      numprot = 1;
+    }
   //Is it already a reference to an existing NP/JS object? If so just return that object!
   if (CheckSEXPForJSRef(val, inst))
     {
@@ -51,6 +55,8 @@ bool ConvertRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret, co
       MakeRRefForNP(val, inst, funcs, ret);
       break;
     }
+  if(numprot)
+    UNPROTECT(1);
   return true;
 }
 
@@ -691,15 +697,15 @@ bool CheckSEXPForJSRef(SEXP obj, NPP inst)
   ptr = CDR(ptr);
   SETCAR(ptr, obj);
   ptr = CDR(ptr);
-  //  SETCAR(ptr, ScalarString(mkChar("JSValueRef")));
   SETCAR(ptr, ScalarString(mkChar("JSValueRef")));
   
   PROTECT(ans = rQueue.requestRCall(call, R_GlobalEnv, &err, inst));
   bool ret;
-  if (ans == R_UnboundValue || ans == R_NilValue)
+  if (ans == R_UnboundValue || ans == R_NilValue || err)
     ret = 0;
   else
     {
+    
       ret = LOGICAL(ans)[0];
       if(ret)
 	{fprintf(stderr, "\nR object contains JS reference.\n");fflush(stderr);}
@@ -724,7 +730,7 @@ bool checkForRefClass(SEXP obj)
   PROTECT(ans = R_tryEval(call, R_GlobalEnv, &err));
   if(err || !LOGICAL(ans)[0])
     ret = false;
-  
+  UNPROTECT(2);
   return ret;
 }
 
