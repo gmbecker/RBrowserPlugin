@@ -1,8 +1,0 @@
-#include "IRObject.idl"
-
-[scriptable, uuid(5FF701CA-CFEF-4E7D-AF8D-F882CC52E8D5)]
-interface IRFunction : IRObject {
-
-    IRObject call([array, size_is(length)] in IRObject args, in unsigned long length);
-
-};

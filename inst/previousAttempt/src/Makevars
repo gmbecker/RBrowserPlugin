@@ -1,5 +1,0 @@
-XUL_SDK=/home/gmbecker/gabe/checkedout/FirefoxSource192/obj-xulrunner-dbg/dist
-# Do we need nspr explicitly
-GCC_FLAGS=-fshort-wchar
-PKG_CPPFLAGS= -I../include -DCANT_USE_INHERITANCE -DXPCOM_GLUE $(GCC_FLAGS) -I$(XUL_SDK)/include -I$(XUL_SDK)/include 
-PKG_LIBS=-L$(XUL_SDK)/lib  -lxpcomglue
