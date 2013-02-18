@@ -48,6 +48,8 @@
 #include <stdio.h>
 //#include "pthread.h"
 
+#include "jsStartup.h"
+
 #ifndef _WIN32
 #define CSTACK_DEFNS 1
 #endif

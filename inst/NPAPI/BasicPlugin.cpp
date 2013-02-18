@@ -239,7 +239,8 @@ NPError OSCALL  NP_Shutdown(void)
 {
   //CFRelease(browserUAString);
   //browserUAString = NULL;
-	return NPERR_NO_ERROR;
+  Rf_endEmbeddedR(0);
+  return NPERR_NO_ERROR;
 }
 
 /* Called to create a new instance of the plugin. */
@@ -286,39 +287,21 @@ NPError  NPP_New(NPMIMEType pluginType, NPP instance, uint16_t mode, int16_t arg
     return NPERR_INCOMPATIBLE_VERSION_ERROR;
   }
 #endif //XP_MACOSX
-  /*
-  if (!browserUAString) {
-    const char* ua = myNPNFuncs->uagent(instance);
-    if (ua) {
-      browserUAString = CFStringCreateWithCString(kCFAllocatorDefault, ua, kCFStringEncodingASCII);
-    }
-  }
-  */
-  /*
-  SEXP klass, ans, ptr;
-  SEXP klass2, ans2, ptr2;
-
-  PROTECT( klass = MAKE_CLASS( "PluginInstance" ) );
-  PROTECT( ans = NEW( klass ) );
-  PROTECT( ptr = R_MakeExternalPtr( instance,
-                                    Rf_install( "NPP" ),
-                                    R_NilValue));
-//	UNPROTECT(3);
-
-  PROTECT( klass2 = MAKE_CLASS( "NPNFunctionsRef" ) );
-  PROTECT( ans2 = NEW( klass2 ) );
-  PROTECT( ptr2 = R_MakeExternalPtr( myNPNFuncs,
-                                     Rf_install("NPNFuncs"),
-                                     R_NilValue));
-  SET_SLOT( ans2, Rf_install("ref"), ptr2);
-  SET_SLOT( ans, Rf_install("funcs"), ans2);
-  //finalizer here if needed
-
-  SET_SLOT(ans, Rf_install("ref"), ptr);
-  Rf_defineVar(Rf_install("PluginInstance"), ans, R_GlobalEnv);
-  UNPROTECT(6);
-  */
   makeRGlobals(instance);
+
+//Trying to bootstrap loading of the R JS object and running of R script tags. JS_INIT_CODE is a defined constant which contains a minified version of Rhelpers.js
+  NPObject *win;
+  
+  NPVariant *res, tmpvar;
+  NPString initScript;
+  int len = strlen(JS_INIT_CODE) + 1;
+  char *dat = (char *) myNPNFuncs->memalloc(len*sizeof(char));
+  memcpy(dat, JS_INIT_CODE, len);
+  STRINGZ_TO_NPVARIANT(dat, tmpvar);
+  myNPNFuncs->getvalue(instance, NPNVWindowNPObject, &win);
+  myNPNFuncs->evaluate(instance, win, &(tmpvar.value.stringValue), res);
+  myNPNFuncs->releasevariantvalue(res);
+
 
   return NPERR_NO_ERROR;
 }

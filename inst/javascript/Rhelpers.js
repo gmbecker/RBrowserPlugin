@@ -1,13 +1,4 @@
 
-function addREventHandler(name, targ, event, arg)
-{
-  
-    targ.addEventListener(event, function(e)
-			  {
-			      callRFunction(name, arg);
-			  }, false, true);
-}
-
 function runScriptsNPAPI()
 {
     //    alert("in runScriptsNPAPI");
@@ -79,7 +70,7 @@ function makeFun(obj)
     }
     return fun;
 }
-window.addEventListener("load", doAttach, true, true);
+//window.addEventListener("load", doAttach, true, true);
 
 
 function args(obj)

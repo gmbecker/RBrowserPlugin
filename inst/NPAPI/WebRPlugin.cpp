@@ -263,7 +263,15 @@ NPP_New(NPMIMEType pluginType, NPP instance, uint16_t mode, int16_t argc, char* 
   SET_SLOT(ans, Rf_install("ref"), ptr);
   Rf_defineVar(Rf_install("PluginInstance"), ans, R_GlobalEnv);
   UNPROTECT(3);
+
   
+  //Trying to bootstrap loading of the R JS object and running of R script tags. JS_INIT_CODE is a defined constant which contains a minified version of Rhelpers.js
+  NPObject *win;
+  
+  NPVariant *res;
+  myNPNFuncs->getvalue(instance, NPNVWindowNPObject, &win);
+  myNPNFuncs->evaluate(instance, win, JS_INIT_CODE, res);
+  myNPNFFuncs->releasevariantvalue(res);
 
 
    return NPERR_NO_ERROR;
