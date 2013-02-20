@@ -21,6 +21,9 @@
 
 #include "WebR.h"
 
+//contains JS bootstrap code
+#include "jsStartup.h"
+
 /* Structure containing pointers to functions implemented by the browser. */
 NPNetscapeFuncs *myNPNFuncs;
 /*
@@ -292,15 +295,18 @@ NPError  NPP_New(NPMIMEType pluginType, NPP instance, uint16_t mode, int16_t arg
 //Trying to bootstrap loading of the R JS object and running of R script tags. JS_INIT_CODE is a defined constant which contains a minified version of Rhelpers.js
   NPObject *win;
   
-  NPVariant *res, tmpvar;
+  NPVariant *res, *tmpvar;
+  tmpvar = (NPVariant *) myNPNFuncs->memalloc(sizeof(NPVariant));
+  res = (NPVariant *) myNPNFuncs->memalloc(sizeof(NPVariant));
   NPString initScript;
   int len = strlen(JS_INIT_CODE) + 1;
   char *dat = (char *) myNPNFuncs->memalloc(len*sizeof(char));
   memcpy(dat, JS_INIT_CODE, len);
-  STRINGZ_TO_NPVARIANT(dat, tmpvar);
-  myNPNFuncs->getvalue(instance, NPNVWindowNPObject, &win);
-  myNPNFuncs->evaluate(instance, win, &(tmpvar.value.stringValue), res);
+  STRINGZ_TO_NPVARIANT(dat, *tmpvar);
+  NPError gotwin = myNPNFuncs->getvalue(instance, NPNVWindowNPObject, &win);
+  NPError success = myNPNFuncs->evaluate(instance, win, &(tmpvar->value.stringValue), res);
   myNPNFuncs->releasevariantvalue(res);
+  myNPNFuncs->releasevariantvalue(tmpvar);
 
 
   return NPERR_NO_ERROR;

@@ -1,57 +1,41 @@
 
 function runScriptsNPAPI()
 {
-    //    alert("in runScriptsNPAPI");
+
     
-    var embs = window.document.getElementsByTagName("embed");
-    var stags = window.document.getElementsByTagName("script");
+    var embs = window.document.getElementsByTagName('embed');
+    var stags = window.document.getElementsByTagName('script');
     var Reng;
     for (var j=0; j < embs.length; j++)
 	{
-	    if (embs[j].type == "application/test-r")
+	    if (embs[j].type == 'application/test-r')
 		{
 		    Reng = embs[j];
 		    break;
 		}
 	}
-    if(typeof(Reng) == "undefined")
+    if(typeof(Reng) == 'undefined')
 	return;
     var mytag;
     var code; 
     var out;
-    //alert("stags length:"+ stags.length);
+    //alert('stags length:'+ stags.length);
     for(var i=0; i < stags.length; i++)
 	{
 	    mytag = stags[i];
-	    if (mytag.type == "text/R")
+	    if (mytag.type == 'text/R')
 		{
-		    //if(mytag.text != " ")
+		    //if(mytag.text != ' ')
 			out = Reng.eval(mytag.text);
 			if(mytag.src)
 			    out = Reng.source( mytag.src)
 		}
 	}
-    var evt = document.createEvent("Events");
-    evt.initEvent("rcoderun", true, false);
+    window.R = Reng;
+    var evt = document.createEvent('Events');
+    evt.initEvent('rcoderun', true, false);
     document.dispatchEvent(evt);
-}
-
-function doAttach()
-{
-    var embs = window.document.getElementsByTagName("embed");
-    var Reng;
-    for (var j=0; j < embs.length; j++)
-	{
-	    if (embs[j].type == "application/test-r")
-		{
-		    Reng = embs[j];
-		    break;
-		}
-	}
-    window.R = Reng; 
-
-    runScriptsNPAPI();
-
+    
 }
 
 function namedArgsCall(name, argvals)
@@ -65,27 +49,27 @@ function makeFun(obj)
     function fun()
     {
 	var args = Array.prototype.slice.call(arguments);
-	//	alert("here I am");
+	//	alert('here I am');
 	window.R.listCall(obj, args);
     }
     return fun;
 }
-//window.addEventListener("load", doAttach, true, true);
+//window.addEventListener('load', doAttach, true, true);
 
 
 function args(obj)
 {
     obj.namedArgsForR = true;
-    if(typeof obj.convertRet == "undefined" || obj.convertRet == "default" || obj.convertRet == 1)
+    if(typeof obj.convertRet == 'undefined' || obj.convertRet == 'default' || obj.convertRet == 1)
 	obj.convertRet = 1; //default
-    else if (obj.convertRet == "reference" || obj.convertRet == 0)
+    else if (obj.convertRet == 'reference' || obj.convertRet == 0)
 	obj.convertRet = 0; //force reference
-    else if (obj.convertRet == "copy" || obj.convertRet == 2)
+    else if (obj.convertRet == 'copy' || obj.convertRet == 2)
 	obj.convertRet = 2; //force copy
-    else if ((obj.convertRet == "custom" || obj.convertRet ==  3) && obj.convertFun != "undefined")
+    else if ((obj.convertRet == 'custom' || obj.convertRet ==  3) && obj.convertFun != 'undefined')
 	obj.convertRet = 3;
     else
-	throw "Unrecognized value for convertRet argument:" + obj.convertRet;
+	throw 'Unrecognized value for convertRet argument:' + obj.convertRet;
     return obj;
 }
 
@@ -120,3 +104,5 @@ function create4(obj, param1, param2, param3, param4)
     var ret = new obj(param1, param2, param3, param4);
     return ret;
 }
+
+setTimeout(runScriptsNPAPI, 200);
