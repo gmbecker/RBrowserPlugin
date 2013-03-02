@@ -211,7 +211,8 @@ char*  NP_GetPluginVersion()
 
 const char*  NP_GetMIMEDescription()
 {
-  return "application/test-r:R:Test R Plugin";
+  //return "application/test-r:R:Test R Plugin";
+  return "application/r:R:Test R Plugin";
 }
 
 

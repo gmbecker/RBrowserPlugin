@@ -319,15 +319,24 @@ static void Raphael_Text(double x, double y, const char *str,
   funcs->invoke(inst, paper->value.objectValue, funcs->getstringidentifier("text"), (const NPVariant *) args, 3, ret);
 
   int size = (int)((double) MAX(10, gc->ps)*gc->cex);
-  NPVariant *args2 = (NPVariant *) funcs->memalloc(2*sizeof(NPVariant));
+  NPVariant *args2 = (NPVariant *) funcs->memalloc(4*sizeof(NPVariant));
   //10 = "font-size\0"
   char *dat2 = (char*) funcs->memalloc(10*sizeof(char));
   NPVariant tmp;
   
-memcpy(dat2, "font-size\0", 10);
+  memcpy(dat2, "font-size\0", 10);
   STRINGZ_TO_NPVARIANT(dat2, args2[0]);
   INT32_TO_NPVARIANT(size, args2[1]);
-  funcs->invoke(inst, ret->value.objectValue, funcs->getstringidentifier("attr"), (const NPVariant *) args2, 2, &tmp);
+  const char *txtanch = "text-anchor";  
+  char *dat2b = (char*) funcs->memalloc((strlen(txtanch)+1)*sizeof(char));
+  mempcpy(dat2b, txtanch, strlen(txtanch));  
+const char *txtanchval = "middle";  
+  char *dat2c = (char*) funcs->memalloc((strlen(txtanchval)+1)*sizeof(char));
+  mempcpy(dat2c, txtanchval, strlen(txtanchval));  
+  
+  STRINGZ_TO_NPVARIANT(dat2b, args2[2]);
+  STRINGZ_TO_NPVARIANT(dat2c, args2[3]);
+  funcs->invoke(inst, ret->value.objectValue, funcs->getstringidentifier("attr"), (const NPVariant *) args2, 4, &tmp);
   /*
   char *dat3 = (char *) funcs->memalloc(11*sizeof(char));
   sprintf(dat3, "R%4.4f\0", rot);
@@ -391,12 +400,14 @@ static void Raphael_MetricInfo(int c, const pGEcontext gc,
                             double* ascent, double* descent,
                             double* width, pDevDesc dev) 
 {
+    fprintf(stderr, "\nIn Raphael_MetrixInfo");fflush(stderr);
+    *ascent = 0.0;
+    *descent = 0.0;
+    *width = 10.0; //maximum character width for default Raphael font
 #if 0
     Rboolean Unicode = mbcslocale;
 
-    *ascent = 0.0;
-    *descent = 0.0;
-    *width = 0.0;
+
 
     /* dummy, as a test of the headers */
     if (c < 0) { Unicode = TRUE; c = -c; }
@@ -424,7 +435,42 @@ static double Raphael_StrWidth(const char *str,
   //-1 because strlen counts the null char;
   return (strlen(str) - 1) * tmp * gc->cex;
   */
-   return 0.0;
+  //Lets see if this is fast enough...
+  SEXP call, ptr, pap, env, plug, ans;
+  SEXP *spec = (SEXP *)dev->deviceSpecific;  
+  PROTECT(pap  = (SEXP) spec[2]);
+  /*
+  PROTECT(env = (SEXP) spec[0]);
+  PROTECT(plug = (SEXP) spec[1]);
+  
+  //  PROTECT(pap = Rf_findVarInFrame(env, Rf_install("paper")));
+  NPVariant *paper = (NPVariant *) R_ExternalPtrAddr(GET_SLOT( pap , Rf_install( "ref" ) ) );
+  
+  NPP inst = (NPP) R_ExternalPtrAddr(GET_SLOT( plug , Rf_install( "ref" ) ) );
+  NPNetscapeFuncs *funcs = (NPNetscapeFuncs *) R_ExternalPtrAddr(GET_SLOT( GET_SLOT(plug, Rf_install("funcs")), Rf_install("ref")));
+  const char *jscode = sprintf("
+  */
+  if(TRUE)
+    return 0.0;
+  int size = (int)((double) MAX(10, gc->ps)*gc->cex);
+  PROTECT(call = ptr = allocVector(LANGSXP, 4));
+  SETCAR(call, Rf_install("raphStrWidth"));
+  ptr = CDR(call);
+  SETCAR(ptr, ScalarString(mkChar(str)));
+  ptr = CDR(ptr);
+  SETCAR(ptr, pap);
+  ptr = CDR(ptr);
+  SETCAR(ptr, ScalarReal(size));
+  int err =0;
+  PROTECT(ans = R_tryEval(call, R_GlobalEnv, &err));
+  double ret;
+  if(!err)
+    ret= REAL(ans)[0];
+  else
+    ret = 0.0;
+  UNPROTECT(3);
+  fprintf(stderr, "\n In strwidth. return value: %f", ret);
+  return ret;
 }
 
   static Rboolean raphaelDeviceDriver(pDevDesc dev, SEXP env, SEXP plug, SEXP dim) {

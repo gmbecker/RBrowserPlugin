@@ -44,7 +44,7 @@ raphaelCDev = function(id = "raph_content", dim = c(400, 400), storage = new.env
 
     script = paste("Raphael('", id, "',", dim[1], " , ", dim[2], ");", sep="")
     print("Raphael C device attempting to create paper")
-    tmp = evalJavaScript(script = script, keepResult = TRUE)
+    tmp = evalJavaScript(script = script, keepResult = TRUE, convertRet = function(x) as(x, "JSPaperRef"))
     assign("paper", tmp, env = storage)
     print("Raphael C device paper created")
     .Call("R_GD_raphaelDevice", storage, PluginInstance, as.integer(dim))
@@ -268,3 +268,13 @@ raphRemoveElements = function(type="points", indexes, dev)
 
 }
 
+raphStrWidth = function(txt, paper, size)
+  {
+    txt = paper$text(0, 0, txt);
+    
+    txt$attr("font-size", size);
+    bbox = txt$getBBox();
+    ret = as.numeric(bbox[["width"]])
+    txt$remove()
+    ret
+  }

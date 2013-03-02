@@ -89,10 +89,11 @@ getPageElement = function(id, convertRet = "default")
     if(length(id) > 1)
       return(mapply(getPageElement, id, convertRet))
     #When JS object is implemented
-    JS[["document"]]$getElementById(id, convertRet)
-    #window = getGlobalJSObject()
-    #document = window[["document"]]
-    #document$getElementById(id)
+    ret = JS[["document"]]$getElementById(id, convertRet)
+    if(is(ret, "JSValueRef"))
+      ret = as(ret, "JSDOMRef")
+    ret
+    
   }
 
 
@@ -110,14 +111,48 @@ removePageElement = function(id, object=NULL)
     #Code to remove element.
   }
 
-addEventListener = function(target, event, rfun)
-  {
-    if(length(event) > 1)
-      return(mapply(function(e, f) addEventListener(target, e, f), event, rfun))
-    target$addEventListener(event, rfun)
-    TRUE
-  }
+#addEventListener = function(target, event, rfun)
+#  {
+#    if(length(event) > 1)
+#      return(mapply(function(e, f) addEventListener(target, e, f), event, rfun))
+#    target$addEventListener(event, rfun)
+#    TRUE
+#  }
 
+setGeneric("addEventListener")
+setMethod("addEventListener", c(target = "JSRaphaelRef"),
+          function(target, event, rfun)
+          {
+            if(length(event) > 1)
+              return(sapply(event, function(e) addEventListener(target, e, rfun)))
+            nd = target[["node"]]
+            addEventListener(nd, event, rfun)
+          })
+setMethod("addEventListener", c(target = "JSPaperRef"),
+          function(target, event, rfun)
+          {
+            if(length(event) > 1)
+              return(sapply(event, function(e) addEventListener(target, e, rfun)))
+            nd = target[["canvas"]]
+            addEventListener(nd, event, rfun)
+          })
+
+setMethod("addEventListener", c(target="list"),
+          function(target, event, rfun)
+          {
+            mapply(function(t, e) addEventListener(t, e, rfun),
+                   t = target, e=event)
+            
+          })
+
+setMethod("addEventListener", c(target="JSValueRef"),
+          function(target, event, rfun)
+          {
+            if(length(event) > 1)
+              return(mapply(function(e, f) addEventListener(target, e, f), event, rfun))
+            target$addEventListener(event, rfun)
+            TRUE
+          })
 removeEventListener = function(target, event)
   {
     TRUE
