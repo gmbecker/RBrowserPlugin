@@ -1214,3 +1214,188 @@ bool RSubsettableObject::_Construct(NPObject *npobj, const NPVariant *args, uint
 {
 	return ((RSubsettableObject*)npobj)->Construct (args, argCount, result);
 }
+
+
+
+
+RNAValue::RNAValue (NPP instance) 
+{
+  this->instance = instance;
+  this->type = 0;
+  this->funcs = NULL;
+}
+
+void RNAValue::Deallocate()
+{
+
+}
+
+void RNAValue::Invalidate()
+{
+}
+
+bool RNAValue::HasMethod(NPIdentifier name)
+{
+  int ret = 0;
+  if(name == this->funcs->getstringidentifier("toString"))
+    ret = 1;
+  
+  return (bool) ret;
+}
+
+
+bool RNAValue::Invoke(NPIdentifier name, const NPVariant *args, uint32_t argCount, NPVariant *result)
+{
+  if (name == this->funcs->getstringidentifier("toString")) 
+    {
+      fprintf(stderr, "\nIn tostring method of an RNAValue\n");fflush(stderr);
+      //From NPN_ReleaseVariantValue docs: NPN_ReleaseVariantValue() will call NPN_ReleaseObject() on NPVariants of type NPVARIANTTYPE_OBJECT, and NPN_FreeMem() on NPVariants of type NPVARIANTTYPE_STRING. 
+      const char *msg = "[Internal R NA Value]";
+      NPUTF8 *strdat = (NPUTF8*) this->funcs->memalloc(strlen(msg)+1);
+      //strdat = (NPUTF8*)"[Internal R Object]";
+      memcpy(strdat, msg, strlen(msg)+1);
+      NPString str ={ strdat, strlen(msg)};
+      result->type = NPVariantType_String;
+      result->value.stringValue = str;     
+      return true;
+    }
+    
+  return false;
+}
+
+bool RNAValue::InvokeDefault(const NPVariant *args, uint32_t argCount, NPVariant *result)
+{
+  return false;
+}
+
+bool RNAValue::HasProperty(NPIdentifier name)
+{
+  bool ret= false;
+  fprintf(stderr, "\nIn RNAValue::HasProperty");fflush(stderr);
+  //we need to return false for things that need to be methods.
+  if(name == this->funcs->getstringidentifier("_R_NA_Type"))
+    ret = true;
+  return ret;
+}
+
+bool RNAValue::GetProperty(NPIdentifier name, NPVariant *result)
+{
+  if(name == this->funcs->getstringidentifier("_R_NA_Type"))
+    {
+      INT32_TO_NPVARIANT(this->type, *result); 
+      return true;
+    }
+  return false;
+}
+
+bool RNAValue::SetProperty(NPIdentifier name, const NPVariant *value)
+{
+  //Emulate object[[name]]<-value
+	return false;
+}
+
+bool RNAValue::RemoveProperty(NPIdentifier name)
+{
+	return false;
+}
+
+bool RNAValue::Enumerate(NPIdentifier **identifier, uint32_t *count)
+{
+    fprintf(stderr, "\nIn RNAValue::Enumerate");fflush(stderr);
+	return false;
+}
+
+bool RNAValue::Construct(const NPVariant *args, uint32_t argCount, NPVariant *result)
+{
+	return true;
+}
+
+NPObject *RNAValue::Allocate(NPP npp, NPClass *aClass)
+{
+	NPObject *pObj = (NPObject *)new RNAValue(npp);
+	return pObj;
+}
+
+void RNAValue::Detatch (void)
+{
+	m_Instance = NULL;
+}
+
+
+
+void RNAValue::_Deallocate(NPObject *npobj)
+{
+	RNAValue *pObj = ((RNAValue *) npobj);
+
+  // Call the virtual destructor.
+	pObj->Deallocate ();
+	delete pObj;
+}
+
+void RNAValue::_Invalidate(NPObject *npobj)
+{
+	((RNAValue*)npobj)->Invalidate();
+}
+
+bool RNAValue::_HasMethod(NPObject *npobj, NPIdentifier name)
+{
+	return ((RNAValue*)npobj)->HasMethod (name);
+}
+
+bool RNAValue::_Invoke(NPObject *npobj, NPIdentifier name, const NPVariant *args, uint32_t argCount, NPVariant *result)
+{
+	return ((RNAValue*)npobj)->Invoke (name, args, argCount, result);
+}
+
+bool RNAValue::_InvokeDefault(NPObject *npobj, const NPVariant *args, uint32_t argCount, NPVariant *result)
+{
+	return ((RNAValue*)npobj)->InvokeDefault (args, argCount, result);
+}
+
+bool RNAValue::_HasProperty(NPObject * npobj, NPIdentifier name)
+{
+	return ((RNAValue*)npobj)->HasProperty (name);
+}
+
+bool RNAValue::_GetProperty(NPObject *npobj, NPIdentifier name, NPVariant *result)
+{
+	return ((RNAValue*)npobj)->GetProperty (name, result);
+}
+
+bool RNAValue::_SetProperty(NPObject *npobj, NPIdentifier name, const NPVariant *value)
+{
+	return ((RNAValue*)npobj)->SetProperty (name, value);
+}
+
+bool RNAValue::_RemoveProperty(NPObject *npobj, NPIdentifier name)
+{
+	return ((RNAValue*)npobj)->RemoveProperty (name);
+}
+
+bool RNAValue::_Enumerate(NPObject *npobj, NPIdentifier **identifier, uint32_t *count)
+{
+	return ((RNAValue*)npobj)->Enumerate (identifier, count);
+}
+
+bool RNAValue::_Construct(NPObject *npobj, const NPVariant *args, uint32_t argCount, NPVariant *result)
+{
+	return ((RNAValue*)npobj)->Construct (args, argCount, result);
+}
+
+
+NPClass RNAValue::_npclass = {                              
+  NP_CLASS_STRUCT_VERSION,								                          
+  RNAValue::Allocate,                                       
+  RNAValue::_Deallocate,                                    
+  RNAValue::_Invalidate,                                    
+  RNAValue::_HasMethod,                                     
+  RNAValue::_Invoke,                                        
+  RNAValue::_InvokeDefault,                                 
+  RNAValue::_HasProperty,                                   
+  RNAValue::_GetProperty,                                   
+  RNAValue::_SetProperty,                                   
+  RNAValue::_RemoveProperty,                                
+  RNAValue::_Enumerate,                                     
+  RNAValue::_Construct                                      
+};
+

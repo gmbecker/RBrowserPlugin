@@ -29,14 +29,19 @@ bool ConvertRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret, co
       MakeRRefForNP(val, inst, funcs, ret);
       return true;
     }
-  
+ 
+  // I don't think we need this check here, it happens in MakeCopyRToNP.
+  // if(checkRForNA(val))
+  // {
+  //    makeNAForNP(TYPEOF(val), ret);
+  //   return true;
+  // }
   //Default marshalling behavior
   switch(TYPEOF(val))
     {
     case NILSXP:
       break;
     case CHARSXP:
-
       MakeCopyRToNP(val, inst, funcs, ret);
       break;
     case REALSXP:
@@ -62,10 +67,14 @@ bool ConvertRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret, co
 
 void MakeCopyRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret)
 {
-
+  
   if(IS_S4_OBJECT(val))
     CopyS4ToNP(val, inst, funcs, ret);
-  else
+  else if(checkRForNA(val))
+    {
+      makeNAForNP(TYPEOF(val),  inst, funcs, ret);
+    } 
+  else 
     {
       int len = LENGTH(val);
       if(len == 0)
@@ -386,12 +395,11 @@ bool ConvertNPToR(NPVariant *var, NPP inst, NPNetscapeFuncs *funcs, convert_t co
       fprintf(stderr, "Javascript argument conversion specified via _convert property.\n");fflush(stderr);
       convRet = GetConvertBehavior(var, inst, funcs);
     }
-  if(convRet == CONV_REF)
+  switch(convRet)
     {
-      *_ret = MakeNPRefForR(var);
-      canfree = 0;
-    } else if (convRet == CONV_CUSTOM) {
-      *_ret = MakeNPRefForR(var);
+    case CONV_CUSTOM:
+      {
+	*_ret = MakeNPRefForR(var, inst, funcs);
       NPVariant convFun;
       funcs->getproperty(inst, var->value.objectValue, funcs->getstringidentifier("_convert"), &convFun);
       canfree = 0;
@@ -414,83 +422,81 @@ bool ConvertNPToR(NPVariant *var, NPP inst, NPNetscapeFuncs *funcs, convert_t co
 	{
 	  fprintf(stderr, "Invalid custom JavaScript argument converter specified. Custom converters must be RFunction objects");fflush(stderr);
 	  
-	}  
-  } else {
-      switch(var->type)
-	{
-	case NPVariantType_Void:
-	case NPVariantType_Null:
-	  break;
-	case NPVariantType_Bool:
-	  *_ret = NEW_LOGICAL(1);
-	  LOGICAL(*_ret)[0] = var->value.boolValue;
-	  break;
-	case NPVariantType_Int32:
-	  *_ret = NEW_INTEGER(1);
-	  INTEGER(*_ret)[0] = var->value.intValue;
-	  break;
-	case NPVariantType_Double:
-	  *_ret = NEW_NUMERIC(1);
-	  REAL(*_ret)[0] = var->value.doubleValue;
-	  break;
-	case NPVariantType_String:
-	  {
-	    
-	    NPString str = NPVARIANT_TO_STRING(*var);
-	    NPUTF8 *tmpchr = (NPUTF8 *) malloc((str.UTF8Length +1)*sizeof(NPUTF8));
-	    memcpy(tmpchr,str.UTF8Characters,  str.UTF8Length);
-	    tmpchr[str.UTF8Length] = '\0';
-	    const char *strval = (const char *) tmpchr;
-	    
-	    *_ret = ScalarString(mkChar(strval));
-
-	  }	
-	  break;
-	case NPVariantType_Object:
-	  {
-	    NPObject *inObject = var->value.objectValue;
-	    NPVariant npvLength;
-	    
-	    //check if it is an R object.
-	    NPVariant isRObject;
-	    bool tmp = funcs->getproperty(inst, inObject, funcs->getstringidentifier("isRObject"), &isRObject);
-	    if(tmp && NPVARIANT_IS_BOOLEAN(isRObject) && isRObject.value.boolValue)
-	      {
-		fprintf(stderr, "\nRObject (or subclass) detected. Extracting original SEXP\n");fflush(stderr);
-		*_ret = ((RObject *) inObject)->object;
-		canfree = 1;
-	      } else if (funcs->hasmethod(inst, inObject, funcs->getstringidentifier("pop")) && convRet == CONV_COPY)
-	      {
-	//XXX Taking a shortcut here, assuming only arrays have a pop method. A better while performant way to check this would be good...	
-		funcs->getproperty(inst, inObject, funcs->getstringidentifier("length"), &npvLength);
-		//int len = npvLength.value.intValue;
-		int len = (int) npvLength.value.doubleValue;
-		fprintf(stderr, "\nNPArray of length %d detected. Copying to R list/vector", len);fflush(stderr);
-		canfree = NPArrayToR(var, len, 0, inst, funcs, _ret);
-	      }
-	    else
-	      {
-		tmp = funcs->getproperty(inst, inObject, funcs->getstringidentifier("__CopiedFromR__"), &isRObject);
-		if(convRet == CONV_COPY || (tmp && NPVARIANT_IS_BOOLEAN(isRObject) && isRObject.value.boolValue))
-		  {
-		    //CONV_COPY - force (shallow) copy. Deep copy would drag over the entire JS scope because of parent/child properties
-		    *_ret = CopyNPObjForR(var, inst, myNPNFuncs);
-		    canfree = 1;
-		  }
-		else
-		  //CONV_DEFAULT and object is not a copy of an R object (eg associative array created when copying named vector)
-		  {
-		    //No specific conversion found so we return a reference
-		    *_ret = MakeNPRefForR(var);
-		    
-		    canfree = 0;
-		  }
-	      }
-	  }
-	
-	  break;
 	}
-  }
+      }
+      break;
+    case CONV_REF:
+      *_ret = MakeNPRefForR(var, inst, funcs);
+      canfree = !checkNPForNA(var, inst, funcs);
+      break;
+    case CONV_COPY:
+      CopyNPVarForR(var, inst, funcs, _ret);
+      canfree = true;
+      break;
+
+    case CONV_DEFAULT:
+      {
+	if(!NPVARIANT_IS_OBJECT(*var))
+	  {
+	    CopyNPVarForR(var, inst, funcs, _ret);
+	    canfree = true;
+	  } 
+	else 
+	  {
+	    *_ret = MakeNPRefForR(var, inst, funcs);
+	    canfree = checkNPForNA(var, inst, funcs);
+	  }
+      }
+      break;
+      /*
+	    
+	  NPObject *inObject = var->value.objectValue;
+	  NPVariant npvLength;
+	  
+	  //check if it is an R object.
+	  NPVariant isRObject;
+	  bool tmp = funcs->getproperty(inst, inObject, funcs->getstringidentifier("isRObject"), &isRObject);
+	  if(tmp && NPVARIANT_IS_BOOLEAN(isRObject) && isRObject.value.boolValue)
+	    {
+	      fprintf(stderr, "\nRObject (or subclass) detected. Extracting original SEXP\n");fflush(stderr);
+	      *_ret = ((RObject *) inObject)->object;
+	      canfree = 1;
+	    } else if (funcs->hasmethod(inst, inObject, funcs->getstringidentifier("pop")) && convRet == CONV_COPY)
+	    {
+	      //XXX Taking a shortcut here, assuming only arrays have a pop method. A better while performant way to check this would be good...	
+	      funcs->getproperty(inst, inObject, funcs->getstringidentifier("length"), &npvLength);
+	      //int len = npvLength.value.intValue;
+	      int len = (int) npvLength.value.doubleValue;
+	      fprintf(stderr, "\nNPArray of length %d detected. Copying to R list/vector", len);fflush(stderr);
+	      canfree = NPArrayToR(var, len, 0, inst, funcs, _ret);
+	    }
+	  else
+	    {
+	      tmp = funcs->getproperty(inst, inObject, funcs->getstringidentifier("__CopiedFromR__"), &isRObject);
+	      if(convRet == CONV_COPY || (tmp && NPVARIANT_IS_BOOLEAN(isRObject) && isRObject.value.boolValue))
+		{
+		  //CONV_COPY - force (shallow) copy. Deep copy would drag over the entire JS scope because of parent/child properties
+		  *_ret = CopyNPObjForR(var, inst, myNPNFuncs);
+		  canfree = 1;
+		}
+	      else
+		//CONV_DEFAULT and object is not a copy of an R object (eg associative array created when copying named vector)
+		{
+		  //No specific conversion found so we return a reference
+		  *_ret = MakeNPRefForR(var);
+		  
+		  canfree = 0;
+		}
+		}
+	}
+	
+	break;
+      }
+      }
+      break;
+    }
+      */
+    }
   return canfree;
 }
 } //extern "C"
@@ -539,19 +545,102 @@ bool NPArrayToR(NPVariant *arr, int len, int simplify, NPP inst, NPNetscapeFuncs
   return( canfree );
 }
 
-SEXP MakeNPRefForR(NPVariant *ref)
+SEXP MakeNPRefForR(NPVariant *ref, NPP inst, NPNetscapeFuncs *funcs)
 {
-  SEXP klass, ans, Rptr;
-  PROTECT( klass = MAKE_CLASS( "JSValueRef" ) );
-  PROTECT( ans = NEW( klass ) );
-  PROTECT( Rptr = R_MakeExternalPtr( ref ,
-				    Rf_install( "JSValueRef" ),
-				    R_NilValue));
+  SEXP ans;
+  PROTECT(ans = R_NilValue);
+  if(checkNPForNA(ref, inst, funcs))
+    {
+      makeNAForR(ref->value.objectValue, inst, funcs, &ans);
+      UNPROTECT(1);
+    } 
+  else 
+    {
 
+      SEXP klass, Rptr;
+      PROTECT( klass = MAKE_CLASS( "JSValueRef" ) );
+      ans = NEW( klass ) ;
+      PROTECT( Rptr = R_MakeExternalPtr( ref ,
+					 Rf_install( "JSValueRef" ),
+					 R_NilValue));
+      
   //XXX need to add finalizer!!
-  SET_SLOT( ans , Rf_install( "ref" ), Rptr );
+      SET_SLOT( ans , Rf_install( "ref" ), Rptr );
   UNPROTECT(3);
+    }
   return ans;
+}
+
+bool CopyNPVarForR(NPVariant *ref, NPP inst, NPNetscapeFuncs *funcs, SEXP *_ret)
+{
+  bool canfree = true;
+  if(checkNPForNA(ref, inst, funcs))
+    {
+      makeNAForR(ref->value.objectValue, inst, funcs, _ret);
+      return true;
+    }
+  
+  switch(ref->type)
+    {
+    case NPVariantType_Void:
+    case NPVariantType_Null:
+      break;
+    case NPVariantType_Bool:
+      *_ret = NEW_LOGICAL(1);
+      LOGICAL(*_ret)[0] = ref->value.boolValue;
+      break;
+    case NPVariantType_Int32:
+      *_ret = NEW_INTEGER(1);
+      INTEGER(*_ret)[0] = ref->value.intValue;
+      break;
+    case NPVariantType_Double:
+      *_ret = NEW_NUMERIC(1);
+      REAL(*_ret)[0] = ref->value.doubleValue;
+      break;
+    case NPVariantType_String:
+      {
+	
+	NPString str = NPVARIANT_TO_STRING(*ref);
+	NPUTF8 *tmpchr = (NPUTF8 *) malloc((str.UTF8Length +1)*sizeof(NPUTF8));
+	memcpy(tmpchr,str.UTF8Characters,  str.UTF8Length);
+	tmpchr[str.UTF8Length] = '\0';
+	const char *strval = (const char *) tmpchr;
+	
+	*_ret = ScalarString(mkChar(strval));
+	
+      }	
+      break;
+    case NPVariantType_Object:
+      {
+	NPObject *inObject = ref->value.objectValue;
+	NPVariant npvLength;
+	
+	//check if it is an R object.
+	NPVariant isRObject;
+	bool tmp = funcs->getproperty(inst, inObject, funcs->getstringidentifier("isRObject"), &isRObject);
+	if(tmp && NPVARIANT_IS_BOOLEAN(isRObject) && isRObject.value.boolValue)
+	  {
+	    fprintf(stderr, "\nRObject (or subclass) detected. Extracting original SEXP\n");fflush(stderr);
+	    *_ret = ((RObject *) inObject)->object;
+	    canfree = 1;
+	  } else if (funcs->hasmethod(inst, inObject, funcs->getstringidentifier("pop")))
+	  {
+	    //XXX Taking a shortcut here, assuming only arrays have a pop method. A better while performant way to check this would be good...	
+	    funcs->getproperty(inst, inObject, funcs->getstringidentifier("length"), &npvLength);
+	    //int len = npvLength.value.intValue;
+	    int len = (int) npvLength.value.doubleValue;
+	    fprintf(stderr, "\nNPArray of length %d detected. Copying to R list/vector", len);fflush(stderr);
+	    canfree = NPArrayToR(ref, len, 0, inst, funcs, _ret);
+	  } else {
+	  *_ret = CopyNPObjForR(ref, inst, funcs);
+	}
+      }
+      break;
+    default:
+      break;
+    }
+      
+
 }
 
 SEXP CopyNPObjForR(NPVariant *ref, NPP inst, NPNetscapeFuncs *funcs)
@@ -768,4 +857,76 @@ convert_t GetConvertBehavior(NPVariant *var, NPP inst, NPNetscapeFuncs *funcs)
       break;
     }
   return ret;
+}
+
+bool checkRForNA(SEXP obj)
+{
+  fprintf(stderr, "\nIn checkRForNA! R object is:");fflush(stderr);
+  Rf_PrintValue(obj);
+  bool ret = false;
+  if(LENGTH(obj) != 1)
+    return ret;
+  
+  switch(TYPEOF(obj))
+    {
+    case INTSXP:
+    case LGLSXP:
+      ret = (INTEGER(obj)[0] == NA_INTEGER) ? true : false;
+      break;
+    case REALSXP:
+      ret = (REAL(obj)[0] == NA_REAL) ? true : false;
+      break;
+    case STRSXP:
+      ret = (STRING_ELT(obj, 0) == NA_STRING) ? true : false;
+      break;
+    case CHARSXP:
+      ret = (obj == NA_STRING) ? true : false;
+      break;
+    default:
+      break;
+    }
+  return ret;
+}
+
+void makeNAForNP(int type, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret)
+{
+  	RNAValue *retobj;
+	retobj = (RNAValue *) funcs->createobject(inst, &RNAValue::_npclass);
+	funcs->retainobject(retobj);
+	retobj->type = type;
+	retobj->funcs = funcs;
+	OBJECT_TO_NPVARIANT(retobj, *ret);
+}
+
+bool checkNPForNA(NPVariant *var, NPP inst, NPNetscapeFuncs *funcs)
+{
+  if(!NPVARIANT_IS_OBJECT(*var))
+    return false;
+  return funcs->hasproperty(inst, var->value.objectValue, funcs->getstringidentifier("_R_NA_Type"));
+}
+
+void makeNAForR(NPObject *obj, NPP inst, NPNetscapeFuncs *funcs, SEXP *_ret)
+{
+  NPVariant typevar;
+  funcs->getproperty(inst, obj, funcs->getstringidentifier("_R_NA_Type"), &typevar);
+  switch(typevar.value.intValue)
+    {
+    case INTSXP:
+    case LGLSXP:
+      *_ret = ScalarInteger(NA_INTEGER);
+      break;
+    case REALSXP:
+      *_ret = ScalarReal(NA_REAL);
+      break;
+    case STRSXP:
+      *_ret = ScalarString(NA_STRING);
+      break;
+    case CHARSXP:
+      *_ret = NA_STRING;
+      break;
+    default:
+      fprintf(stderr, "Unrecognized NA type detected. Returning ScalarInteger(NA_INTEGER)");fflush(stderr);
+      *_ret = ScalarInteger(NA_INTEGER);
+      break;
+    }
 }

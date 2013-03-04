@@ -1,7 +1,8 @@
 <html>
   <head>
-    <script type="text/javascript" src = "../javascript/Rhelpers.js"></script>
+   
     <script type="text/javascript" src="../javascript/raphael.js"> </script>
+ 
     <script type="text/R">
       library(ggplot2)
       df <- data.frame(gp = factor(rep(letters[1:3], each = 10)),
@@ -21,8 +22,10 @@
     </script>
   </head>
   <body>
-    <embed id="REngine" type="application/test-r" width="0" height="0"></embed>
+
     
     <div id="imagecont"></div>
+    <!--<embed id="REngine" type="application/r" width="0" height="0"></embed>-->
+    <embed id="REngine" type="application/r" width="0" height="0"></embed>
   </body>
 </html>

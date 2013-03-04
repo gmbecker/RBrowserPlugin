@@ -8,7 +8,7 @@ function runScriptsNPAPI()
     var Reng;
     for (var j=0; j < embs.length; j++)
 	{
-	    if (embs[j].type == 'application/test-r')
+	    if (embs[j].type == 'application/test-r' || embs[j].type == 'application/r')
 		{
 		    Reng = embs[j];
 		    break;

@@ -187,12 +187,13 @@ bool ConvertNPToR(NPVariant *var, NPP inst, NPNetscapeFuncs *funcs, convert_t co
 bool NPArrayToR(NPVariant *arr, int len, int simplify, NPP inst, NPNetscapeFuncs *funcs, SEXP *_ret);
 SEXP makeNPVarRef(NPVariant *ref);
 void CopyNPNFunctions(NPNetscapeFuncs *dstFuncs, NPNetscapeFuncs *srcFuncs);
-SEXP MakeNPRefForR(NPVariant *obj);
+SEXP MakeNPRefForR(NPVariant *obj, NPP inst, NPNetscapeFuncs *funcs);
 void MakeRRefForNP(SEXP obj, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret);
 void MakeCopyRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret);
 void CopyS4ToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret);
 void CopyRefClassToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret);
 SEXP CopyNPObjForR(NPVariant *ref, NPP inst, NPNetscapeFuncs *funcs);
+bool CopyNPVarForR(NPVariant *ref, NPP inst, NPNetscapeFuncs *funcs, SEXP *_ret);
 bool RObject_GetProp( RObject *obj, NPIdentifier name, NPNetscapeFuncs *funcs, NPVariant *result, bool check);
 bool IsMissing(SEXP obj, bool nullAlso);
 bool CheckSEXPForJSRef(SEXP obj, NPP inst);
@@ -234,4 +235,8 @@ SEXP doGetVar(NPIdentifier name, NPP inst);
 bool doNamedCall(NPP inst, SEXP fun, const NPVariant *argsIn, uint32_t count, NPVariant *_res, NPNetscapeFuncs *funcs);
 convert_t GetConvertBehavior(NPVariant *var, NPP inst, NPNetscapeFuncs *funcs);
 void ThrowRError(NPObject *obj, NPNetscapeFuncs *funcs);
+bool checkRForNA(SEXP obj);
+void makeNAForNP(int type, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret);
+bool checkNPForNA(NPVariant *var, NPP inst, NPNetscapeFuncs *funcs);
+void makeNAForR(NPObject *obj, NPP inst, NPNetscapeFuncs *funcs, SEXP *_ret);
 #endif // WebR.h

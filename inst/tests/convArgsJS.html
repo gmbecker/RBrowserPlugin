@@ -34,7 +34,7 @@
 </script>
 </head>
 <body>
-    <embed id="REngine" type="application/test-r" width="0" height="0"></embed>
+    <embed id="REngine" type="application/r" width="0" height="0"></embed>
 Due to how JavaScript values are passed to the plugin, it seems impossible for my code to detect the _convert property on core types (Number, Integer, String, Boolean). In practice this seems ok since these are scalar values so passing them by reference would be somewhat silly and a custom converter seems like overkill.
 <br/>
 <input type="button"  onclick="dotest();"/><br/>

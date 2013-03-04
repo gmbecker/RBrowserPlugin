@@ -278,3 +278,10 @@ raphStrWidth = function(txt, paper, size)
     txt$remove()
     ret
   }
+
+setGeneric("attr", standardGeneric("attr"))
+setMethod("attr", c(el="list"),
+          function(el, ...) lapply(el, function(x) attr(x,...)))setMethod("attr", c(el="JSRaphaelRef"),
+          function(el, ...) el$attr(...))
+setMethod("attr", c(el="ANY"),
+          function(el, ...) stop(paste("Cannot call attr on element of class", class(el))))
