@@ -1,0 +1,50 @@
+<html>
+  <head>
+
+<script type="text/javascript" src="../javascript/raphael.js"> </script>
+<script type="text/R">
+  returnNAs = function()
+  {
+  char = character(1)
+  char[1] = NA
+  logic = NA
+  int = 5L
+  int[1] = NA
+  dbl = 5.2
+  dbl[1] = NA
+  list(logic, int, dbl, char)
+}
+
+  checkNAs = function(l)
+  {
+    return(all(sapply(l, is.na)) & all(sapply(l, class) == c("logical", "integer", "numeric", "character")) )
+
+  }
+
+</script>
+  <script type="text/javascript">
+       
+    function dotest()
+    {
+
+    var tmp = R.returnNAs();
+    var success = R.checkNAs(tmp);
+    if(success)
+    document.getElementById("divout").innerHTML = "success!";
+    else 
+    document.getElementById("divout").innerHTML = "conversion failed";
+    }
+</script>
+</head>
+<body>
+    <embed id="REngine" type="application/r" width="0" height="0"></embed>
+
+<br/>
+<p>Press button to test if NA values of all four types (logical, integer, numeric, and character) can be passed to Javascript then back into R and understood as NA values with the correct class:
+</p>
+<input type="button"  onclick="dotest();"/><br/>
+
+<div id="divout"></div>
+
+</body>
+</html>

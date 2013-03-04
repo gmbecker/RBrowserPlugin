@@ -553,10 +553,17 @@ SEXP MakeNPRefForR(NPVariant *ref, NPP inst, NPNetscapeFuncs *funcs)
     {
       makeNAForR(ref->value.objectValue, inst, funcs, &ans);
       UNPROTECT(1);
-    } 
+    }  
+  else if (checkNPForRObj(ref, inst, funcs)) 
+    {
+      fprintf(stderr, "\nRObject (or subclass) detected. Extracting original SEXP\n");fflush(stderr);
+      UNPROTECT(1);
+      return ((RObject *) ref->value.objectValue)->object;
+    }
+  
   else 
     {
-
+      
       SEXP klass, Rptr;
       PROTECT( klass = MAKE_CLASS( "JSValueRef" ) );
       ans = NEW( klass ) ;
@@ -579,7 +586,12 @@ bool CopyNPVarForR(NPVariant *ref, NPP inst, NPNetscapeFuncs *funcs, SEXP *_ret)
       makeNAForR(ref->value.objectValue, inst, funcs, _ret);
       return true;
     }
-  
+   else if (checkNPForRObj(ref, inst, funcs)) 
+    {
+      fprintf(stderr, "\nRObject (or subclass) detected. Extracting original SEXP\n");fflush(stderr);
+      
+      return ((RObject *) ref->value.objectValue)->object;
+    }
   switch(ref->type)
     {
     case NPVariantType_Void:
@@ -929,4 +941,27 @@ void makeNAForR(NPObject *obj, NPP inst, NPNetscapeFuncs *funcs, SEXP *_ret)
       *_ret = ScalarInteger(NA_INTEGER);
       break;
     }
+}
+
+bool checkNPForRObj(NPVariant *var, NPP inst, NPNetscapeFuncs *funcs)
+{
+  if(!NPVARIANT_IS_OBJECT(*var))
+    return false;
+  else
+    {
+
+    	  NPObject *inObject = var->value.objectValue;
+	  
+	  //check if it is an R object.
+	  NPVariant isRObject;
+	  bool tmp = funcs->getproperty(inst, inObject, funcs->getstringidentifier("isRObject"), &isRObject);
+	  return (tmp && NPVARIANT_IS_BOOLEAN(isRObject) && isRObject.value.boolValue);
+	 
+    }
+  /*   {
+       fprintf(stderr, "\nRObject (or subclass) detected. Extracting original SEXP\n");fflush(stderr);
+       *_ret = ((RObject *) inObject)->object;
+	      canfree = 1;
+	      
+  */
 }

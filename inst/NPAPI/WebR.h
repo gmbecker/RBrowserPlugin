@@ -239,4 +239,5 @@ bool checkRForNA(SEXP obj);
 void makeNAForNP(int type, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret);
 bool checkNPForNA(NPVariant *var, NPP inst, NPNetscapeFuncs *funcs);
 void makeNAForR(NPObject *obj, NPP inst, NPNetscapeFuncs *funcs, SEXP *_ret);
+bool checkNPForRObj(NPVariant *var, NPP inst, NPNetscapeFuncs *funcs);
 #endif // WebR.h
