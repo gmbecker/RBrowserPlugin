@@ -279,9 +279,19 @@ raphStrWidth = function(txt, paper, size)
     ret
   }
 
-setGeneric("attr", standardGeneric("attr"))
-setMethod("attr", c(el="list"),
-          function(el, ...) lapply(el, function(x) attr(x,...)))setMethod("attr", c(el="JSRaphaelRef"),
-          function(el, ...) el$attr(...))
-setMethod("attr", c(el="ANY"),
-          function(el, ...) stop(paste("Cannot call attr on element of class", class(el))))
+setGeneric("raphAttr", function(el, name, ...) standardGeneric("raphAttr"))
+setMethod("raphAttr", c(el="list"), 
+          function(el, name, ...) lapply(el, function(x) attr(x,name)))
+setMethod("raphAttr", c(el="JSRaphaelRef"),
+          function(el, name, ...) el$attr(name))
+setMethod("raphAttr", c(el="ANY"),
+          function(el, name, ...) stop(paste("Cannot call raphAttr on element of class", class(el))))
+
+setGeneric("raphAttr<-", function(el, name,value,  ...) standardGeneric("raphAttr<-"))
+setMethod("raphAttr<-", c(el="list"), 
+          function(el, name, value, ...) lapply(el, function(x, ...) x$attr(name,value, ...), ...))
+setMethod("raphAttr<-", c(el="JSRaphaelRef"),
+          function(el, name, value, ...) x$attr(name, value, ...))
+setMethod("raphAttr<-", c(el="ANY"),
+          function(el, name, value) stop(paste("Cannot call raphAttr<- on element of class", class(el))))
+

@@ -119,7 +119,8 @@ removePageElement = function(id, object=NULL)
 #    TRUE
 #  }
 
-setGeneric("addEventListener")
+setGeneric("addEventListener", function(target, event, rfun) standardGeneric("addEventListener"))
+
 setMethod("addEventListener", c(target = "JSRaphaelRef"),
           function(target, event, rfun)
           {
