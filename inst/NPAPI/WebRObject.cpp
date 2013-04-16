@@ -1049,7 +1049,7 @@ bool RSubsettableObject::HasProperty(NPIdentifier name)
       if(this->funcs->identifierisstring(name))
 	SETCAR(ptr, ScalarString(mkChar(this->funcs->utf8fromidentifier(name))));
       else
-	SETCAR(ptr, ScalarInteger(this->funcs->intfromidentifier(name)));
+	SETCAR(ptr, ScalarInteger(this->funcs->intfromidentifier(name)+1)); //+1 because JS indexing starts at 0, but R indexing starts at 1
       PROTECT(ans = rQueue.requestRCall(call, R_GlobalEnv, &error, this->instance));
 
       if(!error)

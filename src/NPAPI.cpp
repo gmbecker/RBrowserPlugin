@@ -95,7 +95,8 @@ SEXP R_NPAPI_Invoke(SEXP plug, SEXP Robj, SEXP Rname, SEXP Rargs, SEXP RconvArgs
     }
     
   SEXP ans;
-  PROTECT(ans = R_NilValue);
+  //PROTECT(ans = R_NilValue);
+  PROTECT(ans = NEW_INTEGER(1));
   bool canfree = ConvertNPToR(ret, inst, funcs, convRet, &ans);
   bool keepRes = LOGICAL(RkeepRes)[0];
   if(canfree || !keepRes)

@@ -45,9 +45,12 @@
 #include "npapi.h"
 #include "npfunctions.h"
 #include <npruntime.h>
+extern "C" {
 #include <stdio.h>
+}
 //#include "pthread.h"
 
+#define USE_R_INTERNALS 1
 
 
 #ifndef _WIN32
@@ -55,17 +58,26 @@
 #endif
 
 #ifndef XP_MACOSX
+extern "C" {
 #include <R.h>
 #include <Rdefines.h>
 #include <Rembedded.h>
+}
 #ifdef XP_UNIX
+extern "C" {
 #include <Rinterface.h>
+#include <Rinternals.h>
+}
 #endif
 #else
+extern "C" {
 #include <R/R.h>
 #include <R/Rdefines.h>
 #include <R/Rembedded.h>
 #include <R/Rinterface.h>
+#include <R/Rinternals.h>
+}
+
 #endif
 
 typedef enum convert_behavior {

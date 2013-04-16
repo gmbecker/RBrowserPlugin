@@ -257,12 +257,11 @@ bool WebREngine::HasProperty(NPIdentifier name)
 
 bool WebREngine::GetProperty(NPIdentifier name, NPVariant *result)
 {
-  bool ret;  
+  bool ret = true;  
   if(name == myNPNFuncs->getstringidentifier("serving"))
     {
       INT32_TO_NPVARIANT(rQueue.serving, *result);
-      ret = 1;
-    }
+     }
   else
     {
 
@@ -270,13 +269,14 @@ bool WebREngine::GetProperty(NPIdentifier name, NPVariant *result)
       SEXP val;
       PROTECT(val = doGetVar(name, this->instance));
       
+      if(val == R_UnboundValue)
+	ret = false;
      
       
       if(TYPEOF(val) == CLOSXP)
-	ret =  ConvertRToNP(val, this->instance, myNPNFuncs, result, CONV_DEFAULT);
+	ConvertRToNP(val, this->instance, myNPNFuncs, result, CONV_DEFAULT);
       else
-	
-	ret =  ConvertRToNP(val, this->instance, myNPNFuncs, result, CONV_DEFAULT) ;
+	ConvertRToNP(val, this->instance, myNPNFuncs, result, CONV_DEFAULT) ;
       UNPROTECT(1);
     }
   return ret;

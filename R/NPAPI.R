@@ -25,15 +25,16 @@ NP_Invoke = function(...,
         else
           NA
       }, convArgsEnum, convertArgs)
+
     if(is.function(convertRet))
-      convRetEnum = getConvEnum("custom")
+      convRetEnum = getConvEnum("reference") #we apply our custom converter in R after the value is returned!!!
     else
       convRetEnum = getConvEnum(convertRet)  
 
     ret = .Call("R_NPAPI_Invoke", plug, obj, name, args, convArgsEnum, convArgsFuns, convRetEnum, keepResult)
     if(is.function(convertRet))
       {
-        print("convertRet function detected!")
+        print("applying custom convertRet function in R.")
         ret = convertRet(ret)
       }
     ret

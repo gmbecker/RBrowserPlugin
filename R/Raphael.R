@@ -48,7 +48,7 @@ raphaelCDev = function(id = "raph_content", dim = c(400, 400), storage = new.env
     assign("paper", tmp, env = storage)
     print("Raphael C device paper created")
     .Call("R_GD_raphaelDevice", storage, PluginInstance, as.integer(dim))
-        assign("devnum", dev.cur(), storage)
+    assign("devnum", dev.cur(), storage)
     list(getPoints = function() get("points", storage),
          getLines = function() get("lines", storage),
          getPolyLines = function() get("polylines", storage),

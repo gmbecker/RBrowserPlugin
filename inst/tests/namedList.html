@@ -16,6 +16,8 @@
   document.getElementById("divout").innerHTML =  "res: " + res;
   document.getElementById("divout2").innerHTML =  "res.b: " + res.b;
   document.getElementById("divout3").innerHTML = "res[0]: " + res[0];
+   document.getElementById("divout4").innerHTML = "res[1]: " + res[1];
+  document.getElementById("divout5").innerHTML = "res[5] (out of bounds): " + res[5];
   }
 </script>
 </head>
@@ -26,5 +28,7 @@ Press the button to test default marshalling mechanics of named R lists
 <div id="divout"></div>
 <div id="divout2"></div>
 <div id="divout3"></div>
+<div id="divout4"></div>
+<div id="divout5"></div>
 </body>
 </html>

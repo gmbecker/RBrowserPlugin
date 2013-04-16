@@ -2,67 +2,70 @@
 
 bool ConvertRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret, convert_t convRes)
 {
-
+  fprintf(stderr, "Entering ConvertRToNP\n");fflush(stderr);
 //If it is a promise we need the actual value.  
   int err = 0;
   int numprot = 0;
+  bool canfree;
   if(TYPEOF(val) == PROMSXP)
     {
       PROTECT(val = rQueue.requestRCall(val, R_GlobalEnv, &err, inst));
-      numprot = 1;
+      numprot++;
     }
   //Is it already a reference to an existing NP/JS object? If so just return that object!
   if (CheckSEXPForJSRef(val, inst))
     {
-      //XXX We shouldn't have to copy here, but do we really want to pass in double pointers?
+     
       *ret = *(NPVariant *) R_ExternalPtrAddr(GET_SLOT( val , Rf_install( "ref" ) ) );
-      return true;
-    }
-
-  if(convRes == CONV_COPY)
+      canfree = true;
+    } 
+  else if(convRes == CONV_COPY)
     {
       MakeCopyRToNP(val, inst, funcs, ret);
-      return true;
+      canfree =  true;
     }
-  if(convRes == CONV_REF || convRes == CONV_CUSTOM)
+  else if(convRes == CONV_REF || convRes == CONV_CUSTOM)
     {
       MakeRRefForNP(val, inst, funcs, ret);
-      return true;
+      canfree = false;
     }
+  else if (convRes == CONV_DEFAULT)
+    {
  
-  // I don't think we need this check here, it happens in MakeCopyRToNP.
-  // if(checkRForNA(val))
-  // {
-  //    makeNAForNP(TYPEOF(val), ret);
-  //   return true;
-  // }
-  //Default marshalling behavior
-  switch(TYPEOF(val))
-    {
-    case NILSXP:
-      break;
-    case CHARSXP:
-      MakeCopyRToNP(val, inst, funcs, ret);
-      break;
-    case REALSXP:
-    case INTSXP:
-    case LGLSXP:
-    case STRSXP:
-      if(LENGTH(val) <= 1)
-	MakeCopyRToNP(val, inst, funcs, ret);
-      else
-	MakeRRefForNP(val, inst, funcs, ret);
-      break;
-    case CLOSXP:
-    case S4SXP:
-    case VECSXP:
-    default:
-      MakeRRefForNP(val, inst, funcs, ret);
-      break;
+      //Default marshalling behavior
+      canfree = false;
+      switch(TYPEOF(val))
+	{
+	case NILSXP:
+	  break;
+	case CHARSXP:
+	  MakeCopyRToNP(val, inst, funcs, ret);
+	  canfree = true;
+	  break;
+	case REALSXP:
+	case INTSXP:
+	case LGLSXP:
+	case STRSXP:
+	  if(LENGTH(val) <= 1)
+	    {
+	      MakeCopyRToNP(val, inst, funcs, ret);
+	      canfree = true;
+	    }
+	  else
+	    MakeRRefForNP(val, inst, funcs, ret);
+	  break;
+	case CLOSXP:
+	case S4SXP:
+	case VECSXP:
+	default:
+	  MakeRRefForNP(val, inst, funcs, ret);
+	  break;
+	}
     }
   if(numprot)
-    UNPROTECT(1);
-  return true;
+    UNPROTECT(numprot);
+  fprintf(stderr, "Leaving ConvertRToNP\n");fflush(stderr);
+  return canfree;
 }
 
 void MakeCopyRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret)
@@ -716,62 +719,65 @@ void MakeRRefForNP(SEXP obj, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret)
 	R_PreserveObject(retobj->object);
 	OBJECT_TO_NPVARIANT(retobj, *ret);
       }
-    } 
-  switch(TYPEOF(ans))
-    {
-    case CLOSXP:
-      // if (TYPEOF(ans) == CLOSXP)
-    {
-      RFunction *retobj;
-      retobj = (RFunction *) funcs->createobject(inst, &RFunction::_npclass);
-      funcs->retainobject(retobj);
-      retobj->object = ans;
-      retobj->funcs = funcs;
-      R_PreserveObject(retobj->object);
-      OBJECT_TO_NPVARIANT(retobj, *ret);
-      break;
-    }
-    case LGLSXP:
-    case INTSXP:
-    case REALSXP:
-    case STRSXP:
-      {
-	RVector *retobj;
-	retobj = (RVector *) funcs->createobject(inst, &RVector::_npclass);
-	funcs->retainobject(retobj);
-	retobj->object = ans;
-	retobj->funcs = funcs;
-	R_PreserveObject(retobj->object);
-	//retobj->vecType = TYPEOF(ans);
-	OBJECT_TO_NPVARIANT(retobj, *ret);
-	
-	break;
-      }
       
-    case VECSXP:
+    } else {
+    
+    switch(TYPEOF(ans))
       {
-	RList *retobj;
-	retobj = (RList *) funcs->createobject(inst, &RList::_npclass);
-	funcs->retainobject(retobj);
-	retobj->object = ans;
-	retobj->funcs = funcs;
-	R_PreserveObject(retobj->object);
-	OBJECT_TO_NPVARIANT(retobj, *ret);
+      case CLOSXP:
+	// if (TYPEOF(ans) == CLOSXP)
+	{
+	  RFunction *retobj;
+	  retobj = (RFunction *) funcs->createobject(inst, &RFunction::_npclass);
+	  funcs->retainobject(retobj);
+	  retobj->object = ans;
+	  retobj->funcs = funcs;
+	  R_PreserveObject(retobj->object);
+	  OBJECT_TO_NPVARIANT(retobj, *ret);
+	  break;
+	}
+      case LGLSXP:
+      case INTSXP:
+      case REALSXP:
+      case STRSXP:
+	{
+	  RVector *retobj;
+	  retobj = (RVector *) funcs->createobject(inst, &RVector::_npclass);
+	  funcs->retainobject(retobj);
+	  retobj->object = ans;
+	  retobj->funcs = funcs;
+	  R_PreserveObject(retobj->object);
+	  //retobj->vecType = TYPEOF(ans);
+	  OBJECT_TO_NPVARIANT(retobj, *ret);
+	  
+	  break;
+	}
 	
-	break;
+      case VECSXP:
+	{
+	  RList *retobj;
+	  retobj = (RList *) funcs->createobject(inst, &RList::_npclass);
+	  funcs->retainobject(retobj);
+	  retobj->object = ans;
+	  retobj->funcs = funcs;
+	  R_PreserveObject(retobj->object);
+	  OBJECT_TO_NPVARIANT(retobj, *ret);
+	  
+	  break;
+	}
+	
+      default:
+	{
+	  RObject *retobj;
+	  retobj = (RObject *) funcs->createobject(inst, &RObject::_npclass);
+	  funcs->retainobject(retobj);
+	  retobj->object = ans;
+	  retobj->funcs = funcs;
+	  R_PreserveObject(retobj->object);
+	  OBJECT_TO_NPVARIANT(retobj, *ret);
+	}
       }
-      
-    default:
-      {
-	RObject *retobj;
-	retobj = (RObject *) funcs->createobject(inst, &RObject::_npclass);
-	funcs->retainobject(retobj);
-	retobj->object = ans;
-	retobj->funcs = funcs;
-	R_PreserveObject(retobj->object);
-	OBJECT_TO_NPVARIANT(retobj, *ret);
-      }
-    }
+  }
   return;
 }
 
