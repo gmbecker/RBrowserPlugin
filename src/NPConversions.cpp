@@ -20,9 +20,8 @@ bool ConvertRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret, co
       //XXX We shouldn't have to copy here, but do we really want to pass in double pointers?
       *ret = *(NPVariant *) R_ExternalPtrAddr(GET_SLOT( val , Rf_install( "ref" ) ) );
       canfree = true;
-    }
-
-  if(convRes == CONV_COPY)
+    } 
+  else if(convRes == CONV_COPY)
     {
       MakeCopyRToNP(val, inst, funcs, ret);
       canfree =  true;

@@ -1,0 +1,24 @@
+<html>
+  <head>
+    <script type="text/R">
+     div1 = addPageElement(parent = "div0",id="div1", attributes = list(style="background-color:red;width:500px;height:500px"))
+     addPageElement(parent = div1, attributes=list(style="background-color:green;width:200px;height:300px;"))
+      addPageElement(id="div3", attributes=list(style="background-color:purple;width:200px;height:300px;"))
+    </script>
+    <script>
+      function jstest()
+      {
+        var body = document.body;
+        var newdiv = document.createElement("div");
+        newdiv.id = "divneg1";
+        newdiv.setAttribute("style", "background-color:yellow;width:100px;height:100px;")
+        body.appendChild(newdiv);
+}
+      window.addEventListener("load", jstest);
+    </script>
+  </head>
+  <body>
+    <div id="div0"></div>
+    <embed type="application/r" width="0" height="0"/>
+  </body>
+</html>

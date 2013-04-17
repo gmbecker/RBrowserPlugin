@@ -1,0 +1,29 @@
+<html>
+  <head>
+    <script type="text/R">
+      div = getPageElement("div0")
+      jsProperty(div, "innerHTML") = "stuff1"
+      print(div)
+      div[["innerHTML"]] = "now there is some text here!"
+      newdiv = JS[["document"]]$createElement("div")
+      print(div)
+      #doc = JS[["document"]]
+      #doc$importNode(newdiv, TRUE)
+      div$appendChild(newdiv)
+      #JS$doappend(div, newdiv)
+    </script>
+    <script>
+      function doappend(targ, newel)
+      {
+        var div = document.getElementById("div0");
+        div.innerHTML = newel.toString();
+        targ.appendChild(newel);
+      
+      }
+    </script>
+  </head>
+  <body>
+    <div id="div0"></div>
+    <embed type="application/r" width="0" height="0"/>
+  </body>
+</html>

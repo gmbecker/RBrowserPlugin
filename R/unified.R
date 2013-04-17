@@ -117,16 +117,14 @@ addPageElement = function(parent = NULL, type="div", id=NULL, attributes = list(
       {
         parent = doc[["body"]]
       }
-    el = doc$createElement(type, )
-    print("el$setAttribute")
-    print(el$setAttribute)
+    el = doc$createElement(type )
+ 
     if(!is.null(id))
       el$setAttribute("id", id)
     if(length(attributes))
       mapply(function(nm, at) el$setAttribute(nm, at), nm = names(attributes), at = attributes)
 
-    print(el)
-    print(parent$appendChild)
+ 
     parent$appendChild(el)
 }    
 
@@ -256,7 +254,7 @@ setMethod("$", "JSValueRef",
 
                 callJavaScript(object = x,name =  name, ... , multipleArgs = multipleArgs, keepResult = keepResult, convertRet = convertRet, convertArgs = convertArgs)
               }
-            attr(fun, "NPRef") <- x[[name]]
+#            attr(fun, "NPRef") <- x[[name]]
             fun
           }
           )
