@@ -66,8 +66,28 @@ int initR( const char **args, int nargs)
 
   if(!getenv("R_HOME"))
     {
-      fprintf(stderr, "\nR_HOME was not set. using /usr/lib64/R\n");fflush(stderr);
-      putenv("R_HOME=/usr/lib64/R");
+#ifdef XP_UNIX
+      fprintf(stderr, "\nR_HOME was not set. Checking usual places for R installation\n");fflush(stderr);
+      FILE *tmp = fopen("/usr/lib64/R/bin/R", "r");
+      if(tmp)
+	{
+	  putenv("R_HOME=/usr/lib64/R");
+	  fprintf(stderr, "Using R installation found at /usr/lib64/R");fflush(stderr);
+	  fclose(tmp);
+	}
+      else
+	{
+	  tmp = fopen("/usr/lib/R/bin/R", "r");
+	  if(tmp)
+	    {
+	      putenv("R_HOME=/usr/lib/R");
+	      fprintf(stderr, "Using R installation found at /usr/lib/R");fflush(stderr);
+	      fclose(tmp);
+	    } else {
+	    fprintf(stderr, "No R installation found at /usr/lib64/R or /usr/lib/R");fflush(stderr);
+	  }
+	}
+#endif
       //      putenv("R_HOME=c:/R64");
     }
   Rf_initEmbeddedR(nargs, rargs);
