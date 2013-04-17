@@ -2,7 +2,7 @@
 
 bool ConvertRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret, convert_t convRes)
 {
-  fprintf(stderr, "Entering ConvertRToNP\n");fflush(stderr);
+  //fprintf(stderr, "Entering ConvertRToNP\n");fflush(stderr);
 //If it is a promise we need the actual value.  
   int err = 0;
   int numprot = 0;
@@ -64,7 +64,7 @@ bool ConvertRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret, co
     }
   if(numprot)
     UNPROTECT(numprot);
-  fprintf(stderr, "Leaving ConvertRToNP\n");fflush(stderr);
+  //fprintf(stderr, "Leaving ConvertRToNP\n");fflush(stderr);
   return canfree;
 }
 
@@ -128,7 +128,7 @@ void MakeCopyRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret)
 	  {
 
 	      const char *fromR = CHAR(val);
-	      fprintf(stderr, "\nProcessing CHARSXP: %s\n", fromR);fflush(stderr);
+	      //fprintf(stderr, "\nProcessing CHARSXP: %s\n", fromR);fflush(stderr);
 	      //+1 for the null termination char
 	      int len = strlen(fromR) + 1;
 	      char *dat = (char *) funcs->memalloc(len*sizeof(char));
@@ -137,7 +137,7 @@ void MakeCopyRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret)
 	  }
 	case CLOSXP:
 	  {
-	    fprintf(stderr, "\nConverting R function to JavaScript function.");fflush(stderr);
+	    //fprintf(stderr, "\nConverting R function to JavaScript function.");fflush(stderr);
 	    NPObject *domwin = NULL;
 	    NPError res;
 	    res = funcs->getvalue(inst, NPNVWindowNPObject , &domwin);
@@ -666,7 +666,7 @@ SEXP CopyNPObjForR(NPVariant *ref, NPP inst, NPNetscapeFuncs *funcs)
   NPIdentifier *ids;
   NPObject *obj = ref->value.objectValue;
   NPVariant curprop;
-  bool success = myNPNFuncs->enumerate(inst, obj, &ids, &idcount);
+  bool success = funcs->enumerate(inst, obj, &ids, &idcount);
   SEXP ans, tmp, names;
   PROTECT(ans = allocVector(VECSXP, idcount));
   PROTECT(names = allocVector(STRSXP, idcount));
@@ -674,10 +674,10 @@ SEXP CopyNPObjForR(NPVariant *ref, NPP inst, NPNetscapeFuncs *funcs)
   for(int i =0; i < idcount; i++)
     {
       
-      myNPNFuncs->getproperty(inst, obj, ids[i], &curprop);
-      ConvertNPToR(&curprop, inst, myNPNFuncs, CONV_DEFAULT, &tmp);
+      funcs->getproperty(inst, obj, ids[i], &curprop);
+      ConvertNPToR(&curprop, inst, funcs, CONV_DEFAULT, &tmp);
       SET_ELEMENT(ans, i, tmp);
-      SET_STRING_ELT(names, i, mkChar(myNPNFuncs->utf8fromidentifier(ids[i])));
+      SET_STRING_ELT(names, i, mkChar(funcs->utf8fromidentifier(ids[i])));
     }
   SET_NAMES(ans, names);
   UNPROTECT(3);
@@ -856,12 +856,11 @@ convert_t GetConvertBehavior(NPVariant *var, NPP inst, NPNetscapeFuncs *funcs)
       break;
     case NPVariantType_String:
       {
-      NPString str = var->value.stringValue;
-      if(strncmp(str.UTF8Characters, "default", str.UTF8Length))
-	ret = CONV_DEFAULT;
-      else if (strncmp(str.UTF8Characters, "reference", str.UTF8Length))
+      NPString str = curprop.value.stringValue;
+      ret = CONV_DEFAULT;
+      if (strncmp(str.UTF8Characters, "reference", str.UTF8Length)==0)
 	ret = CONV_REF;
-      else if (strncmp(str.UTF8Characters, "copy", str.UTF8Length))
+      else if (strncmp(str.UTF8Characters, "copy", str.UTF8Length)==0)
 	ret = CONV_COPY;
       break;
       }     
@@ -879,8 +878,8 @@ convert_t GetConvertBehavior(NPVariant *var, NPP inst, NPNetscapeFuncs *funcs)
 
 bool checkRForNA(SEXP obj)
 {
-  fprintf(stderr, "\nIn checkRForNA! R object is:");fflush(stderr);
-  Rf_PrintValue(obj);
+  //fprintf(stderr, "\nIn checkRForNA! R object is:");fflush(stderr);
+  //Rf_PrintValue(obj);
   bool ret = false;
   if(LENGTH(obj) != 1)
     return ret;

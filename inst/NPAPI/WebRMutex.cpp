@@ -164,10 +164,10 @@ void RCallQueue::waitInQueue(int32_t spot)
 void RCallQueue::advanceQueue(int32_t spot)
 {
   
-  fprintf(stderr, "\nDone serving spot %ld. LastInQueue:%ld", spot, this->lastInQueue);fflush(stderr);
+  //fprintf(stderr, "\nDone serving spot %ld. LastInQueue:%ld", spot, this->lastInQueue);fflush(stderr);
   if(this->lastInQueue == spot)
     {
-      fprintf(stderr, "....Clearing Queue");fflush(stderr);
+      //fprintf(stderr, "....Clearing Queue");fflush(stderr);
       this->serving = 1;
       this->lastInQueue = 0;
       this->unlock();
@@ -178,7 +178,7 @@ void RCallQueue::advanceQueue(int32_t spot)
     
 
   }
-  fprintf(stderr, "\nUnlocking queue to serve %ld", this->serving); fflush(stderr);
+  //fprintf(stderr, "\nUnlocking queue to serve %ld", this->serving); fflush(stderr);
   //  pthread_mutex_unlock(&rMutex);
   /*
   pthread_mutex_lock(&queueMutex);
@@ -256,7 +256,7 @@ void ThrowRError(NPObject *obj, NPNetscapeFuncs *funcs)
       int len = strlen(CHAR(STRING_ELT(errsxp, 0)));
       NPUTF8 *errmsg = (NPUTF8 *) malloc(len*sizeof(char));
       strcpy(errmsg, CHAR(STRING_ELT(errsxp, 0)));
-      fprintf(stderr, "attemtping to throw JS exception. Err msg: %s", errmsg);fflush(stderr);
+      //fprintf(stderr, "attemtping to throw JS exception. Err msg: %s", errmsg);fflush(stderr);
       funcs->setexception(obj, errmsg);
       UNPROTECT(2);
 

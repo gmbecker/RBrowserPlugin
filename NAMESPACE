@@ -6,7 +6,7 @@ useDynLib(RBrowserPlugin)
 exportClasses("JSValueRef", "NPNFunctionsRef", "PluginInstance")
 exportPattern(".*")
 
-exportMethods("coerce")
+#exportMethods("coerce")
 #exportClasses("nsPIDOMWindow")
 
 

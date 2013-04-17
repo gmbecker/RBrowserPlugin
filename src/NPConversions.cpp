@@ -4,7 +4,7 @@ RCallQueue rQueue;
 
 bool ConvertRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret, convert_t convRes)
 {
-  fprintf(stderr, "In package version of ConvertRToNP\n");fflush(stderr);
+  //fprintf(stderr, "In package version of ConvertRToNP\n");fflush(stderr);
 //If it is a promise we need the actual value.  
   int err = 0;
   int numprot = 0;
@@ -131,7 +131,7 @@ void MakeCopyRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret)
 	  {
 
 	      const char *fromR = CHAR(val);
-	      fprintf(stderr, "\nProcessing CHARSXP: %s\n", fromR);fflush(stderr);
+	      //fprintf(stderr, "\nProcessing CHARSXP: %s\n", fromR);fflush(stderr);
 	      //+1 for the null termination char
 	      int len = strlen(fromR) + 1;
 	      char *dat = (char *) funcs->memalloc(len*sizeof(char));
@@ -140,7 +140,7 @@ void MakeCopyRToNP(SEXP val, NPP inst, NPNetscapeFuncs *funcs, NPVariant *ret)
 	  }
 	case CLOSXP:
 	  {
-	    fprintf(stderr, "\nConverting R function to JavaScript function.");fflush(stderr);
+	    //fprintf(stderr, "\nConverting R function to JavaScript function.");fflush(stderr);
 	    NPObject *domwin = NULL;
 	    NPError res;
 	    res = funcs->getvalue(inst, NPNVWindowNPObject , &domwin);
@@ -860,11 +860,10 @@ convert_t GetConvertBehavior(NPVariant *var, NPP inst, NPNetscapeFuncs *funcs)
     case NPVariantType_String:
       {
       NPString str = var->value.stringValue;
-      if(strncmp(str.UTF8Characters, "default", str.UTF8Length))
-	ret = CONV_DEFAULT;
-      else if (strncmp(str.UTF8Characters, "reference", str.UTF8Length))
+      ret = CONV_DEFAULT;
+       if (strncmp(str.UTF8Characters, "reference", str.UTF8Length)==0)
 	ret = CONV_REF;
-      else if (strncmp(str.UTF8Characters, "copy", str.UTF8Length))
+      else if (strncmp(str.UTF8Characters, "copy", str.UTF8Length)==0)
 	ret = CONV_COPY;
       break;
       }     
@@ -882,8 +881,8 @@ convert_t GetConvertBehavior(NPVariant *var, NPP inst, NPNetscapeFuncs *funcs)
 
 bool checkRForNA(SEXP obj)
 {
-  fprintf(stderr, "\nIn checkRForNA! R object is:");fflush(stderr);
-  Rf_PrintValue(obj);
+  // fprintf(stderr, "\nIn checkRForNA! R object is:");fflush(stderr);
+  //Rf_PrintValue(obj);
   bool ret = false;
   if(LENGTH(obj) != 1)
     return ret;

@@ -174,13 +174,13 @@ static void Raphael_Path(double *x, double *y,
                       Rboolean winding,
                       const pGEcontext gc,
                       pDevDesc dev) {
-  fprintf(stderr, "\nIn Raphael_Path\n");fflush(stderr);
+  //fprintf(stderr, "\nIn Raphael_Path\n");fflush(stderr);
 }
 static void Raphael_Polyline(int n, double *x, double *y,
                           const pGEcontext gc,
                           pDevDesc dev) {
 
-fprintf(stderr, "\nIn Raphael_Polyline\n");fflush(stderr);
+  //fprintf(stderr, "\nIn Raphael_Polyline\n");fflush(stderr);
   SEXP pap, env, plug;
   SEXP *spec = (SEXP *)dev->deviceSpecific;
   PROTECT(env = (SEXP) spec[0]);
@@ -228,14 +228,14 @@ fprintf(stderr, "\nIn Raphael_Polyline\n");fflush(stderr);
 static void Raphael_Polygon(int n, double *x, double *y,
                          const pGEcontext gc,
                          pDevDesc dev) {
-  fprintf(stderr, "\nIn Raphael_Polygon\n");fflush(stderr);
+  //fprintf(stderr, "\nIn Raphael_Polygon\n");fflush(stderr);
   Raphael_Polyline(n, x, y, gc, dev);
 }
 
 static void Raphael_Rect(double x0, double y0, double x1, double y1,
                       const pGEcontext gc,
                       pDevDesc dev) {
-fprintf(stderr, "\nIn Raphael_Rect\n");fflush(stderr);
+  //fprintf(stderr, "\nIn Raphael_Rect\n");fflush(stderr);
   SEXP pap, env, plug;
   SEXP *spec = (SEXP *)dev->deviceSpecific;
   PROTECT(env = (SEXP) spec[0]);
