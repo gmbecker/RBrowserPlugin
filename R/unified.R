@@ -42,6 +42,7 @@ evalJavaScript = function(script, scope = getGlobalJSObject(), keepResult = TRUE
 
 'jsProperty<-' = function(object, name, value, convertValue = "default")
   {
+    print(paste("in jsProperty<-, class of object is", class(object)))
     if(length(name) > 1)
       {
         for(i in seq(along=name))
@@ -56,7 +57,9 @@ evalJavaScript = function(script, scope = getGlobalJSObject(), keepResult = TRUE
         #NPAPI property set code goes here
         NP_SetProperty(obj = object, name = name, value = value, convertValue = convertValue)
       }
-    object
+    print(paste("leaving jsProperty<-, class of object is", class(object)))
+    #object
+    return(object)
   }
 
 jsProperty = function(object, name, convertRet = "default")
@@ -96,11 +99,37 @@ getPageElement = function(id, convertRet = "default")
     
   }
 
-
-addPageElement = function(parent, type, id, properties = list())
+addTextNode = function(parent = NULL, content = "hello world!")
   {
-    TRUE
+    doc = JS[["document"]]
+    if(is.null(parent))
+      parent = doc
+    tnode = doc$createTextNode(content)
+    parent$appendChild(tnode)
   }
+
+addPageElement = function(parent = NULL, type="div", id=NULL, attributes = list())
+  {
+    if(is.character(parent))
+      parent = getPageElement(parent)
+    doc = JS[["document"]]
+    if(is.null(parent))
+      {
+        parent = doc[["body"]]
+      }
+    el = doc$createElement(type, )
+    print("el$setAttribute")
+    print(el$setAttribute)
+    if(!is.null(id))
+      el$setAttribute("id", id)
+    if(length(attributes))
+      mapply(function(nm, at) el$setAttribute(nm, at), nm = names(attributes), at = attributes)
+
+    print(el)
+    print(parent$appendChild)
+    parent$appendChild(el)
+}    
+
 
 removePageElement = function(id, object=NULL)
   {
@@ -178,182 +207,20 @@ setMethod("names", "JSValueRef", function(x)
             TRUE
           })
 
-#Name of arguments???
-#setMethod("[[", "JSValueRef", function(x, i, ...)
-setMethod("[[", c("JSValueRef", "character", "missing"), function(x, i, ...)
+setMethod("length", "JSValueRef", function(x)
           {
-            jsProperty(x, i, ...)
+            x[["length"]]
           })
 
-
-setMethod("[[<-", c("JSValueRef", "character", "missing"), function(x, i, ..., value)
-          {
-            jsProperty(x, i, ...) <- value
-          })
-
-#setGeneric("$", function(x, name, ...) standardGeneric("$"))
-#setMethod("$", "JSValueRef",
-setMethod("$", "JSValueRef",
-          function(x, name)
-          {
-
-            #fun = function( ...,  keepResult = TRUE, returnRef = FALSE, convertArgs)
-            fun = function( ...,  keepResult = TRUE, convertRet = "default", convertArgs = NULL)
-              {
-              
-                args = list(...)
-                if(length(args) > 1)
-                  multipleArgs = TRUE
-                else
-                  multipleArgs = FALSE
-
-                callJavaScript(object = x,name =  name, ... , multipleArgs = multipleArgs, keepResult = keepResult, convertRet = convertRet, convertArgs = convertArgs)
-              }
-            attr(fun, "NPRef") <- x[[name]]
-            fun
-          }
-          )
-
-setGeneric("newJSObject", function(obj, ...) standardGeneric("newJSObject"))
-
-setMethod("newJSObject", "character",
-          function(obj, ...)
-          {
-            obj = evalJavaScript(obj)
-            newJSObject(obj, ...)
-          })
-
-setMethod("newJSObject", "JSValueRef",
-          function(obj, ...)
-          {
-            paramlist = c(obj, list(...))
-            fun = switch(length(paramlist),
-                   JS$create0,
-                   JS$create1,
-                   JS$create2,
-                   JS$create3,
-                   JS$create4,
-                   default=stop("Creation of JS objects whose constructors require more than 4 arguments via newJSObject is not currently supported."))
-            do.call(fun, paramlist)
-          })
-            
-
-setMethod("[[", c("JSValueRef", "character", "missing"), function(x, i, ...)
-          {
-            jsProperty(x, i, ...)
-          })
-
-
-setMethod("[[<-", c("JSValueRef", "character", "missing"), function(x, i, ..., value)
-          {
-            jsProperty(x, i, ...) <- value
-          })
-
-#setGeneric("$", function(x, name, ...) standardGeneric("$"))
-#setMethod("$", "JSValueRef",
-setMethod("$", "JSValueRef",
-          function(x, name)
-          {
-
-            #fun = function( ...,  keepResult = TRUE, returnRef = FALSE, convertArgs)
-            fun = function( ...,  keepResult = TRUE, convertRet = "default", convertArgs = NULL)
-              {
-              
-                args = list(...)
-                if(length(args) > 1)
-                  multipleArgs = TRUE
-                else
-                  multipleArgs = FALSE
-
-                callJavaScript(object = x,name =  name, ... , multipleArgs = multipleArgs, keepResult = keepResult, convertRet = convertRet, convertArgs = convertArgs)
-              }
-            attr(fun, "NPRef") <- x[[name]]
-            fun
-          }
-          )
-
-setGeneric("newJSObject", function(obj, ...) standardGeneric("newJSObject"))
-
-setMethod("newJSObject", "character",
-          function(obj, ...)
-          {
-            obj = evalJavaScript(obj)
-            newJSObject(obj, ...)
-          })
-
-setMethod("newJSObject", "JSValueRef",
-          function(obj, ...)
-          {
-            paramlist = c(obj, list(...))
-            fun = switch(length(paramlist),
-                   JS$create0,
-                   JS$create1,
-                   JS$create2,
-                   JS$create3,
-                   JS$create4,
-                   default=stop("Creation of JS objects whose constructors require more than 4 arguments via newJSObject is not currently supported."))
-            do.call(fun, paramlist)
-          })
             
 setMethod("[[", c("JSValueRef", "character", "missing"), function(x, i, ...)
           {
             jsProperty(x, i, ...)
           })
 
-
-setMethod("[[<-", c("JSValueRef", "character", "missing"), function(x, i, ..., value)
+setMethod("[[", c("JSValueRef", "numeric", "missing"), function(x, i, ...)
           {
-            jsProperty(x, i, ...) <- value
-          })
-
-#setGeneric("$", function(x, name, ...) standardGeneric("$"))
-#setMethod("$", "JSValueRef",
-setMethod("$", "JSValueRef",
-          function(x, name)
-          {
-
-            #fun = function( ...,  keepResult = TRUE, returnRef = FALSE, convertArgs)
-            fun = function( ...,  keepResult = TRUE, convertRet = "default", convertArgs = NULL)
-              {
-              
-                args = list(...)
-                if(length(args) > 1)
-                  multipleArgs = TRUE
-                else
-                  multipleArgs = FALSE
-
-                callJavaScript(object = x,name =  name, ... , multipleArgs = multipleArgs, keepResult = keepResult, convertRet = convertRet, convertArgs = convertArgs)
-              }
-            attr(fun, "NPRef") <- x[[name]]
-            fun
-          }
-          )
-
-setGeneric("newJSObject", function(obj, ...) standardGeneric("newJSObject"))
-
-setMethod("newJSObject", "character",
-          function(obj, ...)
-          {
-            obj = evalJavaScript(obj)
-            newJSObject(obj, ...)
-          })
-
-setMethod("newJSObject", "JSValueRef",
-          function(obj, ...)
-          {
-            paramlist = c(obj, list(...))
-            fun = switch(length(paramlist),
-                   JS$create0,
-                   JS$create1,
-                   JS$create2,
-                   JS$create3,
-                   JS$create4,
-                   default=stop("Creation of JS objects whose constructors require more than 4 arguments via newJSObject is not currently supported."))
-            do.call(fun, paramlist)
-          })
-            
-setMethod("[[", c("JSValueRef", "character", "missing"), function(x, i, ...)
-          {
+            i = as.character(as.integer(i))
             jsProperty(x, i, ...)
           })
 
@@ -361,63 +228,14 @@ setMethod("[[", c("JSValueRef", "character", "missing"), function(x, i, ...)
 setMethod("[[<-", c("JSValueRef", "character", "missing"), function(x, i, ..., value)
           {
             jsProperty(x, i, ...) <- value
+            x
           })
 
-#setGeneric("$", function(x, name, ...) standardGeneric("$"))
-#setMethod("$", "JSValueRef",
-setMethod("$", "JSValueRef",
-          function(x, name)
+setMethod("[[<-", c("JSValueRef", "numeric", "missing"), function(x, i, ..., value)
           {
-
-            #fun = function( ...,  keepResult = TRUE, returnRef = FALSE, convertArgs)
-            fun = function( ...,  keepResult = TRUE, convertRet = "default", convertArgs = NULL)
-              {
-              
-                args = list(...)
-                if(length(args) > 1)
-                  multipleArgs = TRUE
-                else
-                  multipleArgs = FALSE
-
-                callJavaScript(object = x,name =  name, ... , multipleArgs = multipleArgs, keepResult = keepResult, convertRet = convertRet, convertArgs = convertArgs)
-              }
-            attr(fun, "NPRef") <- x[[name]]
-            fun
-          }
-          )
-
-setGeneric("newJSObject", function(obj, ...) standardGeneric("newJSObject"))
-
-setMethod("newJSObject", "character",
-          function(obj, ...)
-          {
-            obj = evalJavaScript(obj)
-            newJSObject(obj, ...)
-          })
-
-setMethod("newJSObject", "JSValueRef",
-          function(obj, ...)
-          {
-            paramlist = c(obj, list(...))
-            fun = switch(length(paramlist),
-                   JS$create0,
-                   JS$create1,
-                   JS$create2,
-                   JS$create3,
-                   JS$create4,
-                   default=stop("Creation of JS objects whose constructors require more than 4 arguments via newJSObject is not currently supported."))
-            do.call(fun, paramlist)
-          })
-            
-setMethod("[[", c("JSValueRef", "character", "missing"), function(x, i, ...)
-          {
-            jsProperty(x, i, ...)
-          })
-
-
-setMethod("[[<-", c("JSValueRef", "character", "missing"), function(x, i, ..., value)
-          {
-            jsProperty(x, i, ...) <- value
+            i = as.character(as.integer(i))
+            ret = jsProperty(x, i, ...) <- value
+            x
           })
 
 #setGeneric("$", function(x, name, ...) standardGeneric("$"))

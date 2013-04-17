@@ -6,7 +6,9 @@ raphaelCDev = function(id = "raph_content", dim = c(400, 400), storage = new.env
     assign("rects", list(), envir=storage)
     assign("polylines", list(), envir=storage)
     assign("texts", list(), envir=storage)
-
+    div = getPageElement(id)
+    if(is.null(div))
+      addPageElement(id=id, attributes = list(style=paste("width:", dim[1], "px; height:", dim[2], "px;")))
     script = paste("Raphael('", id, "',", dim[1], " , ", dim[2], ");", sep="")
     print("Raphael C device attempting to create paper")
     tmp = evalJavaScript(script = script, keepResult = TRUE, convertRet = function(x) as(x, "JSPaperRef"))

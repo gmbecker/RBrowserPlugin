@@ -60,6 +60,7 @@ NP_SetProperty = function( obj = JS, name, value, plug = PluginInstance, convert
   {
     
     .Call("R_NPAPI_SetProperty", plug, obj, name, value, getConvEnum(convertValue))
+    obj
   }
 
 
