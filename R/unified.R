@@ -146,39 +146,55 @@ removePageElement = function(id, object=NULL)
 #    TRUE
 #  }
 
-setGeneric("addEventListener", function(target, event, rfun) standardGeneric("addEventListener"))
+setGeneric("addEventListener", function(target, event, rfun, ...) standardGeneric("addEventListener"))
 
 setMethod("addEventListener", c(target = "JSRaphaelRef"),
-          function(target, event, rfun)
+          function(target, event, rfun, ...)
           {
             if(length(event) > 1)
-              return(sapply(event, function(e) addEventListener(target, e, rfun)))
+              return(sapply(event, function(e) addEventListener(target, e, rfun, ...)))
             nd = target[["node"]]
-            addEventListener(nd, event, rfun)
+            print("JSRaphaelRef method")
+            print(nd)
+            addEventListener(nd, event, rfun, ...)
           })
 setMethod("addEventListener", c(target = "RaphPaperRef"),
-          function(target, event, rfun)
+          function(target, event, rfun, ...)
           {
             if(length(event) > 1)
-              return(sapply(event, function(e) addEventListener(target, e, rfun)))
+              return(sapply(event, function(e) addEventListener(target, e, rfun, ...)))
             nd = target[["canvas"]]
-            addEventListener(nd, event, rfun)
+            addEventListener(nd, event, rfun, ...)
           })
 
 setMethod("addEventListener", c(target="list"),
-          function(target, event, rfun)
+          function(target, event, rfun, ...)
           {
-            mapply(function(t, e) addEventListener(t, e, rfun),
+            mapply(function(t, e) addEventListener(t, e, rfun, ...),
                    t = target, e=event)
             
           })
 
 setMethod("addEventListener", c(target="JSValueRef"),
-          function(target, event, rfun)
+          function(target, event, rfun, ...)
           {
             if(length(event) > 1)
-              return(mapply(function(e, f) addEventListener(target, e, f), event, rfun))
-            target$addEventListener(event, rfun)
+              return(mapply(function(e, f) addEventListener(target, e, f,...), event, rfun))
+            args = list(...)
+            if("event" %in% names(formals(rfun)))
+              hfun = function(evt)
+                {
+                  do.call(rfun, c(event=evt, args))
+                }
+            else
+              hfun = function(evt)
+                {
+                  do.call(rfun, args)
+                }
+            
+         #   target$addEventListener(event, rfun)
+            print(target)
+            target$addEventListener(event, hfun)
             TRUE
           })
 removeEventListener = function(target, event)

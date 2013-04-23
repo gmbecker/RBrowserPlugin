@@ -45,7 +45,7 @@
 
 void DoColors(NPVariant *el, const pGEcontext gc, NPP inst, NPNetscapeFuncs *funcs);
 void drawPoly(int n, double *x, double *y, const pGEcontext gc, pDevDesc dev, NPVariant **_ret);
-
+void assignToStorage(SEXP val, SEXP env, const char *type);
 extern "C"{
 
   static Rboolean raphaelDeviceDriver(pDevDesc dev, SEXP env, SEXP plug, SEXP dim);
@@ -82,13 +82,9 @@ static void Raphael_Circle(double x, double y, double r,
 
   SEXP pap, env, plug;
   SEXP *spec = (SEXP *)dev->deviceSpecific;
-  //PROTECT(env = (SEXP) spec[0]);
-  //PROTECT(plug = (SEXP) spec[1]);
   //These have R_PreserveObject called on them when the device is created
   PROTECT(env = (SEXP) spec[0]);
   PROTECT(plug = (SEXP) spec[1]);
-  // PROTECT(pap = Rf_findVarInFrame(Rf_install("paper"), env));
-  //PROTECT(pap = Rf_findVarInFrame(env, Rf_install("paper")));
   PROTECT(pap = (SEXP) spec[2]);
 
   NPVariant *paper = (NPVariant *) R_ExternalPtrAddr(GET_SLOT( pap , Rf_install( "ref" ) ) );
@@ -105,6 +101,7 @@ static void Raphael_Circle(double x, double y, double r,
   funcs->invoke(inst, paper->value.objectValue, funcs->getstringidentifier("circle"), (const NPVariant *) args, 3, ret);
   //XXX color code here
   DoColors(ret, gc, inst, funcs);
+  /*
   SEXP val, list, call, ptr, ans;
   PROTECT(val = R_NilValue);
   ConvertNPToR(ret, inst, funcs, CONV_REF, &val);
@@ -112,21 +109,15 @@ static void Raphael_Circle(double x, double y, double r,
   SET_LENGTH(list, LENGTH(list) + 1);
   SET_VECTOR_ELT(list, LENGTH(list) - 1, val);
   defineVar(Rf_install("points"), list, env);
-  /*
-  PROTECT(call = ptr = allocVector(LANGSXP, 4));
-  SETCAR(call, Rf_install("assign"));
-  ptr = CDR(ptr);
-  SETCAR(ptr, ScalarString(mkChar("points")));
-  ptr = CDR(ptr);
-  SETCAR(ptr,list);
-  ptr = CDR(ptr);
-  SETCAR(ptr, env);
-  SET_TAG(ptr, Rf_install("envir"));
-  int error=0;
-  ans = R_tryEval(call, R_GlobalEnv, &error);
-  UNPROTECT(6);
-  */  
   UNPROTECT(5);
+  
+  */
+  SEXP val;
+  PROTECT(val = R_NilValue);
+  ConvertNPToR(ret, inst, funcs, CONV_REF, &val);
+
+  assignToStorage(val, env, "points");
+  UNPROTECT(4);
   return;
 
 }
@@ -159,6 +150,7 @@ static void Raphael_Line(double x1, double y1, double x2, double y2,
   funcs->invoke(inst, paper->value.objectValue, funcs->getstringidentifier("path"), (const NPVariant *) arg, 1, ret);
   //XXX color code here
   DoColors(ret, gc, inst, funcs);
+  /*
   SEXP val, list;
   PROTECT(val = R_NilValue);
   ConvertNPToR(ret, inst, funcs, CONV_DEFAULT, &val);
@@ -168,6 +160,14 @@ static void Raphael_Line(double x1, double y1, double x2, double y2,
   SET_VECTOR_ELT(list, LENGTH(list) - 1, val);
   defineVar(Rf_install("lines"), list, env);
   UNPROTECT(5);
+  */
+
+  SEXP val;
+  PROTECT(val = R_NilValue);
+  ConvertNPToR(ret, inst, funcs, CONV_REF, &val);
+
+  assignToStorage(val, env, "lines");
+  UNPROTECT(4);
   return;
 }
 static void Raphael_Path(double *x, double *y,
@@ -181,39 +181,6 @@ static void Raphael_Polyline(int n, double *x, double *y,
                           const pGEcontext gc,
                           pDevDesc dev) {
 
-  //fprintf(stderr, "\nIn Raphael_Polyline\n");fflush(stderr);
-  /*
-  SEXP pap, env, plug;
-  SEXP *spec = (SEXP *)dev->deviceSpecific;
-  PROTECT(env = (SEXP) spec[0]);
-  PROTECT(plug = (SEXP) spec[1]);
-
-  PROTECT(pap = Rf_findVarInFrame(env, Rf_install("paper")));
-  NPVariant *paper = (NPVariant *) R_ExternalPtrAddr(GET_SLOT( pap , Rf_install( "ref" ) ) );
-  
-  NPP inst = (NPP) R_ExternalPtrAddr(GET_SLOT( plug , Rf_install( "ref" ) ) );
-  NPNetscapeFuncs *funcs = (NPNetscapeFuncs *) R_ExternalPtrAddr(GET_SLOT( GET_SLOT(plug, Rf_install("funcs")), Rf_install("ref")));
-  
-  NPVariant *arg = (NPVariant *) funcs->memalloc(sizeof(NPVariant));
-  NPVariant *ret = (NPVariant *) funcs->memalloc(sizeof(NPVariant));
-  int setsize = 1 + 2 + 2*11;
-  int len = n*(setsize) + 1; //M,l, 4 doubles, and 5 spaces (plus null char) M%4.6 %4.6 
-  char *dat = (char *) funcs->memalloc(len*sizeof(char));
-  sprintf(dat, "M%4.6f %4.6f ", x[0], y[0]);
-  int pos = setsize;
-  for(int i = 1; i < n; i++)
-    {
-      sprintf((char*)&dat[strlen(dat)], "L%04.6f %04.6f ", x[i], y[i]);
-      pos = pos + setsize;
-    }
-  memcpy(&dat[strlen(dat)], "\0", 1);
-  
-  STRINGZ_TO_NPVARIANT(dat, *arg);
-  
-  funcs->invoke(inst, paper->value.objectValue, funcs->getstringidentifier("path"), (const NPVariant *) arg, 1, ret);
-  //XXX color code here
-  DoColors(ret, gc, inst, funcs);
-  */
 
   SEXP *spec = (SEXP *)dev->deviceSpecific;
   SEXP env, plug;
@@ -225,7 +192,13 @@ static void Raphael_Polyline(int n, double *x, double *y,
   
   NPVariant *ret = (NPVariant *) funcs->memalloc(sizeof(NPVariant));
   drawPoly(n, x, y, gc, dev, &ret);
-  SEXP val, list;
+  SEXP val;
+  PROTECT(val = R_NilValue);
+  ConvertNPToR(ret, inst, funcs, CONV_REF, &val);
+  
+  assignToStorage(val, env, "polylines");
+  /*  
+SEXP val, list;
   PROTECT(val = R_NilValue);
   ConvertNPToR(ret, inst, funcs, CONV_DEFAULT, &val);
   //PROTECT(list = Rf_findVarInFrame(mkString("lines"), env));
@@ -235,7 +208,8 @@ static void Raphael_Polyline(int n, double *x, double *y,
   defineVar(Rf_install("polylines"), list, env);
   UNPROTECT(4);
   //funcs->memfree(dat);
-  
+  */
+  UNPROTECT(3);
   return;
 }
 
@@ -254,6 +228,11 @@ static void Raphael_Polygon(int n, double *x, double *y,
   
   NPVariant *ret = (NPVariant *) funcs->memalloc(sizeof(NPVariant));
   drawPoly(n, x, y, gc, dev, &ret);
+  SEXP val;
+  PROTECT(val = R_NilValue);
+  ConvertNPToR(ret, inst, funcs, CONV_REF, &val);
+   assignToStorage(val, env, "polygons");
+  /*
   SEXP val, list;
   PROTECT(val = R_NilValue);
   ConvertNPToR(ret, inst, funcs, CONV_DEFAULT, &val);
@@ -262,7 +241,8 @@ static void Raphael_Polygon(int n, double *x, double *y,
   SET_VECTOR_ELT(list, LENGTH(list) - 1, val);
   defineVar(Rf_install("polygons"), list, env);
   UNPROTECT(4);
- 
+  */
+  UNPROTECT(3);
 }
 
 static void Raphael_Rect(double x0, double y0, double x1, double y1,
@@ -273,7 +253,6 @@ static void Raphael_Rect(double x0, double y0, double x1, double y1,
   SEXP *spec = (SEXP *)dev->deviceSpecific;
   PROTECT(env = (SEXP) spec[0]);
   PROTECT(plug = (SEXP) spec[1]);
-  //PROTECT(pap = Rf_findVarInFrame(mkString("paper"), env));
   PROTECT(pap = Rf_findVarInFrame(env, Rf_install("paper")));
   NPVariant *paper = (NPVariant *) R_ExternalPtrAddr(GET_SLOT( pap , Rf_install( "ref" ) ) );
 
@@ -304,6 +283,12 @@ static void Raphael_Rect(double x0, double y0, double x1, double y1,
   bool success = funcs->invoke(inst, paper->value.objectValue, funcs->getstringidentifier("rect"), (const NPVariant *) args, 4, ret);
   //XXX color code here
   DoColors(ret, gc, inst, funcs);
+ SEXP val;
+  PROTECT(val = R_NilValue);
+  ConvertNPToR(ret, inst, funcs, CONV_REF, &val);
+  
+  assignToStorage(val, env, "rects");
+  /*
   SEXP val, list;
   PROTECT(val = R_NilValue);
   ConvertNPToR(ret, inst, funcs, CONV_DEFAULT, &val);
@@ -313,6 +298,8 @@ static void Raphael_Rect(double x0, double y0, double x1, double y1,
   SET_VECTOR_ELT(list, LENGTH(list) - 1, val);
   defineVar(Rf_install("rects"), list, env);
   UNPROTECT(5);
+  */
+  UNPROTECT(4);
   return;
  
 }
@@ -370,20 +357,17 @@ const char *txtanchval = "middle";
   STRINGZ_TO_NPVARIANT(dat2b, args2[2]);
   STRINGZ_TO_NPVARIANT(dat2c, args2[3]);
   funcs->invoke(inst, ret->value.objectValue, funcs->getstringidentifier("attr"), (const NPVariant *) args2, 4, &tmp);
-  /*
-  char *dat3 = (char *) funcs->memalloc(11*sizeof(char));
-  sprintf(dat3, "R%4.4f\0", rot);
-  STRINGZ_TO_NPVARIANT(dat3, args2[0]);
-  bool success = funcs->invoke(inst, ret->value.objectValue, funcs->getstringidentifier("transform"), (const NPVariant *) args2, 1, &tmp);
-  */
   //rotation seems to be opposite of what R expects...
   DOUBLE_TO_NPVARIANT(-1.0*rot, args2[0]);
   bool success = funcs->invoke(inst, ret->value.objectValue, funcs->getstringidentifier("rotate"), (const NPVariant *) args2, 1, &tmp);
   //XXX color code here
+  SEXP val;
+  PROTECT(val = R_NilValue);
+  ConvertNPToR(ret, inst, funcs, CONV_REF, &val);
 
+  assignToStorage(val, env, "texts");
 
-
-
+  /*
   SEXP val, list;
   PROTECT(val = R_NilValue);
   ConvertNPToR(ret, inst, funcs, CONV_REF, &val);
@@ -393,8 +377,11 @@ const char *txtanchval = "middle";
   SET_VECTOR_ELT(list, LENGTH(list) - 1, val);
   defineVar(Rf_install("texts"), list, env);
   UNPROTECT(5);
+  */
+  
   funcs->memfree(dat);
   funcs->memfree(dat2);
+  UNPROTECT(4);
   //  funcs->memfree(dat3);
   
 
@@ -468,23 +455,12 @@ static double Raphael_StrWidth(const char *str,
   //-1 because strlen counts the null char;
   return (strlen(str) - 1) * tmp * gc->cex;
   */
-  //Lets see if this is fast enough...
+  if(TRUE)
+    return 0.0;
+
   SEXP call, ptr, pap, env, plug, ans;
   SEXP *spec = (SEXP *)dev->deviceSpecific;  
   PROTECT(pap  = (SEXP) spec[2]);
-  /*
-  PROTECT(env = (SEXP) spec[0]);
-  PROTECT(plug = (SEXP) spec[1]);
-  
-  //  PROTECT(pap = Rf_findVarInFrame(env, Rf_install("paper")));
-  NPVariant *paper = (NPVariant *) R_ExternalPtrAddr(GET_SLOT( pap , Rf_install( "ref" ) ) );
-  
-  NPP inst = (NPP) R_ExternalPtrAddr(GET_SLOT( plug , Rf_install( "ref" ) ) );
-  NPNetscapeFuncs *funcs = (NPNetscapeFuncs *) R_ExternalPtrAddr(GET_SLOT( GET_SLOT(plug, Rf_install("funcs")), Rf_install("ref")));
-  const char *jscode = sprintf("
-  */
-  if(TRUE)
-    return 0.0;
   int size = (int)((double) MAX(10, gc->ps)*gc->cex);
   PROTECT(call = ptr = allocVector(LANGSXP, 4));
   SETCAR(call, Rf_install("raphStrWidth"));
@@ -667,3 +643,24 @@ void drawPoly(int n, double *x, double *y,
   funcs->memfree(dat);
   UNPROTECT(3);
 }
+
+void assignToStorage(SEXP val, SEXP env, const char *type)
+{
+  SEXP list, call, ptr, ans;
+
+  PROTECT(ptr = call = allocVector(LANGSXP, 3));
+  SETCAR(ptr, Rf_install("as"));
+  ptr = CDR(ptr);
+  SETCAR(ptr, val);
+  ptr = CDR(ptr);
+  SETCAR(ptr, ScalarString(mkChar("JSRaphaelRef")));
+  int err =0;
+  PROTECT(ans = R_tryEval(call, R_GlobalEnv, &err));
+  PROTECT(list = Rf_findVarInFrame(env, Rf_install(type)));
+  SET_LENGTH(list, LENGTH(list) + 1);
+  SET_VECTOR_ELT(list, LENGTH(list) - 1, ans);
+  defineVar(Rf_install(type), list, env);
+  
+  UNPROTECT(3);
+
+} 

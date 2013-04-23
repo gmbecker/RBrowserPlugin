@@ -555,15 +555,15 @@ SEXP MakeNPRefForR(NPVariant *ref, NPP inst, NPNetscapeFuncs *funcs)
 {
   SEXP ans;
   PROTECT(ans = R_NilValue);
+  int numprot = 1;
   if(checkNPForNA(ref, inst, funcs))
     {
       makeNAForR(ref->value.objectValue, inst, funcs, &ans);
-      UNPROTECT(1);
     }  
   else if (checkNPForRObj(ref, inst, funcs)) 
     {
       fprintf(stderr, "\nRObject (or subclass) detected. Extracting original SEXP\n");fflush(stderr);
-      UNPROTECT(1);
+      UNPROTECT(numprot);
       return ((RObject *) ref->value.objectValue)->object;
     }
   
@@ -576,11 +576,13 @@ SEXP MakeNPRefForR(NPVariant *ref, NPP inst, NPNetscapeFuncs *funcs)
       PROTECT( Rptr = R_MakeExternalPtr( ref ,
 					 Rf_install( "JSValueRef" ),
 					 R_NilValue));
-      
+      numprot = numprot +2;
   //XXX need to add finalizer!!
       SET_SLOT( ans , Rf_install( "ref" ), Rptr );
-  UNPROTECT(3);
+  
+      
     }
+  UNPROTECT(numprot);
   return ans;
 }
 
