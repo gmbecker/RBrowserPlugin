@@ -44,6 +44,7 @@
 
 
 void DoColors(NPVariant *el, const pGEcontext gc, NPP inst, NPNetscapeFuncs *funcs);
+void drawPoly(int n, double *x, double *y, const pGEcontext gc, pDevDesc dev, NPVariant **_ret);
 
 extern "C"{
 
@@ -181,6 +182,7 @@ static void Raphael_Polyline(int n, double *x, double *y,
                           pDevDesc dev) {
 
   //fprintf(stderr, "\nIn Raphael_Polyline\n");fflush(stderr);
+  /*
   SEXP pap, env, plug;
   SEXP *spec = (SEXP *)dev->deviceSpecific;
   PROTECT(env = (SEXP) spec[0]);
@@ -211,6 +213,18 @@ static void Raphael_Polyline(int n, double *x, double *y,
   funcs->invoke(inst, paper->value.objectValue, funcs->getstringidentifier("path"), (const NPVariant *) arg, 1, ret);
   //XXX color code here
   DoColors(ret, gc, inst, funcs);
+  */
+
+  SEXP *spec = (SEXP *)dev->deviceSpecific;
+  SEXP env, plug;
+  PROTECT(env = (SEXP) spec[0]);
+  PROTECT(plug = (SEXP) spec[1]);
+  
+  NPP inst = (NPP) R_ExternalPtrAddr(GET_SLOT( plug , Rf_install( "ref" ) ) );
+  NPNetscapeFuncs *funcs = (NPNetscapeFuncs *) R_ExternalPtrAddr(GET_SLOT( GET_SLOT(plug, Rf_install("funcs")), Rf_install("ref")));
+  
+  NPVariant *ret = (NPVariant *) funcs->memalloc(sizeof(NPVariant));
+  drawPoly(n, x, y, gc, dev, &ret);
   SEXP val, list;
   PROTECT(val = R_NilValue);
   ConvertNPToR(ret, inst, funcs, CONV_DEFAULT, &val);
@@ -219,8 +233,8 @@ static void Raphael_Polyline(int n, double *x, double *y,
   SET_LENGTH(list, LENGTH(list) + 1);
   SET_VECTOR_ELT(list, LENGTH(list) - 1, val);
   defineVar(Rf_install("polylines"), list, env);
-  UNPROTECT(5);
-  funcs->memfree(dat);
+  UNPROTECT(4);
+  //funcs->memfree(dat);
   
   return;
 }
@@ -229,7 +243,26 @@ static void Raphael_Polygon(int n, double *x, double *y,
                          const pGEcontext gc,
                          pDevDesc dev) {
   //fprintf(stderr, "\nIn Raphael_Polygon\n");fflush(stderr);
-  Raphael_Polyline(n, x, y, gc, dev);
+  // Raphael_Polyline(n, x, y, gc, dev);
+  SEXP *spec = (SEXP *)dev->deviceSpecific;
+  SEXP env, plug;
+  PROTECT(env = (SEXP) spec[0]);
+  PROTECT(plug = (SEXP) spec[1]);
+  
+  NPP inst = (NPP) R_ExternalPtrAddr(GET_SLOT( plug , Rf_install( "ref" ) ) );
+  NPNetscapeFuncs *funcs = (NPNetscapeFuncs *) R_ExternalPtrAddr(GET_SLOT( GET_SLOT(plug, Rf_install("funcs")), Rf_install("ref")));
+  
+  NPVariant *ret = (NPVariant *) funcs->memalloc(sizeof(NPVariant));
+  drawPoly(n, x, y, gc, dev, &ret);
+  SEXP val, list;
+  PROTECT(val = R_NilValue);
+  ConvertNPToR(ret, inst, funcs, CONV_DEFAULT, &val);
+  PROTECT(list = Rf_findVarInFrame(env, Rf_install("polygons")));
+  SET_LENGTH(list, LENGTH(list) + 1);
+  SET_VECTOR_ELT(list, LENGTH(list) - 1, val);
+  defineVar(Rf_install("polygons"), list, env);
+  UNPROTECT(4);
+ 
 }
 
 static void Raphael_Rect(double x0, double y0, double x1, double y1,
@@ -598,3 +631,39 @@ void DoColors(NPVariant *el, const pGEcontext gc, NPP inst, NPNetscapeFuncs *fun
   funcs->memfree(args);
 }
 
+void drawPoly(int n, double *x, double *y,
+	      const pGEcontext gc,
+	      pDevDesc dev, NPVariant **_ret) {
+  SEXP *spec = (SEXP *)dev->deviceSpecific;
+  SEXP env, plug, pap;
+  PROTECT(env = (SEXP) spec[0]);
+  PROTECT(plug = (SEXP) spec[1]);
+  
+  PROTECT(pap = Rf_findVarInFrame(env, Rf_install("paper")));
+  NPVariant *paper = (NPVariant *) R_ExternalPtrAddr(GET_SLOT( pap , Rf_install( "ref" ) ) );
+  
+  NPP inst = (NPP) R_ExternalPtrAddr(GET_SLOT( plug , Rf_install( "ref" ) ) );
+  NPNetscapeFuncs *funcs = (NPNetscapeFuncs *) R_ExternalPtrAddr(GET_SLOT( GET_SLOT(plug, Rf_install("funcs")), Rf_install("ref")));
+  
+  NPVariant *arg = (NPVariant *) funcs->memalloc(sizeof(NPVariant));
+  // NPVariant *ret = (NPVariant *) funcs->memalloc(sizeof(NPVariant));
+  int setsize = 1 + 2 + 2*11;
+  int len = n*(setsize) + 1; //M,l, 4 doubles, and 5 spaces (plus null char) M%4.6 %4.6 
+  char *dat = (char *) funcs->memalloc(len*sizeof(char));
+  sprintf(dat, "M%4.6f %4.6f ", x[0], y[0]);
+  int pos = setsize;
+  for(int i = 1; i < n; i++)
+    {
+      sprintf((char*)&dat[strlen(dat)], "L%04.6f %04.6f ", x[i], y[i]);
+      pos = pos + setsize;
+    }
+  memcpy(&dat[strlen(dat)], "\0", 1);
+  
+  STRINGZ_TO_NPVARIANT(dat, *arg);
+  
+  funcs->invoke(inst, paper->value.objectValue, funcs->getstringidentifier("path"), (const NPVariant *) arg, 1, *_ret);
+  //XXX color code here
+  DoColors(*_ret, gc, inst, funcs);
+  funcs->memfree(dat);
+  UNPROTECT(3);
+}

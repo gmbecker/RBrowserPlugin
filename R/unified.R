@@ -156,7 +156,7 @@ setMethod("addEventListener", c(target = "JSRaphaelRef"),
             nd = target[["node"]]
             addEventListener(nd, event, rfun)
           })
-setMethod("addEventListener", c(target = "JSPaperRef"),
+setMethod("addEventListener", c(target = "RaphPaperRef"),
           function(target, event, rfun)
           {
             if(length(event) > 1)

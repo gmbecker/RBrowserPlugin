@@ -5,13 +5,14 @@ raphaelCDev = function(id = "raph_content", dim = c(400, 400), storage = new.env
     assign("lines", list(), envir=storage)
     assign("rects", list(), envir=storage)
     assign("polylines", list(), envir=storage)
+    assign("polygons", list(), envir=storage)
     assign("texts", list(), envir=storage)
     div = getPageElement(id)
     if(is.null(div))
       addPageElement(id=id, attributes = list(style=paste("width:", dim[1], "px; height:", dim[2], "px;")))
     script = paste("Raphael('", id, "',", dim[1], " , ", dim[2], ");", sep="")
     print("Raphael C device attempting to create paper")
-    tmp = evalJavaScript(script = script, keepResult = TRUE, convertRet = function(x) as(x, "JSPaperRef"))
+    tmp = evalJavaScript(script = script, keepResult = TRUE, convertRet = function(x) as(x, "RaphPaperRef"))
     assign("paper", tmp, env = storage)
     print("Raphael C device paper created")
     .Call("R_GD_raphaelDevice", storage, PluginInstance, as.integer(dim))
@@ -19,6 +20,7 @@ raphaelCDev = function(id = "raph_content", dim = c(400, 400), storage = new.env
     list(getPoints = function() get("points", storage),
          getLines = function() get("lines", storage),
          getPolyLines = function() get("polylines", storage),
+         getPolygons = function() get("polygons", storage),
          getTexts = function() get("texts", storage),
          getRects = function() get("rects", storage),
          devnum = storage$devnum,
@@ -80,7 +82,7 @@ raphRemoveAll = function(type="points", dev)
            lines = .Call("R_NPAPI_Remove_All", PluginInstance, dev$getLines()),
            texts = .Call("R_NPAPI_Remove_All", PluginInstance, dev$getTexts()),
            polylines = .Call("R_NPAPI_Remove_All", PluginInstance, dev$getPolyLines()),
-           polygons = .Call("R_NPAPI_Remove_All", PluginInstance, dev$getPolyLines()),
+           polygons = .Call("R_NPAPI_Remove_All", PluginInstance, dev$getPolygons()),
            rects = .Call("R_NPAPI_Remove_All", PluginInstance, dev$getRects())
            )
     assign(type, list(), dev$storage)
@@ -88,7 +90,7 @@ raphRemoveAll = function(type="points", dev)
 
 raphRemoveElements = function(type="points", indexes, dev)
 {
-   match.arg(type, c("points", "lines", "texts", "polylines"))
+   match.arg(type, c("points", "lines", "texts", "polylines", "polygons", "rects"))
   sapply(indexes, function(i, lst) lst[[i]]$remove(), lst = get(type, dev$storage))
 
   #remove chosen elements from the list of currently drawn elements
@@ -123,3 +125,5 @@ setMethod("raphAttr<-", c(el="JSRaphaelRef"),
 setMethod("raphAttr<-", c(el="ANY"),
           function(el, name, value) stop(paste("Cannot call raphAttr<- on element of class", class(el))))
 
+#backwards compatability
+raphaelDev = raphaelCDev

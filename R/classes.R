@@ -9,6 +9,6 @@ setClass("NPVariantRef", contains="RCStructReference")
 setIs("NPVariantRef", "JSValueRef")
 
 setClass("JSRaphaelRef", contains="JSValueRef")
-setClass("JSPaperRef", contains="JSValueRef")
+setClass("RaphPaperRef", contains="JSValueRef")
 setClass("JSDOMRef", contains="JSValueRef")
 
