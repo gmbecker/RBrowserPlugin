@@ -151,17 +151,23 @@ bool WebREngine::Invoke(NPIdentifier name, const NPVariant *args, uint32_t argCo
       }
     else if (name == myNPNFuncs->getstringidentifier("namedArgsCall"))
       {
-	NPString str = NPVARIANT_TO_STRING(args[0]);
-	NPUTF8 *tmpchr = (NPUTF8 *) malloc((str.UTF8Length +1)*sizeof(NPUTF8));
-	memcpy(tmpchr,str.UTF8Characters,  str.UTF8Length);
-	tmpchr[str.UTF8Length] = '\0';
-	const char *strval = (const char *) tmpchr;	
 	SEXP fun;
-	PROTECT(fun = innerGetVar(strval, this->instance));
-	free(tmpchr);
+	if(NPVARIANT_IS_STRING(args[0]))
+	  {
+	    NPString str = NPVARIANT_TO_STRING(args[0]);
+	    NPUTF8 *tmpchr = (NPUTF8 *) malloc((str.UTF8Length +1)*sizeof(NPUTF8));
+	    memcpy(tmpchr,str.UTF8Characters,  str.UTF8Length);
+	    tmpchr[str.UTF8Length] = '\0';
+	    const char *strval = (const char *) tmpchr;	
+	    PROTECT(fun = innerGetVar(strval, this->instance));
+	    addProt++;
+	    free(tmpchr);
+	  } else if (TYPEOF(Rargs[0]) == CLOSXP) {
+	  fun = Rargs[0];
+	}
 	//We used the first argument to identify the function, the only remaining argument is the object with the named argument values in it.
 	bool res = doNamedCall(this->instance, fun, &args[1], 1, result, myNPNFuncs) ;
-	UNPROTECT(argCount + 1);
+	UNPROTECT(argCount + addProt);
 	//We need to skip the conversion code below, because doNamedCall takes care of the conversion stuff. This is hacky :(
 	return res;
       }
