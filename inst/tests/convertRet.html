@@ -1,0 +1,30 @@
+<html>
+  <head>
+  <script type="text/javascript" src="../javascript/raphael.js"> </script>
+<script type="text/R">
+  
+  addpi = function(a)
+{
+ pi + a
+}
+</script>
+<script type="text/javascript">
+  function dotest()
+{
+  //R.myfun(args({b: "success!", c:"success!"}));
+  document.getElementById("divout3").innerHTML = "R.addpi( convertRet(reference), 10): " + R.addpi(convertRet(reference), 10 );
+  document.getElementById("divout4").innerHTML = "R.addpi( 10, convertRet(reference)): " + R.addpi(10, convertRet(reference));
+  document.getElementById("divout5").innerHTML = "R.addpi(10, convertRet(function(ret) { return ret[0]/2;})): " + R.addpi(10, convertRet(function(ret) { return ret[0]/2;}));
+}
+</script>
+</head>
+<body>
+    <embed id="REngine" type="application/r" width="0" height="0"></embed>
+<input type="button"  onclick="dotest();"/>
+<div id="divout"></div>
+<div id="divout2"></div>
+<div id="divout3"></div>
+<div id="divout4"></div>
+<div id="divout5"></div>
+</body>
+</html>

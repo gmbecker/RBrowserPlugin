@@ -106,6 +106,7 @@ addTextNode = function(parent = NULL, content = "hello world!")
       parent = doc
     tnode = doc$createTextNode(content)
     parent$appendChild(tnode)
+    NULL
   }
 
 addPageElement = function(parent = NULL, type="div", id=NULL, attributes = list())
@@ -195,7 +196,7 @@ setMethod("addEventListener", c(target="JSValueRef"),
          #   target$addEventListener(event, rfun)
             print(target)
             target$addEventListener(event, hfun)
-            TRUE
+            NULL
           })
 removeEventListener = function(target, event)
   {

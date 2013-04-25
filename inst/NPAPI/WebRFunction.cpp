@@ -74,12 +74,10 @@ bool RFunction::Invoke(NPIdentifier name, const NPVariant *args, uint32_t argCou
     }
   if (name == this->funcs->getstringidentifier("handleEvent"))
     {
-      fprintf(stderr, "\nIn handleEvent method of an RFunction\n");fflush(stderr);
       return this->InvokeDefault(args, argCount, result);
     }
   if (name == this->funcs->getstringidentifier("call"))
     {
-      fprintf(stderr, "\nIn call method of an RFunction\n");fflush(stderr);
       return this->InvokeDefault(args, argCount, result);
     }
   return false;
@@ -93,49 +91,84 @@ bool RFunction::InvokeDefault(const NPVariant *args, uint32_t argCount, NPVarian
       return doNamedCall(this->instance, this->object, args, argCount, result, this->funcs);
     }
   SEXP Rargs[argCount];
-  for(uint32_t i=0; i<argCount; i++)
-    {
-      PROTECT(Rargs[i] = R_NilValue);
-      //If the argument is not an "emptyArg" object, indicating, eg, foo(a, , c), convert as normal
-      if(args[i].type != NPVariantType_Object || !this->funcs->hasproperty(this->instance, args[i].value.objectValue, this->funcs->getstringidentifier("emptyRArg")))
-	ConvertNPToR((NPVariant *) &(args[i]), this->instance, this->funcs, CONV_DEFAULT, &Rargs[i]);
-      else
-	Rargs[i] = R_MissingArg;
-    }
+  convert_t convRet = CONV_DEFAULT;
+  NPVariant convRetVariant;
+  int numprot = 0;  
+  
+  uint32_t  j=0;
+  bool wasConvRet;
+  //argCountR is the number of arguments to be actually passed to the R function. Does not include, e.g. convertRet specification args
+  int argCountR = argCount;
+  //i is position in JS args, j is position in converted R args  
+  for(uint32_t i=0; i< argCount; i++)
+  {
+    wasConvRet = false;
+    
+    //If the argument is not an "emptyArg" object, indicating, eg, foo(a, , c), convert as normal
+    if(args[i].type == NPVariantType_Object && this->funcs->hasproperty(this->instance, args[i].value.objectValue, this->funcs->getstringidentifier("_convertRet")))
+      {
+	wasConvRet = true;
+	funcs->getproperty(this->instance, args[i].value.objectValue, this->funcs->getstringidentifier("behavior"), &convRetVariant);
+	if(convRetVariant.type==NPVariantType_Int32) 
+	  convRet = (convert_t) convRetVariant.value.intValue;
+	else if ( convRetVariant.type==NPVariantType_Double)
+	  convRet = (convert_t) convRetVariant.value.doubleValue;
+	else
+	  convRet = CONV_CUSTOM;
+      } else if(args[i].type == NPVariantType_Object && this->funcs->hasproperty(this->instance, args[i].value.objectValue, this->funcs->getstringidentifier("emptyRArg")))
+      {
+      //If it is the special emptyRArg object, it represents a missing argument, eg rnorm(2, , 5)
+	PROTECT(Rargs[j] = R_NilValue);
+	Rargs[j] = R_MissingArg;
+	numprot++;
+      }
+    else
+      {
+	PROTECT(Rargs[j] = R_NilValue);
+	ConvertNPToR((NPVariant *) &(args[i]), this->instance, this->funcs, CONV_DEFAULT, &Rargs[j]);
+	numprot++;
+      }
+    //If the argument was a convertRet specification it doesn't count as a "real argument", we decrease the argument count and do not increment i
+    if(wasConvRet)
+      argCountR--;
+    else
+      j++;
+  }
   SEXP ans;
   SEXP call;
   int error = 0;
   int addProt = 0;
 
   SEXP ptr;
-  PROTECT(ptr = call = allocVector(LANGSXP, argCount  + 1));
+  //argCountR is the number of arguments after we remove any convertRet specifiers
+  PROTECT(ptr = call = allocVector(LANGSXP, argCountR  + 1));
   SETCAR(ptr, (SEXP) this->object );
-  for(uint32_t i=0; i < argCount; i++)
+  for(uint32_t i=0; i < argCountR; i++)
     {
       ptr = CDR( ptr );
-      //If its not the special empty argument object, add it to the call.
-      //if(args[i].type != NPVariantType_Object || !this->funcs->hasproperty(this->instance, args[i].value.objectValue, this->funcs->getstringidentifier("emptyRArg")))
-	SETCAR(ptr, Rargs[i]);
+ 	SETCAR(ptr, Rargs[i]);
 
     }
 
-  fprintf(stderr, "\nDirect API call: ");fflush(stderr);
   Rf_PrintValue(call);
   //PROTECT(ans = R_tryEval( call, R_GlobalEnv, &error));
   PROTECT(ans = rQueue.requestRCall( call, R_GlobalEnv, &error, this->instance));
 
   addProt = 2;
   if(!error)
-    ConvertRToNP(ans, this->instance, this->funcs, result, CONV_DEFAULT);
+    {
+    //ConvertRToNP(ans, this->instance, this->funcs, result, CONV_DEFAULT);
+      ConvertRToNP(ans, this->instance, this->funcs, result, convRet);
+      if(convRet == CONV_CUSTOM)
+	this->funcs->invokeDefault(this->instance, convRetVariant.value.objectValue, result, 1, result);
+    }
   //If it's an error, just throw an error for the browser.
-  //else
-  //  
   else
     {
       ThrowRError(this, this->funcs);
       ConvertRToNP(R_NilValue, this->instance, this->funcs, result, CONV_DEFAULT);
     }
-  UNPROTECT(argCount + addProt);
+  UNPROTECT(numprot + addProt);
 //There is a bug in chrome where if an NPObject method call returns false NPN_SetException doesn't work. I'm going to experiment with always returning true...
   //return !error;
   return true;

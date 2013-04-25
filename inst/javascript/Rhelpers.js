@@ -1,11 +1,8 @@
-
 function runScriptsNPAPI()
 {
-
-    
-    var embs = window.document.getElementsByTagName('embed');
-    var stags = window.document.getElementsByTagName('script');
-    var Reng;
+    var embs, stags, Reng, mytag, code, out, evt;
+    embs = window.document.getElementsByTagName('embed');
+    stags = window.document.getElementsByTagName('script');
     for (var j=0; j < embs.length; j++)
 	{
 	    if (embs[j].type == 'application/test-r' || embs[j].type == 'application/r')
@@ -16,9 +13,6 @@ function runScriptsNPAPI()
 	}
     if(typeof(Reng) == 'undefined')
 	return;
-    var mytag;
-    var code; 
-    var out;
     //alert('stags length:'+ stags.length);
     for(var i=0; i < stags.length; i++)
 	{
@@ -32,7 +26,7 @@ function runScriptsNPAPI()
 		}
 	}
     window.R = Reng;
-    var evt = document.createEvent('Events');
+    evt = document.createEvent('Events');
     evt.initEvent('rcoderun', true, false);
     document.dispatchEvent(evt);
     
@@ -103,6 +97,16 @@ function create4(obj, param1, param2, param3, param4)
 {
     var ret = new obj(param1, param2, param3, param4);
     return ret;
+}
+
+window.emptyArg={emptyRArg:true};
+window.standard = 0;
+window.reference = 1;
+window.copy=2;
+
+function convertRet(x)
+{
+    return {behavior:x, _convertRet:true};
 }
 
 setTimeout(runScriptsNPAPI, 200);
