@@ -13,7 +13,7 @@
 {
   //R.myfun(args({b: "success!", c:"success!"}));
   document.getElementById("divout3").innerHTML = "R.addpi( convertRet(reference), 10): " + R.addpi(convertRet(reference), 10 );
-  document.getElementById("divout4").innerHTML = "R.addpi( 10, convertRet(reference)): " + R.addpi(10, convertRet(reference));
+  document.getElementById("divout4").innerHTML = "R.rnorm( 3, convertRet(copy)): " + R.rnorm(3, convertRet(copy));
   document.getElementById("divout5").innerHTML = "R.addpi(10, convertRet(function(ret) { return ret[0]/2;})): " + R.addpi(10, convertRet(function(ret) { return ret[0]/2;}));
 }
 </script>
