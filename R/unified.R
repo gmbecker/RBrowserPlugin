@@ -195,7 +195,8 @@ setMethod("addEventListener", c(target="JSValueRef"),
             
          #   target$addEventListener(event, rfun)
             print(target)
-            target$addEventListener(event, hfun)
+#            target$addEventListener(event, hfun)
+            JS$makeHandler(target, event, hfun)
             NULL
           })
 removeEventListener = function(target, event)
@@ -299,3 +300,20 @@ setMethod("newJSObject", "JSValueRef",
             do.call(fun, paramlist)
           })
             
+
+getEventLocation = function(evt, user.coords = TRUE)
+    {
+        print("In getEventLocation")
+        loc = as.numeric(JS$offsets(evt, convertRet = "copy"))
+        print(loc)
+        if(user.coords)
+            loc = c(grconvertX(loc[1], from="device", to="user"),
+                grconvertY(loc[2], from="device", to="user")
+                )
+        print(loc)
+        names(loc) = c("x", "y")
+        print(loc)
+        loc
+    }
+                    
+        

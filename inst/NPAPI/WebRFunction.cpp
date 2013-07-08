@@ -90,13 +90,15 @@ bool RFunction::InvokeDefault(const NPVariant *args, uint32_t argCount, NPVarian
     {
       return doNamedCall(this->instance, this->object, args, argCount, result, this->funcs);
     }
+
   SEXP Rargs[argCount];
   convert_t convRet = CONV_DEFAULT;
   NPVariant convRetVariant;
   int numprot = 0;  
-  
+  bool canfree;
   uint32_t  j=0;
   bool wasConvRet;
+  bool retained[argCount];
   //argCountR is the number of arguments to be actually passed to the R function. Does not include, e.g. convertRet specification args
   int argCountR = argCount;
   //i is position in JS args, j is position in converted R args  
@@ -125,6 +127,15 @@ bool RFunction::InvokeDefault(const NPVariant *args, uint32_t argCount, NPVarian
     else
       {
 	PROTECT(Rargs[j] = R_NilValue);
+	//We need to retain this because we are calling R which can initiate another conversion before we return and I think some things (eg events in raphZoom) are getting improperly freed during the inner conversion cycle
+	if(NPVARIANT_IS_OBJECT(args[i]))
+	  {
+	    this->funcs->retainobject(args[i].value.objectValue);
+	    retained[ i ] = true;
+	  } else {
+	  retained[ i ] =  false;
+	}
+
 	ConvertNPToR((NPVariant *) &(args[i]), this->instance, this->funcs, CONV_DEFAULT, &Rargs[j]);
 	numprot++;
       }
@@ -171,6 +182,13 @@ bool RFunction::InvokeDefault(const NPVariant *args, uint32_t argCount, NPVarian
   UNPROTECT(numprot + addProt);
 //There is a bug in chrome where if an NPObject method call returns false NPN_SetException doesn't work. I'm going to experiment with always returning true...
   //return !error;
+
+  //Unretain objects now that we are done calling R
+  for(int k = 0; k < argCount; k++)
+    {
+      if(retained[k])
+	this->funcs->releasevariantvalue((NPVariant *) &args[k]);
+    }
   return true;
   
 }
